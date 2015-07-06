@@ -49,7 +49,7 @@ function getMobName()
  
 end
 function getEntityName(_name)
- local a = {["zombie"] = "Zombie",["ranged_skeleton"] = "Skeleton",["melee_skeleton"] = "Skeleton"}
+ local a = {["zombie"] = "Zombie",["ranged_skeleton"] = "Skeleton",["melee_skeleton"] = "Skeleton",["spider"] = "Spider"}
  return (a[_name] or "Zombie")
 end
 function getDropChances()

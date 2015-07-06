@@ -1,9 +1,0 @@
-[API][DCORE] Loaded dcore ?
-[API][MAIN] Loading :dungeon/apis/mob
-[API][MAIN] Loading :dungeon/apis/advitem
-[API][MAIN] Loading :dungeon/apis/items
-[API][MAIN][items] Loading function setItem --> items.setItem
-[API][MAIN][items] Loading function getName --> items.getName
-[API][MAIN][items] Loading function getSetByID --> items.getSetByID
-[API][MAIN][items] Loading function getItem --> items.getItem
-[API][MAIN][items] Loading function getDurability --> items.getDurability

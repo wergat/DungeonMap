@@ -204,7 +204,12 @@ function initializeItem(_dlevel,_typeOfItem,mobname,_forceQ)
   end
  end
  
- setItemData("itemID",equipment[mobname][getItemData("slot")]["items"][getItemData("tier")] or 0)
+ setItemData("itemID",0)
+ if(equipment[mobname]~=nil)then
+  if(equipment[1]~=nil)then
+   setItemData("itemID",equipment[mobname][getItemData("slot")]["items"][getItemData("tier")] or 0)
+  end
+ end
 end
 function getMobName(_mobname)
  local mobname = _mobname or "zombie"
