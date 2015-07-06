@@ -40,7 +40,7 @@ end
 -- returning functions
 function getMobName()
  local name = getMobData("mobType")
- local a = {["zombie"] = "Zombie",["ranged_skeleton"] = "Ranged Skeleton",["melee_skeleton"] = "Melee Skeleton"}
+ local a = {["zombie"] = "Zombie",["ranged_skeleton"] = "Ranged Skeleton",["melee_skeleton"] = "Melee Skeleton",["spider"] = "Spider"}
  if(a[name]~=nil)then
   return "Lv. "..math.floor(getMobData("level")).." "..a[name].." " 
  else
