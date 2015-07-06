@@ -1,0 +1,323 @@
+local args = {...}
+spell = tostring(args[1])
+
+spell = "cuerapovalauspeedasac rufunoldluspoiapo"
+
+invalid = false
+
+
+effects = {"spee","slowe","haste","mifa","stre","inhea","intama","jubo","nase","rege","resi","fire","wabrea","invisi","bli","nivisio","hunge","weakne","poiso","withe","heaboo","abso","satu"}
+effects_duration_factor = {5,2,3 ,1     ,1     ,0      ,0      ,1      ,1     ,1     ,1     ,1     ,1       ,1       ,1    ,1        ,1      ,1       ,1      ,1      ,5       ,5     ,1}
+
+-- duration of potion effects/ duration of spell projectile
+duration = {"da","di","dum","dou","dlu","dsii","dexupla"}
+
+-- strength of potion effects/ speed of spell projectile
+strength = {"s","su","sui","seso","spoia","squfut","squfual"}
+
+-- range of aoe cmd spell/particle explosion radius
+range = {"r","ro","rui","reso","resia","roquut","riqulal"}
+
+local flight = {}
+local effect = {["type"] = 0,["ID"] = {},["str"] = 0,["dur"] = 0}
+local particles = {}
+
+-- data = {}
+-- contains rocket and effect data
+
+mana_cost = 0	
+
+timeout = 0
+
+--[[ --
+ Projectile 
+  ("r") to start
+  ("ol"/"ufunol") for type, -- rework?
+  (duration) for flight duration
+  (strength) for flight speed
+  ("po") to end the spell a proper way
+ 
+ Potion Effects
+  ("c") to start
+  (mana_reduction) to reduce mana cost of spell
+  ("zu"/"kala"/"valau") for type, self/aoe-potion/aoe-command
+  (effects) to set potion effect
+  [duration] potion effet duration
+  [strength] strength of potion effect
+  [range] 
+  [target] who will be effected?
+  ("ac") to end the spell a proper way
+  
+-- ]]--
+while string.len(spell)>0 and not invalid and timeout<10 do
+ timeout = timeout + 1
+ -- Projectile type
+ if(string.sub(spell,1,1) == "r")then
+  local spell_length = 2
+
+  
+  term.setTextColor(colors.red) write("r") term.setTextColor(colors.white)
+  
+  -- magic type
+  -- eao
+  -- rocket [duration,speed]
+  
+  -- wtf is flight typ???
+  if(string.sub(spell,2,3) == "ol")then
+   term.setTextColor(colors.blue) write("ol") term.setTextColor(colors.white)
+   spell = string.sub(spell,4,-1)
+   flight["type"] = 1
+   spell_length = spell_length + 2
+  elseif(string.sub(spell,2,7) == "ufunol")then
+   term.setTextColor(colors.blue) write("ufunol") term.setTextColor(colors.white)
+   spell = string.sub(spell,8,-1)
+   flight["type"] = 2
+   spell_length = spell_length + 4
+  else
+   invalid = true
+   print("Invalid Rocket type!")
+  end
+  
+  
+  -- flight duration
+  if(not invalid)then
+   for i=1,#duration do
+    local part = string.sub(spell,1,string.len(duration[i]))
+    if(part == duration[i])then
+	 term.setTextColor(colors.orange)
+	 write(part)
+	 term.setTextColor(colors.white)
+	 flight["dur"] = i
+	 spell = string.sub(spell,(string.len(duration[i])+1),-1)
+	 spell_length = spell_length + string.len(part)
+	end
+   end
+  end
+  
+  -- flight speed
+  if(not invalid)then
+   for i=#strength,1,-1 do
+    local part = string.sub(spell,1,string.len(strength[i]))
+    if(part == strength[i])then
+	 term.setTextColor(colors.magenta)
+	 write(part)
+	 term.setTextColor(colors.white)
+	 flight["dur"] = i
+	 spell = string.sub(spell,(string.len(strength[i])+1),-1)
+	 spell_length = spell_length + string.len(part)
+	end
+   end
+  end
+  
+  --
+  
+  -- ending
+  if(not invalid)then
+   if(string.sub(spell,1,2) == "po")then
+    term.setTextColor(colors.red) write("po") term.setTextColor(colors.white)
+	spell = string.sub(spell,3,-1)
+	spell_length = spell_length + 2
+   else
+    invalid = true
+   end
+  end
+
+  -- remove space
+  spell = string.sub(spell,2,-1)
+  mana_cost = mana_cost+spell_length
+  print("")
+ end
+
+ -- Potion Effects
+ if(string.sub(spell,1,1) == "c")then
+  local mana_reduction = {"a","lu","ozu","erto","irlou","uerapo"}
+  
+  local spell_length = 2
+  local manacostreduction = 0
+  
+  for i=1,#mana_reduction do
+   if(string.sub(spell,2,1+string.len(mana_reduction[i]))==mana_reduction[i])then
+    manacostreduction = i
+	spell = string.sub(spell,(string.len((mana_reduction[i] or ""))+2),-1)
+   end
+  end
+  
+  if(manacostreduction==0)then invalid = true print("wrong start!") end
+  
+  term.setTextColor(colors.red) write("c"..(mana_reduction[manacostreduction] or "")) term.setTextColor(colors.white)
+  
+  -- potion type
+  if(string.sub(spell,1,2) == "zu")then
+   term.setTextColor(colors.blue) write("zu") term.setTextColor(colors.white)
+   spell = string.sub(spell,3,-1)
+   effect["type"] = 1
+   spell_length = spell_length + 2
+  elseif(string.sub(spell,1,4) == "kala")then
+   term.setTextColor(colors.blue) write("kala") term.setTextColor(colors.white)
+   spell = string.sub(spell,5,-1)
+   effect["type"] = 2
+   spell_length = spell_length + 4
+  elseif(string.sub(spell,1,5) == "valau")then
+   term.setTextColor(colors.blue) write("valau") term.setTextColor(colors.white)
+   spell = string.sub(spell,6,-1)
+   effect["type"] = 3
+   spell_length = spell_length + 5
+  else
+   invalid = true
+   print("Invalid Potion type!")
+  end
+  
+  -- Required:
+  
+  -- potion effect
+  if(not invalid)then
+   for i=1,#effects do
+    local part = string.sub(spell,1,string.len(effects[i]))
+    if(part == effects[i])then
+	 term.setTextColor(colors.orange)
+	 write(part..",")
+	 term.setTextColor(colors.white)
+	 effect["ID"][i] = true
+	 spell = string.sub(spell,(string.len(effects[i])+1),-1)
+	 spell_length = spell_length + string.len(part)
+	end
+   end
+   if(#effect["ID"]==0)then invalid = true end
+  end
+  
+  -- optional
+  -- backfire
+  --[[
+  if(not invalid)then
+   for i=1,#duration do
+    local part = string.sub(spell,1,string.len(duration[i]))
+    if(part == duration[i])then
+	 term.setTextColor(colors.magenta)
+	 write(part)
+	 term.setTextColor(colors.white)
+	 effect["dur"] = i
+	 spell = string.sub(spell,(string.len(duration[i])+1),-1)
+	 spell_length = spell_length + string.len(part)
+	end
+   end
+  end]]
+  
+  -- optional
+  -- potion duration
+  if(not invalid)then
+   for i=1,#duration do
+    local part = string.sub(spell,1,string.len(duration[i]))
+    if(part == duration[i])then
+	 term.setTextColor(colors.magenta)
+	 write(part)
+	 term.setTextColor(colors.white)
+	 effect["dur"] = i
+	 spell = string.sub(spell,(string.len(duration[i])+1),-1)
+	 spell_length = spell_length + string.len(part)
+	end
+   end
+  end
+   
+  -- optional
+  -- potion strength
+  if(not invalid)then
+   for i=#strength,1,-1 do
+    local part = string.sub(spell,1,string.len(strength[i]))
+    if(part == strength[i])then
+	 term.setTextColor(colors.lightBlue)
+	 write(part)
+	 term.setTextColor(colors.white)
+	 effect["str"] = i
+	 spell = string.sub(spell,(string.len(strength[i])+1),-1)
+	 spell_length = spell_length + string.len(part)
+	end
+   end
+  end
+  
+  -- optional
+  -- potion effect range
+  if(not invalid and effect["type"] == 3)then
+   for i=#range,1,-1 do
+    local part = string.sub(spell,1,string.len(range[i]))
+    if(part == range[i])then
+	 term.setTextColor(colors.purple)
+	 write(part)
+	 term.setTextColor(colors.white)
+	 effect["range"] = i
+	 spell = string.sub(spell,(string.len(range[i])+1),-1)
+	 spell_length = spell_length + string.len(part)
+	end
+   end
+  end
+  
+  -- optional
+  -- who will be affected
+  if(not invalid and effect["type"] == 3)then
+   local part = string.sub(spell,1,5)
+   if(part=="playu")then
+    effect["target"] = "playerOnly"
+   elseif(part=="mobou")then
+    effect["target"] = "mobOnly"
+   end
+  
+   if(effect["target"]~=nil)then
+    term.setTextColor(colors.lime)
+	write(part)
+	term.setTextColor(colors.white)
+	spell = string.sub(spell,6,-1)
+   end
+  end
+  
+  -- ending
+  if(not invalid)then
+   if(string.sub(spell,1,2) == "ac")then
+    term.setTextColor(colors.red) write("ac") term.setTextColor(colors.white)
+	spell = string.sub(spell,2,-1)
+	spell_length = spell_length + 2
+   else
+    invalid = true
+   end
+  end
+  
+  if(effect["str"]==0)then print("strength is 0, might be invalid?") end
+  if(effect["dur"]==0)then print("potion duration is 0, might be invalid?") end
+  if(effect["ID"]==0)then invalid = true print("effectID is 0, invalid!") end
+  mana_cost = mana_cost+(spell_length*(4/(4+manacostreduction)))
+  print("")
+  spell = string.sub(spell,3,-1)
+ end
+end
+
+print(tostring(not invalid))
+print(mana_cost)
+
+-- cizupinhespoiaac = self heal lv 4
+-- cikalaregesesoac = aoe reg lv 3 
+
+-- cazuspeedasac
+-- 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456
+-- cuerapovalauspeedasac
+
+-- c:effect
+
+-- additions:
+ -- spawn creeper at end of explosion
+ -- let nearby creepers explode
+ -- set nearby mobs on fire
+ -- Backfire-spells
+ -- force rocket explosion type (burst, star, ...)
+  -- otherwise:
+   -- Small Spell: Burst
+   -- Big Radius: Large ball
+   -- Small radius: Small ball
+   -- Involves Creeper Magic: Creeper
+   -- ???: Star
+   
+   
+   
+-- Passives:
+ -- 15% Lifesteal
+  -- aka 3 reg each 20 dmg 
+ -- +X Lifereg wenn x sekunden keinschaden genommen
+ -- + Health boost
+ --

@@ -1,0 +1,218 @@
+dcore.requireAPI("advitem")
+
+-- LORE: some things destroy the world, difficulty gets increased!
+-- TODO fähigkeiten-spawnsystem
+local mobData = {}
+local function count(input)
+ local int = 0
+ for k,v in pairs(input) do
+  int = int+1
+ end
+ return int
+end
+local function overrideTable(_a,_b)
+ local c = _a
+ for k,v in pairs(_b) do
+  if(type(v)=="table")then
+   c[k] = overrideTable(_a[k],v)
+  else
+   c[k] = v
+  end
+ end
+ return c
+end
+
+-- Mob Data handlers
+function setMobData(_key,_value)
+ mobData[_key] = _value
+end
+function addOnMobData(_key,_value)
+ mobData[_key] = mobData[_key] + _value
+end
+function getMobData(_key)
+ if(_key)then
+  return mobData[_key]
+ else
+  return mobData
+ end
+end
+
+-- returning functions
+function getMobName()
+ local name = getMobData("mobType")
+ local a = {["zombie"] = "Zombie",["ranged_skeleton"] = "Ranged Skeleton",["melee_skeleton"] = "Melee Skeleton"}
+ if(a[name]~=nil)then
+  return "Lv. "..math.floor(getMobData("level")).." "..a[name].." " 
+ else
+  return "Lv. "..math.floor(getMobData("level")).." Zombie "
+ end
+ 
+end
+function getEntityName(_name)
+ local a = {["zombie"] = "Zombie",["ranged_skeleton"] = "Skeleton",["melee_skeleton"] = "Skeleton"}
+ return (a[_name] or "Zombie")
+end
+function getDropChances()
+ -- TODO: check for something
+ if(true)then
+  return {"0.5f","0.5f","0.5f","0.5f","0.5f"}
+ else
+  return {"0.2f","0.2f","0.2f","0.2f","0.2f"}
+ end
+end
+
+-- important mob builders
+function setEquipmentOfMob()
+ local equipment = {}
+ for i=1,5 do
+  local itemTable,info = advitem.getEquipment(getMobData("difficulty"),i,getMobData("mobType"))
+  if(type(info)=="table")then
+   table.insert(equipment,itemTable)
+   addOnMobData("level",info["value"])
+  else
+   table.insert(equipment,{})
+  end
+ end
+ setMobData("equipmentTable",equipment)
+end
+function setPotionEffectsOfMob()
+ -- Active Effects: --
+ local active_effects = {}
+ local effects = {
+  {["id"] = 1,["chance"] = 0.4,["max"] = 5,["levelplus"] = 1},
+  {["id"] = 5,["chance"] = 0.2,["max"] = 5,["levelplus"] = 3},
+  {["id"] = 8,["chance"] = .1,["max"] = 2,["levelplus"] = 1},
+  {["id"] = 11,["chance"] = .3,["max"] = 3,["levelplus"] = 3},
+  {["id"] = 12,["chance"] = .3,["max"] = 1,["levelplus"] = 5},
+  {["id"] = 14,["chance"] = .02,["max"] = 1,["levelplus"] = 5},
+  {["id"] = 21,["chance"] = .03,["max"] = 12,["levelplus"] = 3},
+  {["id"] = 22,["chance"] = .02,["max"] = 16,["levelplus"] = 2},
+ }
+  
+ local difficultyOfMob = getMobData("difficulty")
+ local i = 1 -- how many effects
+ 
+ while(math.random(difficultyOfMob)<difficultyOfMob-(20*i)+(math.floor(difficultyOfMob)*.65))do
+  local effect = 0
+  local timeout = 30
+  
+  while timeout>0 do
+   effect = math.random(#effects)
+   if(math.floor(effects[effect]["chance"]*difficultyOfMob)>math.random(difficultyOfMob))then
+    if((active_effects[effects[effect]["id"]] or 0) < effects[effect]["max"])then
+     active_effects[effects[effect]["id"]] = (active_effects[effects[effect]["id"]] or 0) + 1
+	 addOnMobData("level",effects[effect]["levelplus"] + ((math.random(2)-1)/2))
+     break
+	end
+   end
+   timeout = timeout - 1
+  end
+  i = i + 1
+ end
+ 
+ if(count(active_effects)>0)then
+  local eTable = getMobData("effectTable")
+  for k,v in pairs(active_effects) do -- Apply Potion Effects
+   if(active_effects[k]~=nil)then
+    table.insert(eTable,{["Id"] = k,["Amplifier"] = v,["Duration"] = 99999,["Ambient"] = 0,["ShowParticles"] = 0})
+	addOnMobData("level",v)
+   end
+  end
+  setMobData("effectTable",eTable)
+ end
+end
+
+-- init
+function initializeMob(x,y,z,mobName,difficulty)
+ mobData = {}
+
+ setMobData("mobType",mobName)
+ setMobData("xCoord",x+((math.random(11)-6)/10))
+ setMobData("yCoord",y+((math.random(7)-3)/5))
+ setMobData("zCoord",z+((math.random(11)-6)/10))
+ setMobData("difficulty",difficulty)
+ 
+ setMobData("level",1)
+ 
+ setMobData("dataTable",{})
+ setMobData("equipmentTable",{})
+ setMobData("effectTable",{})
+ 
+ if(mobName==nil)then
+  if(math.random(3)==1)then
+    setMobData("mobType","melee_skeleton")
+   if(math.random(3)>1)then
+    setMobData("mobType","ranged_skeleton")
+   end
+  else
+   setMobData("mobType","zombie")
+  end
+ end
+
+ if(getMobData("mobType") == "melee_skeleton" or getMobData("mobType") == "ranged_skeleton")then
+  if(math.random(10)==1)then
+   local t = getMobData("dataTable")
+   t["SkeletonType"] = 1
+   setMobData("dataTable",t)
+   
+   setMobData("difficulty",(getMobData("difficulty") * 1.1 + 5))
+  end
+ end
+end
+
+
+
+-- SummonMob()
+--  @x: x-pos of target spawn position in real coords
+--  @y: z-pos of target spawn position in real coords
+--  @z: y-pos of target spawn position in real coords
+--  @mobName: name of the mob
+--  @difficulty: stregth of mob
+-- return nil
+
+
+-- getPotions
+-- getEquipment
+-- dropChance
+-- getName
+
+function summonMob(x,y,z,mobName,difficulty)
+ mob.initializeMob(x,y,z,mobName,difficulty)
+ local additionalInfo = {}
+
+ local mobDataTag = {}
+ 
+
+ 
+
+ -- Equipment: -- 
+ mob.setEquipmentOfMob()
+ mobDataTag["Equipment"] = getMobData("equipmentTable")
+ 
+ -- Potion Effects: --
+ mob.setPotionEffectsOfMob()
+ mobDataTag["ActiveEffects"] = getMobData("effectTable")
+ 
+ -- Others: --
+ mobDataTag["CustomName"] = mob.getMobName()
+ mobDataTag["DropChances"] = mob.getDropChances()
+
+ local finalTable = overrideTable(mobDataTag,getMobData("dataTable"))
+ local dataTag = dcore.getNBTStringFromTable(finalTable)
+ local cmd = "summon "..mob.getEntityName(getMobData("mobType")).." "..getMobData("xCoord").." "..getMobData("yCoord").." "..getMobData("zCoord").." "..dataTag
+ local success,answer = commands.exec(cmd)
+
+ if(answer)then
+  additionalInfo["didErr"] = false
+ else
+  print_log("command","[error] Failed to execute Command: "..cmd.."; Error message:"..answer[1]..(answer[2] or "").."")
+  additionalInfo["didErr"] = true
+ end
+ 
+ -- I might add more to this, just tell me what :)
+ additionalInfo["mob"] = finalTable
+ 
+ return success,additionalInfo
+end
+
+

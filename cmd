@@ -1,0 +1,223 @@
+os.loadAPI(":dungeon/apis/dcore")
+dcore.requireAPI("mob")
+
+local tArgs = {...}
+local difficulty = tonumber(tArgs[1]) or 1 -- 1 to ?
+local mobName = tArgs[2]-- 1 to ?
+
+print("Summoning d:"..difficulty.." t:"..(mobName or "?").."")
+
+local x,y,z = -178,66,223
+
+for i=1,20 do
+ mob.summonMob(x,y,z,mobName,difficulty)
+end
+
+
+--[[
+local tics = 0
+local pretime = os.clock()
+
+local max_level = 200
+local scansperlevel = 100
+
+function printProgress(d,i)
+ local allsteps = (max_level*scansperlevel)
+ local progress = (((d-1)*scansperlevel)+i)/allsteps
+ 
+ term.setCursorPos(1,1)
+ term.clearLine()
+ write(string.sub((math.floor(progress*10000)/100).."    ",1,4).."% Done")
+ term.setCursorPos(1,2)
+ term.clearLine()
+  
+ local ticksleft = math.floor((allsteps-(((d-1)*scansperlevel)+i))/100+0.5)
+ local secondsleft = ((os.clock()-pretime)*ticksleft) 
+ write((string.sub(math.floor(math.floor(secondsleft)/60).."m     ",1,5)..string.sub((math.floor(secondsleft)%60).."s     ",1,5)).." remaining")
+ pretime = os.clock()
+end
+
+function checkticks(d,i)
+ tics = tics + 1
+ if(tics>100)then -- "ticks"
+  printProgress(d,i)
+  sleep(0.05)
+  tics = 0
+ end
+end
+
+logfile = fs.open("data.txt","w") --a
+
+for d=1,max_level do
+ local data = {}
+ difficulty = d
+ for i=1,scansperlevel do
+  data[i] = (SummonMob() or 0)
+  checkticks(d,i)
+ end
+ term.setCursorPos(1,4)
+ print(""..d.." out of "..max_level.." done   ")
+ 
+ logfile.writeLine((d..","..table.concat(data,","))) --
+ sleep(.05)
+end
+printProgress(max_level+1,0)
+term.setCursorPos(1,5)
+
+logfile.close()
+--]]
+
+
+
+-- os.loadAPI("items")
+-- os.loadAPI("advitem")
+
+
+-- -- How Mob spawing works:
+-- local tArgs = {...}
+-- local difficulty = tonumber(tArgs[1]) or 1 -- 1 to ?
+-- local mobName = tArgs[2] -- 1 to ?
+
+-- print("Summoning d:"..difficulty.." t:"..(mobName or "?").."")
+-- -- LORE: some things destroy the world, difficulty gets increased!
+-- -- TODO fähigkeiten-spawnsystem
+-- -- TODO do set drop shit
+
+
+-- local function count(input)
+ -- local int = 0
+ -- for k,v in pairs(input) do
+  -- int = int+1
+ -- end
+ -- return int
+-- end
+
+
+-- function getMobName(_name)
+ -- local a = {["zombie"] = "Zombie",["ranged_skeleton"] = "Ranged Skeleton",["melee_skeleton"] = "Melee Skeleton"}
+ -- if(a[_name]~=nil)then
+  -- return a[_name]
+ -- else
+  -- return "Zombie"
+ -- end
+-- end
+
+-- function SummonMob()
+ -- local entityName = mobName
+ -- local profession = 0
+ -- local professions = {"§1 Determined §r","§4 Merciless §r","§e Spirited §r","§5 Wicked §r","§6 Voracious §r","§0 Dreaded §r"} --{" Determined "," Merciless "," Spirited "," Wicked "," Voracious "," Dreaded "} --
+ -- -- TODO: rework this
+ -- local professions_settings = {["effects"] = {11,5,1,0,21,12}}
+ 
+ -- if(math.random(10)==1)then
+  -- -- Determined : Entschlossen		more dmg/resi?
+  -- -- Merciless  : Gnadenlos			more dmg?
+  -- -- Spirited   : Lebhaft			more speed, aglility
+  -- -- Wicked     : Böse/Verhext		more resi/thorns
+  -- -- Voracious  : Gefräßig			healty,tanky
+  -- -- Dreaded    : Gefürchtet		all obove?
+  -- profession = ((math.random((#professions*2)-1)-1)%(#professions)+1)
+ -- end
+ 
+ 
+ -- local x,y,z = -178,66,223
+ -- local dataTag = "{"
+ -- local name = ""
+ -- local level = 1
+ -- local difficultyOfMob = difficulty
+ 
+ -- if(mobName==nil)then
+  -- if(math.random(3)==1)then
+   -- entityName = "melee_skeleton"
+   -- if(math.random(5)==1)then
+    -- entityName = "ranged_skeleton"
+   -- end
+  -- else
+   -- entityName = "zombie"
+  -- end
+ -- end
+
+ -- if(entityName == "melee_skeleton" or entityName == "ranged_skeleton")then
+  -- if(math.random(10)==1)then
+   -- dataTag = dataTag.."SkeletonType:1,"
+   -- difficultyOfMob = difficultyOfMob * 1.1 + 5
+  -- end
+ -- end
+
+ 
+ -- -- Active Effects: --
+ -- local active_effects = {}
+ -- local effects = {
+  -- {["id"] = 1,["tag"] = "fast",["chance"] = 0.4,["max"] = 5,["levelplus"] = 1},
+  -- {["id"] = 5,["tag"] = "strong",["chance"] = 0.2,["max"] = 5,["levelplus"] = 3},
+  -- {["id"] = 8,["tag"] = "bouncy",["chance"] = .1,["max"] = 2,["levelplus"] = 1},
+  -- {["id"] = 10,["tag"] = "regenerating",["chance"] = .05,["max"] = 6,["levelplus"] = 3},
+  -- {["id"] = 11,["tag"] = "resistant",["chance"] = .3,["max"] = 3,["levelplus"] = 3},
+  -- {["id"] = 12,["tag"] = "nofla",["chance"] = .3,["max"] = 1,["levelplus"] = 5},
+  -- {["id"] = 14,["tag"] = "invisible",["chance"] = .02,["max"] = 1,["levelplus"] = 5},
+  -- {["id"] = 21,["tag"] = "healthy",["chance"] = .03,["max"] = 12,["levelplus"] = 3},
+  -- {["id"] = 22,["tag"] = "tanky",["chance"] = .02,["max"] = 16,["levelplus"] = 2},
+ -- }
+  
+  
+  
+ -- local i = 1 -- how many effects
+ -- while(math.random(difficultyOfMob)<difficultyOfMob-(20*i)+(math.floor(difficultyOfMob)*.65))do
+  -- local effect = 0
+  -- local timeout = 30
+  
+  -- while timeout>0 do
+   -- effect = math.random(#effects)
+   -- if(math.floor(effects[effect]["chance"]*difficultyOfMob)>math.random(difficultyOfMob))then
+    -- if((active_effects[effects[effect]["id"]] or 0) < effects[effect]["max"])then
+     -- active_effects[effects[effect]["id"]] = (active_effects[effects[effect]["id"]] or 0) + 1
+	 -- name = name..effects[effect]["tag"].." "
+	 -- level = level + effects[effect]["levelplus"] + ((math.random(2)-1)/2)
+     -- break
+	-- end
+   -- end
+   -- timeout = timeout - 1
+  -- end
+  -- i = i + 1
+ -- end
+ 
+ -- if(count(active_effects)>0)then
+  -- dataTag = dataTag.."ActiveEffects:["
+  -- for k,v in pairs(active_effects) do -- Applie Potion Effects
+   -- if(active_effects[k]~=nil)then
+    -- dataTag = dataTag.."{Id:"..k..",Amplifier:"..v..",Duration:99999,Ambient:0,ShowParticles:0},"
+	-- level = level + (v-1)
+   -- end
+  -- end
+  -- dataTag = dataTag.."],"
+ -- end
+ -- -- Equipment: --
+ -- local function getEquipmentOfMobType(_mob)
+  -- local dTag = "Equipment:["
+  -- for i=1,5 do -- for all equipment slots
+   -- local dataTag,value,tier = advitem.getEquipment(difficultyOfMob,i,_mob)
+   -- dTag = dTag.."{"..dataTag.."},"
+   -- level = level + value
+  -- end
+  -- if(profession>0)then
+   -- return dTag.."],DropChances:[0.5f,0.5f,0.5f,0.5f,0.5f],"
+  -- else
+   -- return dTag.."],DropChances:[0.2f,0.2f,0.2f,0.2f,0.2f],"
+   -- --return dTag.."],DropChances:[0.1f,0.1f,0.1f,0.1f,0.1f],"
+  -- end
+ -- end
+ 
+ -- dataTag = dataTag..getEquipmentOfMobType(entityName)
+ -- --return level
+ -- -- Bring all the things together
+ -- dataTag = dataTag.."CustomName:\"Lv. "..math.floor(level)..""..(professions[profession] or " ")..""..getMobName(entityName).."\"}"
+ -- local success,answer = commands.exec("summon "..advitem.getEntityName(entityName).." "..x+((math.random(11)-6)/10).." "..y+((math.random(11)-6)/10).." "..z+((math.random(11)-6)/10).." "..dataTag)
+ -- --logfile = fs.open("data.txt","w")
+ -- print("* "..entityName.." Lv. "..level.." *"..answer[1])
+ -- local printableTAG = string.gsub(dataTag,"§","$")
+ -- --print(printableTAG)
+ -- --print((answer[2] or ""))
+ 
+ -- --logfile.writeLine(dataTag)
+ -- --logfile.close()
+-- end

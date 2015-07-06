@@ -1,0 +1,116 @@
+local formatting_colors = {
+ {"§0","Black","black"},
+ {"§1","Dark Blue","dark_blue"},
+ {"§2","Dark Green","dark_green"},
+ {"§3","Dark Aqua","dark_aqua"},
+ {"§4","Dark Red","dark_red"},
+ {"§5","Dark Purple","dark_purple"},
+ {"§6","Gold","gold"},
+ {"§7","Gray","gray"},
+ {"§8","Dark Gray","dark_gray"},
+ {"§9","Blue","blue"},
+ {"§a","Green","green"},
+ {"§b","Aqua","aqua"},
+ {"§c","Red","red"},
+ {"§d","Light Purple","light_purple"},
+ {"§e","Yellow","yellow"},
+ {"§f","White","white"}
+}
+local wool_colors = {
+ {"0","White"},
+ {"1","Orange"},
+ {"2","Magenta"},
+ {"3","Light blue"},
+ {"4","Yellow"},
+ {"5","Lime"},
+ {"6","Pink"},
+ {"7","Gray"},
+ {"8","Light gray"},
+ {"9","Cyan"},
+ {"10","Purple"},
+ {"11","Blue"},
+ {"12","Brown"},
+ {"13","Green"},
+ {"14","Red"},
+ {"15","Black"},
+}
+
+-- Para: official name of wanted color
+-- returns Code, e.g. §e
+function getFCCodeByOfficialName(_offName)
+ local foundCode
+ for i=1,16 do
+  if(formatting_colors[i][2] == _offName)then
+   foundCode = formatting_colors[i][1]
+  end
+ end
+ if(foundCode==nil)then error("Color "..tostring(_offName).." not found!",2) end
+ return foundCode
+end
+
+-- Para: color HEX code
+-- returns name of color
+function inspectColor(_color)
+ local color = tonumber("0x".._color) or tonumber(_color) or 1 -- 1 to ?
+
+ r = math.floor(color/65536)
+ g = math.floor((color%65536)/256)
+ b = math.floor((color%65536)%256)
+ 
+ local brightness = math.floor(math.sqrt(0.299*r^2+0.587*g^2+0.114*b^2)+0.5)/255
+ 
+ r = math.floor(r/63.75+.5)
+ g = math.floor(g/63.75+.5)
+ b = math.floor(b/63.75+.5)
+ 
+ local dif_desc = {"desaturated ","slightly desaturated ","moderate ","clear ","pure "}
+ 
+ local output = ""
+ 
+ if(brightness<.40)then output = "dark " end
+ if(brightness<.25)then output = "really dark " end
+ 
+ if(brightness>.55)then output = "bright " end
+ if(brightness>.65)then output = "light " end
+ if(brightness>.75)then output = "really bright " end
+ 
+ 
+ if(r==0 and g==0 and b==0)then output = "Black"
+ elseif(r==4 and g==4 and b==4)then output = "White"
+ elseif(r==g and r==b and b==g)then output = output.."gray"
+ 
+ elseif(r==g and r<b)then output = output..dif_desc[(b-r+1)].."blue"
+ elseif(g==b and g<r)then output = output..dif_desc[(r-g+1)].."red"
+ elseif(b==r and b<g)then output = output..dif_desc[(g-b+1)].."green"
+ 
+ elseif(r==4 and g<4 and b<4)then if(g>b)then output = output.."orange" else output = output.."pink" end
+ elseif(g==4 and b<4 and r<4)then if(b<r)then output = output.."lime" else output = output.."mint" end
+ elseif(b==4 and r<4 and g<4)then if(r<g)then output = output.."teal" else output = output.."violet" end
+ 
+ elseif(r==g and r>b)then output = output..dif_desc[(r-b+1)].."yellow"
+ elseif(g==b and g>r)then output = output..dif_desc[(g-r+1)].."cyan"
+ elseif(b==r and b>g)then output = output..dif_desc[(b-g+1)].."magenta"
+ 
+ -- maybe do array like 
+ 
+ elseif(r==0 and g>0 and b>0)then local a = {"blue","teal","cyan","sea green","green"} output = output..a[(3-(b-g))]
+ elseif(g==0 and b>0 and r>0)then local a = {"red","pink","magenta","purple","blue"} output = output..a[(3-(r-b))]
+ elseif(b==0 and r>0 and g>0)then local a = {"green","lime green","yellow","orange","red"} output = output..a[(3-(g-r))]
+ 
+ 
+ elseif(r==1 and g>b)then output = output..dif_desc[(g-b+1)].."mint"
+ elseif(r==1 and b>g)then output = output..dif_desc[(b-g+1)].."blue"
+ 
+ elseif(g==1 and r>b)then output = output..dif_desc[(r-b+1)].."pink"
+ elseif(g==1 and b>r)then output = output..dif_desc[(b-r+1)].."purple"
+ 
+ elseif(b==1 and g>r)then output = output..dif_desc[(g-r+1)].."lime green"
+ elseif(b==1 and r>g)then output = output..dif_desc[(r-g+1)].."orange"
+ 
+ else
+  output = "???"
+ end
+ 
+ return output
+end
+

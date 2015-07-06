@@ -1,0 +1,199 @@
+data = {}
+data["seed"] = math.random(10000)
+math.randomseed(data["seed"])
+data["subSeed"] = math.random(10000)
+
+data["generationHeightMax"] = 5.6
+data["generationHeightMax_ruins"] = 8.4
+data["generationBaseHeight"] = 1
+data["generationBaseHeight_ruins"] = 3
+data["heightMax_ruins"] = 14
+
+-- Boss room has a chance of bossRoomChance_Small in bossRoomChance_Big
+data["bossRoomChance_Big"] = 20 
+data["bossRoomChance_Small"] = 1
+
+-- Biomes: 0: Nothing    1:Fortress      ,2:Nether  ,3:Water Temple,4:Desert Temple,5:Forest,6:Cave,7:Dark Forest  ,8:Mesa       ,9:Ice Cave      ,10:Ruins   ,11:Miner's Cave,12: Abbondend
+-- Biomes: 101: Special Dropluck room ,102: Boss room
+data["biome_levels"] = {{2,1,2,6},{1,3,6,6,9},{4,5,7,8},{0,10,0,0,0,0,0,0,0}}
+
+rooms = {}
+rooms[1] = {["biomeName"] = "Fortress",["blockID"] = "98 0"}
+
+local chunk_sizeX = math.random(15,25)
+local chunk_sizeY = math.floor(375/chunk_sizeX)
+
+-- API functions, so others can change stuff
+function positive(num) if(num<0)then return num*-1 else return num end end
+function getChunkSizes() return chunk_sizeX,chunk_sizeY end
+
+function giveSeed(a,b,c)
+ local num = (data["seed"]+(((a*5-42)+data["subSeed"])*(b*-4*((c%4)+3)))+(c+322))
+ return num
+end
+
+function getVerticalConnectionBottomAndTop(x,z)
+ local height = getEffectiveHeightOfPillar(x,z)
+ math.randomseed(data["seed"]+(((x*3-3)+data["subSeed"])*(z-13))+(z*-2))
+ local bottom = math.random(math.floor(height/2+0.5))
+ local top = math.random(bottom+1,height)
+ return bottom,top
+end
+
+function getRandomSeedForBiome(x,y,xfactor,yfactor,b,level)
+ local realXPos = x+(chunk_sizeX*xfactor)
+ local realYPos = y+(chunk_sizeY*yfactor)
+ local realXChunkPos = math.floor(realXPos/chunk_sizeX)
+ local realYChunkPos = math.floor(realYPos/chunk_sizeY)
+ 
+ local partA = realXChunkPos*(data["seed"]%(13+(level)))+(12*(data["subSeed"]%34))
+ local partB = realYChunkPos*(data["seed"]%(17+(level)))+(34*(data["subSeed"]%12))
+ return (partA*b)+(partB*level)
+end 
+
+function getBiomeByPosition(x,y,level)
+ local level = level
+ if(level > 4)then level = 4 end
+ local xinchunk = x%chunk_sizeX -- X Position in 0/0 chunk
+ local yinchunk = y%chunk_sizeY -- Y Position in 0/0 chunk
+ 
+ local lowest_distance = 200
+ local lowest_distance_biome = 0
+ 
+ for b=1,#data["biome_levels"][level] do
+  for xfactor=-1,1 do
+   for yfactor=-1,1 do
+    math.randomseed(getRandomSeedForBiome(x,y,xfactor,yfactor,b,level))
+    	
+    local biomecenterx = math.random(chunk_sizeX)+(chunk_sizeX*xfactor) -- X center of biome b in Chunk xfactor/yfactor relative to 0/0 chunk
+    local biomecentery = math.random(chunk_sizeY)+(chunk_sizeY*yfactor) -- Y center of biome b in Chunk xfactor/yfactor relative to 0/0 chunk
+	local distance = 0
+	
+	if(level>3)then
+     distance =  math.sqrt(math.pow((xinchunk - biomecenterx),2)+math.pow((yinchunk - biomecentery),2))
+	else
+     distance =  positive(xinchunk - biomecenterx) + positive(yinchunk - biomecentery)
+	end
+    if(distance<lowest_distance)then
+     lowest_distance = distance
+     lowest_distance_biome = b
+    end
+   end
+  end
+ end 
+ return data["biome_levels"][level][lowest_distance_biome]
+end
+function isSpecialRoom(x,h,y) -- Loot room?
+ local size = 7*h
+ local chunkx = math.floor(x/size)*size
+ local chunky = math.floor(y/size)*size
+ local inchunkx = x%size
+ local inchunky = y%size
+ math.randomseed((chunkx*(data["seed"]-chunky))+(chunky*9)-(chunkx%17)+data["seed"])
+ if(inchunkx+1 == math.random(size) and inchunky+1 == math.random(size))then 
+  return true
+ else
+  return false
+ end
+end
+function isBossRoom(x,y)
+ math.randomseed((data["seed"]-23*data["subSeed"]*math.floor(y/3))+(-math.floor(x/3)*(math.floor(y/3)-4))+(math.floor(x/3)*9)-23)
+ if(math.random(data["bossRoomChance_Big"]) == data["bossRoomChance_Small"])then
+  return true
+ else
+  return false
+ end
+end
+function PERLINgetNoiseByPosition(x,z) -- PERLIN
+ math.randomseed(data["seed"]+((x+data["subSeed"])*z)+(z*4))
+ return math.random(data["generationHeightMax"]*10)/10
+end
+function PERLINgetNoiseByPositionForRuins(x,z) -- PERLIN
+ math.randomseed((data["seed"]-data["subSeed"]*z)+(x*(z-4))+(z*6))
+ local size = math.random(data["generationHeightMax_ruins"]*10)/10
+ while (math.random(5)==1 and size<data["heightMax_ruins"]) do size = size + 2 end
+ return size
+end
+function PERLINgetHeightByPosition(x,y)
+ local corners = (PERLINgetNoiseByPosition(x-1,y-1)+ PERLINgetNoiseByPosition(x+1, y-1)+ PERLINgetNoiseByPosition(x-1, y+1)+ PERLINgetNoiseByPosition(x+1, y+1) ) / 8 -- 4
+ local sides   = (PERLINgetNoiseByPosition(x-1,y)  + PERLINgetNoiseByPosition(x+1, y)  + PERLINgetNoiseByPosition(x, y-1)  + PERLINgetNoiseByPosition(x, y+1) ) /  4 -- 2
+ local center  =  PERLINgetNoiseByPosition(x, y) / 2 -- 2
+ local noise = math.floor((corners + sides + center)/(2))
+ return noise
+end
+function PERLINgetRuinHeight(x,y)
+ local special = (PERLINgetNoiseByPosition(x-1,y)+ PERLINgetNoiseByPosition(x+1, y)+ PERLINgetNoiseByPosition(x, y+1)+ PERLINgetNoiseByPosition(x, y-1) ) / 4 -- 1 
+ local corners = (PERLINgetNoiseByPositionForRuins(x-1,y-1)+ PERLINgetNoiseByPositionForRuins(x+1, y-1)+ PERLINgetNoiseByPositionForRuins(x-1, y+1)+ PERLINgetNoiseByPositionForRuins(x+1, y+1) ) / 4 -- 1
+ local sides   = (PERLINgetNoiseByPositionForRuins(x-1,y)  + PERLINgetNoiseByPositionForRuins(x+1, y)  + PERLINgetNoiseByPositionForRuins(x, y-1)  + PERLINgetNoiseByPositionForRuins(x, y+1) ) /  4 -- 1
+ local center  =  PERLINgetNoiseByPositionForRuins(x, y) / 2 -- .5
+ local noise = math.floor((corners + sides + center + special)/3)
+ return noise
+end
+function getEffectiveHeightOfPillar(x,y)
+ local h = 0
+ if(getBiomeByPosition(x,y,4)==10)then
+  h = PERLINgetRuinHeight(x,y)+data["generationBaseHeight_ruins"]
+ else
+  h = PERLINgetHeightByPosition(x,y)+data["generationBaseHeight"]
+ end
+ if(isBossRoom(x,y) and h<3)then
+  return 3
+ else
+  return h
+ end
+end
+function getChunkBiomeAtPostion(x,y,z)
+ if(getBiomeByPosition(x,z,4)==10 or y<=3)then
+  return getBiomeByPosition(x,z,y)
+ else
+  local biomeID = 0
+  local h = PERLINgetHeightByPosition(x,z)+1
+  while(h>0 and biomeID==0)do
+   biomeID = getBiomeByPosition(x,z,h)
+   h = h - 1
+  end
+  return biomeID
+ end
+end
+
+function setSeed(_seed)
+ data["seed"] = _seed
+ math.randomseed(data["seed"])
+ data["subSeed"] = math.random(10000)
+ chunk_sizeX = math.random(15,25)
+ chunk_sizeY = math.floor(375/chunk_sizeX)
+end
+function getChunkSize()
+ return chunk_sizeX,chunk_sizeY
+end
+function getSeed()
+ return data["seed"]
+end
+
+
+
+
+
+
+
+
+-- remove later:
+
+
+local blocks = {"98 0","87","95 11","12","35 13","1","5 5","159 0","174 0","98 2","4","45"}
+
+function getBlockAtPosition(x,y,z)
+ if(y<=3)then
+  if(isBossRoom(x,z))then
+   return "4"
+  elseif(isSpecialRoom(x,y,z))then
+   return "41"
+  end
+ end
+ if(blocks[getChunkBiomeAtPostion(x,y,z)]~=nil)then
+  return blocks[getChunkBiomeAtPostion(x,y,z)]
+ else
+  return "89"
+ end
+ --return rooms[getChunkBiomeAtPostion(x,y,z)]["blockID"]
+end

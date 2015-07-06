@@ -1,0 +1,155 @@
+local apis_loaded = {}
+local all_dir = ":dungeon"
+local mods_dir = all_dir.."/mods"
+local logs_dir = all_dir.."/logs"
+local apis_dir = all_dir.."/apis"
+
+function requireAPI(...)
+ local tArgs = { ... }
+ for i=1,#tArgs do
+  if(fs.exists(apis_dir.."/"..tArgs[i]))then
+   if(apis_loaded[tArgs[i]]~=true)then
+    print_log("dcore","[API][MAIN] Loading "..apis_dir.."/"..tArgs[i])
+    local didLoad = os.loadAPI(apis_dir.."/"..tArgs[i])
+   
+    if(didLoad)then
+	 for k,v in pairs(_G[tArgs[i]]) do
+	  print_log("dcore","[API][MAIN]["..tArgs[i].."] Loading "..type(v).." "..k.." --> "..tArgs[i].."."..k.."")
+	  --print("[API][MAIN]["..tArgs[i].."] Loading "..type(v).." "..k.." --> "..tArgs[i].."."..k.."")
+	 end
+	else
+	 print_log("dcore","[API][MAIN] DID NOT LOAD "..fs.combine(apis_dir.."/"..tArgs[i]).."; error occurred out of nowhere!")
+	end
+	
+    apis_loaded[tArgs[i]] = true
+
+	-- Load apis from mods-folders with same name
+	loadSimilarApis(tArgs[i])
+   end
+  else
+   print_log("dcore","[API][MAIN] DID NOT load "..fs.combine("/apis/",tArgs[i]).."; not found")
+   loadSimilarApis(tArgs[i])
+  end
+ end
+end
+
+local file_used = {}
+
+function print_log(file,text)
+ local logfile = fs.open(logs_dir.."/"..file, file_used[file] and "a" or "w")
+ if(not file_used[file])then file_used[file] = true end
+ logfile.writeLine(text)
+ logfile.close()
+end
+
+function Error(text,level)
+ print_log("error",text)
+ error(text,3)
+end
+
+function loadSimilarApis(_forceName)
+ -- File name
+ local file_name = _forceName or "--"
+ -- get all mod dirs
+ local l = fs.list(mods_dir)
+  
+ for i=1,#l do
+  -- l[i] = Modname
+  if(fs.exists(mods_dir.."/"..l[i].."/"..file_name))then
+   print_log("dcore","[API]["..l[i].."] Loading mod-api "..mods_dir.."/"..l[i].."/"..file_name.."")
+   -- Load functions of mod-api-file
+   local tEnv = setmetatable( _G[file_name], { __index = _G } )
+   local fnAPI, err = loadfile(mods_dir.."/"..l[i].."/"..file_name)
+   if fnAPI then
+    setfenv( fnAPI, tEnv )
+    local ok, err = pcall( fnAPI )
+    if not ok then
+     print_log("error","[API]["..l[i].."] While loading "..mods_dir.."/"..l[i].."/"..file_name.."; "..err)
+    end
+   else
+    print_log("error","[API]["..l[i].."] While loading "..mods_dir.."/"..l[i].."/"..file_name.."; "..err)
+   end
+   
+   for k,v in pairs(tEnv) do
+    print_log("dcore","[API]["..l[i].."]["..file_name.."] Loading "..type(v).." "..k.." --> "..file_name.."."..k.."")
+	_G[file_name][k] = v
+   end   
+  end
+ end
+end
+
+-- 1.20
+function getAPIBuild()
+ return 120
+end
+function getBuild()
+ return 1
+end
+function version()
+ return "pre-alpha 1.0";
+end
+
+function evaluateInputs(...)
+ for k,v in pairs(arg) do
+  write(tostring(v).." ("..type(v)..");")
+ end
+ write("\n")
+end
+local function tableToNBT(t)
+ local nbt = ""
+ for k,v in pairs(t) do
+  if(type(v)~="table")then 
+   if(t[1]==nil)then
+    if(type(v)~="string")then
+     nbt = nbt..k..":"..v..","
+	else
+	 nbt = nbt..k..":\""..v.."\","
+	end
+   else
+    if(type(v)~="string")then
+     nbt = nbt..v..","
+	else
+	 nbt = nbt..v..","
+	 --nbt = nbt.."\""..v.."\","
+	end
+   end
+  end
+ end
+ for k,v in pairs(t) do
+  if(type(v)=="table")then 
+   if(v[1]~=nil)then
+    nbt = nbt..k..":["..string.sub(tableToNBT(v),1,-2).."],"
+   else
+    if(type(k)~="number")then
+     nbt = nbt..k..":{"..string.sub(tableToNBT(v),1,-2).."},"
+	else
+	 nbt = nbt.."{"..string.sub(tableToNBT(v),1,-2).."},"
+	end
+   end
+  end
+ end
+ return nbt 
+end
+function getNBTStringFromTable(t)
+ return "{"..string.sub(tableToNBT(t),1,-2).."}"
+end
+function scanG()
+ local i = 0
+ local text = ""
+ for k,v in pairs(_G) do
+  text = text ..k..","
+  i = i + 1
+ end
+ print(i)
+ write(text.."\n")
+end
+
+
+_G["scan"] = scanG
+-- maybe grab commands executed, and but them in table to print when system shuts down unexpected
+
+
+print_log("dcore","[API][DCORE] Loaded dcore ?")
+print_log("error","This is where the Errors can be found")
+print_log("command","This is where the executed Commands can be found")
+

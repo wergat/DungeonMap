@@ -1,0 +1,47 @@
+dcore.requireAPI("items")
+
+local function isSetItem(q)
+ return (q>6 and math.random(5)>1)
+end
+local function getSetItemName(q,setDataTable,slot)
+ return "§l§2*§r "..advitem.q_color[q]..setDataTable["pre"].." "..setDataTable["items"][slot]
+end
+
+function getLoreOfItem(_colorValue)
+ local shopprice = advitem.getPriceOfItem(_colorValue)
+ local loreArr = getItemData("loreTable")
+ table.insert(loreArr,"\"Rarity is "..advitem.q_color[getItemData("quality")].."§o"..advitem.qualitys[getItemData("quality")].."§5§o\"")
+ table.insert(loreArr,"\"Price is exactly "..shopprice.." gold\"")
+
+ 
+
+ local name = items.getName(getItemData("itemID"))
+ local quali = getItemData("quality")
+ local slot = getItemData("slot")
+ 
+ if(isSetItem(quali))then
+   -- set items dont need item name, they have thier own name!
+   --q = #q_color
+  local setID = items.getRandomSetIDByItem(getItemData("itemID"))
+  if(setID~=nil)then
+   local setTable = items.getSetByID(setID)
+   table.insert(loreArr,"\"This item is part of the set\"")
+   table.insert(loreArr,"\"     §r'§2"..setTable["name"].."§r' \"")
+   table.insert(loreArr,"\"  Other set items are \"")
+   table.insert(loreArr,"\"  \"")
+   for s=1,(#setTable["items"]) do
+	if(s~=slot)then
+	 table.insert(loreArr,"\" * "..setTable["pre"].." "..setTable["items"][s].."  \"")
+	end
+   end
+   name = getSetItemName(quali,setTable,slot)
+   local enchArr = getItemData("dataTable")
+   enchArr["tag"] = {["display"] = {["Name"] = name}}
+   setItemData("dataTable",enchArr)
+  end
+ end
+ 
+ setItemData("loreTable",loreArr)
+ return lore
+end
+
