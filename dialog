@@ -248,6 +248,7 @@ local Carl2 = {["npcID"] = newNPC("Carl","green",-160,65,216)}
 
 local progress = 1
 
+-- So _G dont get spammed
 functions = {}
 functions["talkToCarl"] = function()
  local d = newDialogForNPC(
@@ -310,7 +311,6 @@ functions["helloCarl"] = function()
  enableDialog(Carl.npcID,Carl.greetings)
  newNPCDialogTrigger(Carl.npcID,Carl.greetings,{["t"] = "isInArea",["r"] = 5})
 end
-
 functions["byeCarl"] = function()
  if(Carl2.bye==nil)then
   Carl2.bye = newDialogForNPC(Carl2.npcID,'{"text":"See you soon!"}',{},{"byeCarl"})

@@ -1,7 +1,7 @@
 dcore.requireAPI("gendata")
 
 data = {}
-data["seed"] = 12342-- math.random(10000)
+data["seed"] = 12342 -- math.random(10000)
 math.randomseed(data["seed"])
 data["subSeed"] = math.random(10000)
 
