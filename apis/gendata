@@ -1,0 +1,528 @@
+os.loadAPI(":dungeon/apis/dcore")
+dcore.requireAPI("mob")
+dcore.requireAPI("generation")
+dcore.requireAPI("chest")
+
+-- remove later
+local x_size = 10
+local y_size = 10
+
+-- Room Size: 15x9x15
+-- Flat Size: 15x3x15
+
+
+-- Todo: move most of the functions in here to generation
+-- Todo: load dual wall thing
+
+-- Data for the "first" room, all other rooms are seen relative to those coordinates
+roomData = {}
+roomData["main"] = {}
+
+roomData["main"]["x1"] = -669
+roomData["main"]["y1"] = 14
+roomData["main"]["z1"] = -164
+
+roomData["main"]["x2"] = -683
+roomData["main"]["y2"] = 6
+roomData["main"]["z2"] = -178
+
+
+-- Variables used by cmd-b. spawner
+--
+--           BIOME DATA
+--
+
+
+-- Store Informations about Biomes
+biomeData = {}
+biomeData[1] = {["name"] = "fortress",["dev_blockID"] = }
+biomeData[2] = {["name"] = "nether",["dev_blockID"] = }
+biomeData[3] = {["name"] = "forest",["dev_blockID"] = }
+biomeData[4] = {["name"] = "cave",["dev_blockID"] = }
+
+-- returns biomeID for given name
+-- returns number if successful, nil if not
+function getBiomeIDByName(_name)
+ local result = nil
+ for i=1,#biomeData do
+  if(biomeData[i]["name"]==_name)then
+   result = i
+  end
+ end
+ return result
+end
+
+
+--
+--           ROOM DATA
+--
+-- Store all data about every room.
+
+rooms = {}
+
+-- Add Every biome to data
+for i=1,#biomeData do rooms[biomeData[i]["name"]] = {} end
+
+
+-- Generate coords of Rooms
+rooms["fortress"]["normal"] = {}
+for i=0,9 do
+ local a = {}
+ a["cloneArea"] = "-669 "..(14+12*i).." -164 -683 "..(6+12*i).." -178"
+ table.insert(rooms["fortress"]["normal"],a)
+end
+
+
+--
+--           CONNECTION DATA
+--
+-- Store all data about every ("normal"/[h<y]) connection.
+
+connections = {}
+
+-- Add Every biome to data
+for i=1,#biomeData do connections[biomeData[i]["name"]] = {} end
+
+-- Generate X and Z connections
+connections["fortress"]["normal"] = {["X"] = {},["Z"] = {}}
+for i=0,5 do
+ table.insert(connections["fortress"]["normal"]["X"],{["cloneArea"] = "-674 13 "..(-149+i*9).." -678 18 "..(-143+i*9)})
+ table.insert(connections["fortress"]["normal"]["X"],{["cloneArea"] = "-674 31 "..(-149+i*9).." -678 36 "..(-143+i*9)})
+ table.insert(connections["fortress"]["normal"]["X"],{["cloneArea"] = "-674 49 "..(-149+i*9).." -678 54 "..(-143+i*9)})
+ 
+ table.insert(connections["fortress"]["normal"]["Z"],{["cloneArea"] = "-673 4 "..(-148+i*9).." -679 9 "..(-144+i*9)})
+ table.insert(connections["fortress"]["normal"]["Z"],{["cloneArea"] = "-673 22 "..(-148+i*9).." -679 27 "..(-144+i*9)})
+ table.insert(connections["fortress"]["normal"]["Z"],{["cloneArea"] = "-673 40 "..(-148+i*9).." -679 45 "..(-144+i*9)})
+end
+
+
+--
+--           FLAT DATA
+--
+-- Store all data about every ("normal"/[h>=y]) connection/room.
+
+-- Baseplate
+rooms["fortress"]["baseplate"] = {"-669 36 -198 -683 38 -184"}
+
+-- Flat stuff, always connected to a baseplate
+connections["fortress"]["flatSide"] = {}
+connections["fortress"]["flatSide"]["flatX"] = {}
+connections["fortress"]["flatSide"]["flatZ"] = {}
+connections["fortress"]["flatSide"]["highN"] = {}
+connections["fortress"]["flatSide"]["highE"] = {}
+connections["fortress"]["flatSide"]["highS"] = {}
+connections["fortress"]["flatSide"]["highW"] = {}
+
+connections["fortress"]["corner"] = {}
+
+-- Flat corner square
+connections["fortress"]["corner"]["flat"] = {"-673 20 -36 -669 18 -32"}
+
+-- One Corner Pillar
+connections["fortress"]["corner"]["1se"] = {"-683 14 -44 -679 5 -40"}
+connections["fortress"]["corner"]["1sw"] = {"-673 14 -44 -669 5 -40"}
+connections["fortress"]["corner"]["1ne"] = {"-683 27 -60 -679 18 -56"}
+connections["fortress"]["corner"]["1nw"] = {"-673 27 -60 -669 18 -56"}
+
+-- 2 Corner Pillars Side blocked
+connections["fortress"]["corner"]["2n"] = {"-683 27 -44 -679 18 -40"}
+connections["fortress"]["corner"]["2e"] = {"-683 27 -52 -679 18 -48"}
+connections["fortress"]["corner"]["2s"] = {"-673 27 -44 -669 18 -40"}
+connections["fortress"]["corner"]["2w"] = {"-673 27 -52 -669 18 -48"}
+connections["fortress"]["corner"]["2yb"] = {"-673 14 -36 -669 5 -32"} -- /
+connections["fortress"]["corner"]["2ac"] = {"-683 14 -36 -679 5 -32"} -- \
+
+-- Two sides blocked
+connections["fortress"]["corner"]["3se"] = {"-673 14 -52 -669 5 -48"}
+connections["fortress"]["corner"]["3sw"] = {"-683 14 -52 -679 5 -48"}
+connections["fortress"]["corner"]["3ne"] = {"-673 14 -60 -669 5 -56"}
+connections["fortress"]["corner"]["3nw"] = {"-683 14 -60 -679 5 -56"}
+
+
+--
+--           SPECIAL ROOM DATA
+--
+-- Store all data about every special room, stairs and holes.
+
+-- Add Stairs to data
+rooms["fortress"]["stairs"] = {
+ ["top"] = {"-683 90 -198 -669 98 -184"},
+ ["middle"] = {"-683 114 -198 -669 122 -184","-683 114 -184 -669 122 -198"},
+ ["bottom"] = {"-683 66 -198 -669 74 -184","-683 102 -184 -669 110 -198"}
+}
+
+--
+--           CHEST DATA
+--
+-- Store all data about every chest in connections and/or rooms.
+-- {relXCoord,relYCoord,relZCoord,rotation,isTrappedChest,mustspawn}
+
+-- Chests in rooms
+rooms["fortress"]["normal"][3]["chests"] = {["locations"] = {{2,5,12,5,false,false},{11,1,3,2,false,false}},["random_bonus"] = 1} 
+rooms["fortress"]["normal"][5]["chests"] = {["locations"] = {{1,3,13},{1,3,3},{3,7,11},{13,3,13,2,true,true}},["random_bonus"] = 1} 
+rooms["fortress"]["normal"][7]["chests"] = {["locations"] = {{2,2,1},{5,1,8}},["random_bonus"] = 1} 
+rooms["fortress"]["normal"][9]["chests"] = {["locations"] = {{3,3,13},{3,3,3},{11,3,11}},["random_bonus"] = 1} 
+rooms["fortress"]["normal"][10]["chests"] = {["locations"] = {{2,3,5},{5,4,10}},["random_bonus"] = 1}
+
+-- Chests in Connections
+connections["fortress"]["normal"]["X"][8]["chests"] = {["locations"] = {{2,2,5,2,false,true}},["random_bonus"] = 1}
+
+
+
+
+
+-- Positions to start spawning stuff
+base = {}
+base["x"] = -580
+base["y"] = 30
+base["z"] = -180
+
+
+
+
+-- get random array element
+local function getRAE(_table)
+ return _table[math.random(#_table)]
+end
+
+-- Room:
+-- X: xcoord
+-- y: ycoord, "roof" of the current pillar
+-- z: coors
+function spawnBasePlate(x,y,z)
+ local tx = base["x"]+(x*20)-7
+ local ty = base["y"]+(y-1)*9
+ local tz = base["z"]+(z*20)-7
+ setCommandBlock("/clone "..getRAE(rooms["fortress"]["baseplate"]).." "..tx.." "..ty.." "..tz.."")
+
+ -- Egde:
+ -- + A | B 
+ --  -- + --
+ -- X Y | C
+ -- - Z -> +
+ 
+ local a_height = generation.getEffectiveHeightOfPillar(x+1,z)
+ local b_height = generation.getEffectiveHeightOfPillar(x+1,z+1)
+ local c_height = generation.getEffectiveHeightOfPillar(x,z+1)
+ 
+ local max_height = (math.max(a_height,b_height,c_height,(y-1))+1)
+ 
+ function isRoomSetup(_y,_a,_b,_c,_h)
+  local returnValue = true
+  if(_y==-1)then if(not (y<=_h))then returnValue = false end end
+  if(_y==0)then if(not (y<_h))then returnValue = false end end
+  if(_y==1)then if(not (y==_h))then returnValue = false end end
+  if(_y==2)then if(not (y>_h))then returnValue = false end end
+  
+  if(_a==-1)then if(not ((a_height+1)<=_h))then returnValue = false end end
+  if(_a==0)then if(not ((a_height+1)<_h))then returnValue = false end end
+  if(_a==1)then if(not ((a_height+1)==_h))then returnValue = false end end
+  if(_a==2)then if(not ((a_height+1)>_h))then returnValue = false end end
+  
+  if(_b==-1)then if(not ((b_height+1)<=_h))then returnValue = false end end
+  if(_b==0)then if(not ((b_height+1)<_h))then returnValue = false end end
+  if(_b==1)then if(not ((b_height+1)==_h))then returnValue = false end end
+  if(_b==2)then if(not ((b_height+1)>_h))then returnValue = false end end
+  
+  if(_c==-1)then if(not ((c_height+1)<=_h))then returnValue = false end end
+  if(_c==0)then if(not ((c_height+1)<_h))then returnValue = false end end
+  if(_c==1)then if(not ((c_height+1)==_h))then returnValue = false end end
+  if(_c==2)then if(not ((c_height+1)>_h))then returnValue = false end end
+  
+  return returnValue
+ end
+ function getCornerName(l)
+  if(isRoomSetup(-1,-1,-1,-1,l))then  -- spawn simple plate
+   return ("flat")
+  elseif(isRoomSetup(-1,-1,2,-1,l))then
+   return ("1se")
+  elseif(isRoomSetup(-1,2,-1,-1,l))then
+   return ("1ne")
+  elseif(isRoomSetup(-1,-1,-1,2,l))then
+   return ("1sw")
+  elseif(isRoomSetup(2,-1,-1,-1,l))then
+   return ("1nw")
+  elseif(isRoomSetup(-1,2,2,-1,l))then
+   return ("2e")
+  elseif(isRoomSetup(2,-1,-1,2,l))then
+   return ("2w")
+  elseif(isRoomSetup(-1,-1,2,2,l))then
+   return ("2s")
+  elseif(isRoomSetup(2,2,-1,-1,l))then
+   return ("2n")
+  elseif(isRoomSetup(-1,2,-1,2,l))then
+   return ("2yb")
+  elseif(isRoomSetup(2,-1,2,-1,l))then
+   return ("2ac")
+  elseif(isRoomSetup(2,-1,2,2,l))then
+   return ("3sw")
+  elseif(isRoomSetup(2,2,2,-1,l))then
+   return ("3ne")
+  elseif(isRoomSetup(-1,2,2,2,l))then
+   return ("3se")
+  elseif(isRoomSetup(2,2,-1,2,l))then
+   return ("3nw")
+   --[[
+  elseif(a_height<l and b_height<l and c_height<l)then  -- spawn egde, 1nw
+   print("1nw")
+  elseif(b_height>a_height and b_height>c_height and b_height>(y-1) and l<max_height)then  -- spawn egde, 1se
+   print("1ne")
+  elseif(a_height>b_height and c_height>b_height and (y-1)>b_height and l<max_height)then -- spawn egde, 3nw
+  elseif(a_height>=y and b_height>=y and c_height>=y and l<max_height)then -- spawn egde, 3se
+  ]]
+  end
+ end
+ 
+ for l = (math.min(a_height,b_height,c_height,(y-1))+1),max_height do 
+  setCommandBlock("/clone "..getRAE(connections["fortress"]["corner"][getCornerName(l)]).." "..(tx+15).." "..(base["y"]+(l-1)*9).." "..(tz+15).."")
+ end
+ 
+ -- Connections to sides
+ if(a_height<y)then
+  setCommandBlock("/clone -683 26 -72 -679 24 -86 "..(tx+15).." "..ty.." "..tz.."")
+ end
+ if(c_height<y)then
+  setCommandBlock("/clone -683 20 -94 -669 18 -90 "..tx.." "..ty.." "..(tz+15).."")
+ end
+ if(generation.getEffectiveHeightOfPillar(x-1,z)<(y-1))then
+  setCommandBlock("/clone -683 26 -72 -679 24 -86 "..(tx-5).." "..ty.." "..tz.."")
+ end
+ if(generation.getEffectiveHeightOfPillar(x,z-1)<(y-1))then
+  setCommandBlock("/clone -683 20 -94 -669 18 -90 "..tx.." "..ty.." "..(tz-5).."")
+ end
+end
+function spawnRoom(x,y,z)
+ local seed = generation.giveSeed(x,y,z)
+ 
+ local conType,bottom,top = generation.getVerticalConnection(x,z)
+ math.randomseed(seed)
+ 
+ local difficulty = math.floor(math.sqrt((x^2)+(z^2))+y*10)
+ 
+ local tx = base["x"]+(x*20)-7
+ local ty = base["y"]+(y-1)*9
+ local tz = base["z"]+(z*20)-7
+ 
+
+ -- Main Room
+ 
+ local room = {}
+ if(conType~=nil and y >= bottom and y <= top)then
+  stairs = stairs + 1
+  if(y==bottom)then
+   -- bottom Stairs
+   setCommandBlock("/clone "..getRAE(rooms["fortress"]["stairs"]["bottom"]).." "..tx.." "..ty.." "..tz.."")
+  elseif(y==top)then
+   -- top Stairs
+   setCommandBlock("/clone "..getRAE(rooms["fortress"]["stairs"]["top"]).." "..tx.." "..ty.." "..tz.."")
+  else
+   -- top+bottom Stairs
+   setCommandBlock("/clone "..getRAE(rooms["fortress"]["stairs"]["middle"]).." "..tx.." "..ty.." "..tz.."")
+  end
+ else
+  room = getRAE(rooms["fortress"]["normal"])
+  setCommandBlock("/clone "..room["cloneArea"].." "..tx.." "..ty.." "..tz.."")
+ end
+ 
+ -- Check for chests
+ if(room["chests"] ~= nil)then
+  local amount = #room["chests"]["locations"]
+  for i=1,amount do
+   chests = chests + 1
+   -- Should the chest spawn
+   if((math.random(amount+(room["chests"]["random_bonus"] or 0)) == 1) or (room["chests"]["locations"][i][6] or false))then
+	local chestBlockID = "minecraft:chest"
+	-- check for trapped chest
+	if(room["chests"]["locations"][i][5] or false)then chestBlockID = "minecraft:trapped_chest" end
+    setCommandBlock("/setblock "..(tx+room["chests"]["locations"][i][1]).." "..(ty+room["chests"]["locations"][i][2]).." "..(tz+room["chests"]["locations"][i][3]).." "..chestBlockID.." "..(room["chests"]["locations"][i][5] or 0).." replace "..chest.getChestDataTagByDifficulty(difficulty))
+	chests_success = chests_success + 1
+   end
+  end
+ end
+ 
+ -- Connections
+ 
+ -- X+
+ if(generation.getEffectiveHeightOfPillar(x+1,z)>=y)then -- Small one
+  math.randomseed(seed)
+  local con = getRAE(connections["fortress"]["normal"]["X"])
+  setCommandBlock("/clone "..con["cloneArea"].." "..(tx+15).." "..(ty+2).." "..(tz+4).."")
+ else -- large one
+  setCommandBlock("/clone -679 5 -86 -683 14 -72 "..(tx+15).." "..ty.." "..(tz).."")
+ end
+
+ -- Z+
+ if(generation.getEffectiveHeightOfPillar(x,z+1)>=y)then -- Small one
+  math.randomseed(seed)
+  local con = getRAE(connections["fortress"]["normal"]["Z"])
+  setCommandBlock("/clone "..con["cloneArea"].." "..(tx+4).." "..(ty+2).." "..(tz+15).."")
+ else -- large one
+  setCommandBlock("/clone -669 5 -90 -683 14 -94 "..tx.." "..ty.." "..(tz+15).."")
+ end
+ 
+ -- Z-
+ if(generation.getEffectiveHeightOfPillar(x,z-1)<y)then
+  setCommandBlock("/clone -669 14 -68 -683 5 -64 "..(tx).." "..ty.." "..(tz-5).."")
+ end
+
+ -- X-
+ if(generation.getEffectiveHeightOfPillar(x-1,z)<y)then
+  setCommandBlock("/clone -669 14 -72 -673 5 -86 "..(tx-5).." "..ty.." "..(tz).."")
+ end
+ 
+end
+
+-- Generation-only things:
+--[[
+
+local tics = 0
+
+local pretime = os.clock()
+local preticksleft = x_size*y_size
+local timeWhenDone = os.clock()+120
+
+
+print("")
+print("")
+
+local cx,cy = term.getCursorPos()
+cy = cy - 2
+
+function printProgress(d,i)
+ local allsteps = (x_size*y_size)
+ local progress = (((d-1)*y_size)+i)/allsteps
+ 
+ term.setCursorPos(1,cy)
+ term.clearLine()
+ write(string.sub((math.floor(progress*10000)/100).."    ",1,4).."% Done")
+ term.setCursorPos(1,cy+2)
+end
+
+function printTimeLeft(d,i)
+ term.setCursorPos(1,cy+1)
+ term.clearLine()
+ local secondsleft = timeWhenDone - os.clock()
+ 
+ write((string.sub(math.floor(math.floor(secondsleft)/60).."m     ",1,5)..string.sub((math.floor(secondsleft)%60).."s     ",1,5)).." remaining")
+
+ term.setCursorPos(1,cy+2)
+end
+
+function updateSecondsLeft(d,i)
+ local allsteps = (x_size*y_size)
+ local ticksleft = math.floor((allsteps-(((d-1)*y_size)+i+1)))
+ local secondsleft = ((os.clock()-pretime)/(preticksleft-ticksleft))*ticksleft
+ timeWhenDone = os.clock() + secondsleft
+ pretime = os.clock()
+ preticksleft = ticksleft
+end
+
+function checkticks(d,i)
+ tics = tics + 1
+ if(tics%4==1)then
+  printProgress(d,i)
+  printTimeLeft(d,i)
+ end
+ if(tics>20)then -- "ticks"
+  sleep(0.05)
+  updateSecondsLeft(d,i)
+  tics = 0
+ end
+end
+
+printProgress(0,0)
+
+for sx=0,(x_size-1) do
+ for sz=0,(y_size-1) do
+  local h = generation.getEffectiveHeightOfPillar(sx,sz)
+  for sy=1,h do
+   spawnRoom(sx,sy,sz)
+   checkticks(sx+1,sz+1)
+   count_rooms = count_rooms + 1
+  end
+  spawnBasePlate(sx,h+1,sz)
+  commandblock = 0
+ end
+end
+
+
+
+-- Executing emchanism:
+checkticks(x_size,y_size)
+
+print("loading: loading mechanism")
+
+local height = math.floor(row/50)*3
+commands.setblock("~","~"..height,"~"..(6+((row%50)*3)),"minecraft:command_block","1","replace","{Command:/say Chunk "..math.floor(row/x_size+1).."/"..((row+1)%y_size).." done!}")
+commands.setblock("~-1","~"..height,"~"..(6+((row%50)*3)),"minecraft:wall_sign","4","destroy","{Text1:\""..(row+1).."\"}")
+
+for i=0,((x_size*y_size)-1) do
+ if(i%20==1)then sleep(.05) end
+ commands.setblock("~","~","~"..(-10-i),"minecraft:command_block","1","destroy","{Command:/setblock -599 "..(4+math.floor(i/50)*3).." "..(-194+((i%50)*3)).." redstone_block 0 replace}")
+ if(i%3==1)then
+  commands.setblock("~","~1","~"..(-10-i),"minecraft:unpowered_repeater")
+ else
+  commands.setblock("~","~1","~"..(-10-i),"minecraft:redstone_wire")
+ end
+end
+
+for i=0,((x_size*y_size)-1) do
+ if(i%20==1)then sleep(.05) end
+ commands.setblock("~2","~","~"..(-10-i),"minecraft:command_block","1","destroy","{Command:/setblock -599 "..(4+math.floor(i/50)*3).." "..(-194+((i%50)*3)).." stone 0 replace}")
+ if(i%3==1)then
+  commands.setblock("~2","~1","~"..(-10-i),"minecraft:unpowered_repeater")
+ else
+  commands.setblock("~2","~1","~"..(-10-i),"minecraft:redstone_wire")
+ end
+end
+
+print("")
+print("Chests:"..chests_success.." of "..chests)
+print("Stairs:"..stairs)
+print("Rooms:"..count_rooms)
+print("Commandblocks:"..cmdblocks)
+
+
+
+
+
+--3nw: -683 14 -60 -679 5 -56
+--1nw: -674 27 -60 -669 18 -56
+--2w: -673 27 -52 -669 18 -48
+--3ne: -673 14 -58 -669 5 -56
+
+--3se: -673 14 -52 -669 5 -48
+--3se: -673 14 -52 -669 5 -48
+
+--3sw: -683 14 -52 -679 5 -48
+--2n: -683 27 -44 -679 18 -40
+--2e: -683 27 -52 -679 18 -48
+--1ne: -683 27 -60 -679 18 -56
+--2s: -673 27 -44 -669 18 -40
+--1se: -673 14 -44 -669 5 -40
+--1sw: -683 14 -44 -679 5 -40
+--2ac: -683 14 -36 -679 5 -32
+--2yb: -673 14 -36 -669 5 -32
+--flat: 3 -669 18 -32
+
+--~-7 ~20 ~-7
+-- 20b above, exactly centred
+
+-- Connection: [+Z] -673 4 -148 -679 9 -144        ~-3 ~22 ~8
+-- Connection: [+X] -674 13 -149 -678 18 -143      ~8 ~22 ~-3
+
+-- open Connection:
+-- +Z: /clone -669 5 -90 -683 14 -94 ~-7 ~20 ~8
+-- +X: /clone -679 5 -86 -683 14 -72 ~8 ~20 ~-7
+-- -X: /clone -669 14 -72 -673 5 -86 ~-12 ~20 ~-7
+-- -Z: /clone -669 14 -68 -683 5 -64 ~-7 ~20 ~-12
+
+-- Baseplate: /clone -669 36 -198 -683 38 -184 ~-7 ~20 ~-7
+
+-- Baseplate Connector
+-- +X -683 26 -72 -679 24 -86 ~15 ~20 ~
+-- +Z -683 20 -94 -669 18 -90 ~ ~20 ~15
+
+-- Baseplate Egde flat
+-- -674 40 -148 -678 42 -144 ~15 ~20 ~15
+]]

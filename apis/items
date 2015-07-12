@@ -67,16 +67,7 @@ local items = {}
 -- items[] = {["type"] = "food",["id"] = "",["name"] = "",["foodPoints"] = ,["saturation"] = ,["stack_size"] = }
 
  
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
+
 
 function getItem(itemID)
  return items[itemID]

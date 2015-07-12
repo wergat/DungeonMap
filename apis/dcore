@@ -15,10 +15,9 @@ function requireAPI(...)
     if(didLoad)then
 	 for k,v in pairs(_G[tArgs[i]]) do
 	  print_log("dcore","[API][MAIN]["..tArgs[i].."] Loading "..type(v).." "..k.." --> "..tArgs[i].."."..k.."")
-	  --print("[API][MAIN]["..tArgs[i].."] Loading "..type(v).." "..k.." --> "..tArgs[i].."."..k.."")
 	 end
 	else
-	 print_log("dcore","[API][MAIN] DID NOT LOAD "..fs.combine(apis_dir.."/"..tArgs[i]).."; error occurred out of nowhere!")
+	 print_log("dcore","[API][MAIN] DID NOT LOAD "..apis_dir.."/"..tArgs[i].."; error occurred out of nowhere!")
 	end
 	
     apis_loaded[tArgs[i]] = true
@@ -27,7 +26,7 @@ function requireAPI(...)
 	loadSimilarApis(tArgs[i])
    end
   else
-   print_log("dcore","[API][MAIN] DID NOT load "..fs.combine("/apis/",tArgs[i]).."; not found")
+   print_log("dcore","[API][MAIN] DID NOT load "..apis_dir.."/"..tArgs[i].."; not found")
    loadSimilarApis(tArgs[i])
   end
  end
