@@ -19,7 +19,7 @@ data["bossRoomChance_Small"] = 1
 -- TODO: rework, update to new gendata standarts
 -- Biomes: 0: Nothing    1:Fortress      ,2:Nether  ,3:Water Temple,4:Desert Temple,5:Forest,6:Cave,7:Dark Forest  ,8:Mesa       ,9:Ice Cave      ,10:Ruins   ,11:Miner's Cave,12: Abbondend
 -- Biomes: 101: Special Dropluck room ,102: Boss room
-data["biome_levels"] = {{2,1,2,6},{1,3,6,6,9},{4,5,7,8},{0,10,0,0,0,0,0,0,0}}
+data["biome_levels"] = {{2,1,2,6},{1,3,6,6,9},{4,5,7,8}}
 
 local chunk_sizeX = math.random(15,25)
 local chunk_sizeY = math.floor(375/chunk_sizeX)
@@ -29,16 +29,16 @@ local function positive(num) if(num<0)then return num*-1 else return num end end
 -- aka Stairs and holes
 -- returns start and ending of stairs/holes in y coords
 function getVerticalConnectionBottomAndTop(x,z)
- local height = getEffectiveHeightOfPillar(x,z)
+ local height = generation.getEffectiveHeightOfPillar(x,z)
  math.randomseed(data["seed"]+(((x*3-3)+data["subSeed"])*(z-13))+(z*-2))
  local bottom = math.random(math.floor(height/2+0.5))
  local top = math.random(bottom+1,height)
  return bottom,top
 end
 function getVerticalConnection(x,z)
- local height = getEffectiveHeightOfPillar(x,z)
+ local height = generation.getEffectiveHeightOfPillar(x,z)
  local connectionType = nil
- math.randomseed(giveSeed(x,z))
+ math.randomseed(generation.giveSeed(x,z))
  local bottom = 0
  local top = 0
  -- 1 in 6 chance for stairs/hole
@@ -65,12 +65,14 @@ function getRandomSeedForBiome(x,y,xfactor,yfactor,b,level)
  local realXChunkPos = math.floor(realXPos/chunk_sizeX)
  local realYChunkPos = math.floor(realYPos/chunk_sizeY)
  
- local partA = realXChunkPos*(data["seed"]%(13+(level)))+(12*(data["subSeed"]%34))
- local partB = realYChunkPos*(data["seed"]%(17+(level)))+(34*(data["subSeed"]%12))
+ local partA = realXChunkPos*(generation.data["seed"]%(13+(level)))+(12*(generation.data["subSeed"]%34))
+ local partB = realYChunkPos*(generation.data["seed"]%(17+(level)))+(34*(generation.data["subSeed"]%12))
  return (partA*b)+(partB*level)
 end 
+
+
+
 function getBiomeByPosition(x,y,level)
- local level = level
  if(level > 3)then level = 3 end
  local xinchunk = x%chunk_sizeX -- X Position in 0/0 chunk
  local yinchunk = y%chunk_sizeY -- Y Position in 0/0 chunk
@@ -78,57 +80,53 @@ function getBiomeByPosition(x,y,level)
  local lowest_distance = 200
  local lowest_distance_biome = 0
  
- for b=1,#data["biome_levels"][level] do
+ for b=1,#generation.data["biome_levels"][level] do
   for xfactor=-1,1 do
    for yfactor=-1,1 do
-    math.randomseed(getRandomSeedForBiome(x,y,xfactor,yfactor,b,level))
+    math.randomseed(generation.getRandomSeedForBiome(x,y,xfactor,yfactor,b,level))
     	
     local biomecenterx = math.random(chunk_sizeX)+(chunk_sizeX*xfactor) -- X center of biome b in Chunk xfactor/yfactor relative to 0/0 chunk
     local biomecentery = math.random(chunk_sizeY)+(chunk_sizeY*yfactor) -- Y center of biome b in Chunk xfactor/yfactor relative to 0/0 chunk
-	local distance = 0
+	local distance = positive(xinchunk - biomecenterx) + positive(yinchunk - biomecentery)
 	
-	if(level>3)then
-     distance =  math.sqrt(math.pow((xinchunk - biomecenterx),2)+math.pow((yinchunk - biomecentery),2))
-	else
-     distance =  positive(xinchunk - biomecenterx) + positive(yinchunk - biomecentery)
-	end
     if(distance<lowest_distance)then
      lowest_distance = distance
      lowest_distance_biome = b
     end
+	
    end
   end
  end 
- return data["biome_levels"][level][lowest_distance_biome]
+ return generation.data["biome_levels"][level][lowest_distance_biome]
 end
 
 -- uses minecraft xyz as inputs
 function getRoomsBiomeByPostion(x,y,z)
- return getBiomeByPosition(x,z,y)
+ return generation.getBiomeByPosition(x,z,y)
 end
 
 
 -- HEIGHT GENERATION
 function getNoiseByPosition(x,y) -- 
- math.randomseed(data["seed"]+((x+data["subSeed"])*y)+(y*4))
- return math.random(data["generationHeightMax"]*10)/10
+ math.randomseed(generation.data["seed"]+((x+generation.data["subSeed"])*y)+(y*4))
+ return math.random(generation.data["generationHeightMax"]*10)/10
 end
 function getHeightByPosition(x,y)
- local corners = (getNoiseByPosition(x-1,y-1)+ getNoiseByPosition(x+1, y-1)+ getNoiseByPosition(x-1, y+1)+ getNoiseByPosition(x+1, y+1) ) / 8 -- 4
- local sides   = (getNoiseByPosition(x-1,y)  + getNoiseByPosition(x+1, y)  + getNoiseByPosition(x, y-1)  + getNoiseByPosition(x, y+1) ) /  4 -- 2
- local center  =  getNoiseByPosition(x, y) / 2 -- 2
+ local corners = (generation.getNoiseByPosition(x-1,y-1)+ generation.getNoiseByPosition(x+1, y-1)+ generation.getNoiseByPosition(x-1, y+1)+ generation.getNoiseByPosition(x+1, y+1) ) / 8 -- 4
+ local sides   = (generation.getNoiseByPosition(x-1,y)  + generation.getNoiseByPosition(x+1, y)  + generation.getNoiseByPosition(x, y-1)  + generation.getNoiseByPosition(x, y+1) ) /  4 -- 2
+ local center  =  generation.getNoiseByPosition(x, y) / 2 -- 2
  local noise = math.floor((corners + sides + center)/(2))
  return noise
 end
 function getEffectiveHeightOfPillar(x,y)
- return getHeightByPosition(x,y)+data["generationBaseHeight"]
+ return generation.getHeightByPosition(x,y)+generation.data["generationBaseHeight"]
 end
 
 -- API functions
 function setSeed(_seed)
- data["seed"] = _seed
+ generation.data["seed"] = _seed
  math.randomseed(data["seed"])
- data["subSeed"] = math.random(10000)
+ generation.data["subSeed"] = math.random(10000)
  chunk_sizeX = math.random(15,25)
  chunk_sizeY = math.floor(375/chunk_sizeX)
 end
@@ -136,11 +134,11 @@ function getChunkSize()
  return chunk_sizeX,chunk_sizeY
 end
 function getSeed()
- return data["seed"]
+ return generation.data["seed"]
 end
 -- returns a seed generated with the args given
 function giveSeed(...)
- local seed = data["seed"]
+ local seed = generation.data["seed"]
  for k,v in ipairs(arg) do
   if(type(v)=="number")then
    seed = seed + math.floor((((v*5-42)+data["subSeed"])*(k*-4*((v%4)+3)))+(v+21)/23)

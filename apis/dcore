@@ -84,8 +84,10 @@ end
 function getBuild()
  return 1
 end
+
+-- 0 == pre-alpha, 1 = alpha, 2 = beta, 3 = realese
 function version()
- return "pre-alpha 1.0";
+ return "0.12b";
 end
 
 function evaluateInputs(...)

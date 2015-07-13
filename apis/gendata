@@ -182,7 +182,10 @@ base["z"] = -180
 
 -- get random array element
 local function getRAE(_table)
- return _table[math.random(#_table)]
+ local t = {}
+ -- Fix if table does not contain numbers only
+ for k,v in ipairs(_table) do table.insert(t,v) end
+ return t[math.random(#t)]
 end
 
 -- Room:
