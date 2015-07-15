@@ -17,7 +17,7 @@ function requireAPI(...)
 	  print_log("dcore","[API][MAIN]["..tArgs[i].."] Loading "..type(v).." "..k.." --> "..tArgs[i].."."..k.."")
 	 end
 	else
-	 print_log("dcore","[API][MAIN] DID NOT LOAD "..apis_dir.."/"..tArgs[i].."; error occurred out of nowhere!")
+	 print_log("dcore","[API][MAIN] DID NOT LOAD "..apis_dir.."/"..tArgs[i].."; error occurred out of nowhere, might have been loaded already!")
 	end
 	
     apis_loaded[tArgs[i]] = true

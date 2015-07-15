@@ -8,14 +8,15 @@ local function getSetItemName(q,setDataTable,slot)
 end
 
 function getLoreOfItem(_colorValue)
+ local itemID = getItemData("itemID")
+ if(itemID==0)then return end
+ 
  local shopprice = advitem.getPriceOfItem(_colorValue)
  local loreArr = getItemData("loreTable")
  table.insert(loreArr,"\"Rarity is "..advitem.q_color[getItemData("quality")].."§o"..advitem.qualitys[getItemData("quality")].."§5§o\"")
  table.insert(loreArr,"\"Price is exactly "..shopprice.." gold\"")
 
- 
-
- local name = items.getName(getItemData("itemID"))
+ local name = items.getName(itemID)
  local quali = getItemData("quality")
  local slot = getItemData("slot")
  
@@ -42,6 +43,5 @@ function getLoreOfItem(_colorValue)
  end
  
  setItemData("loreTable",loreArr)
- return lore
 end
 

@@ -1,5 +1,6 @@
 --,{0,10,0,0,0,0,0,0,0}
 
+--[[
 generation.data["generationBaseHeight_ruins"] = generation.data["generationBaseHeight_ruins"] or 3
 generation.data["generationHeightMax_ruins"] = generation.data["generationHeightMax_ruins"] or 8.4
 generation.data["heightMax_ruins"] = generation.data["heightMax_ruins"] or 14
@@ -12,7 +13,6 @@ function getRuinHeight(x,y)
  local noise = math.floor((corners + sides + center + special)/3)
  return noise
 end
-
 function getNoiseByPositionForRuins(x,z)
  math.randomseed((data["seed"]-data["subSeed"]*z)+(x*(z-4))+(z*6))
  local size = math.random(data["generationHeightMax_ruins"]*10)/10
@@ -85,3 +85,4 @@ function getBiomeByPosition(x,y,level)
  end 
  return data["biome_levels"][level][lowest_distance_biome]
 end
+--]]

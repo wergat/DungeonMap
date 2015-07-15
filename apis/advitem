@@ -206,7 +206,7 @@ function initializeItem(_dlevel,_typeOfItem,mobname,_forceQ)
  
  setItemData("itemID",0)
  if(equipment[mobname]~=nil)then
-  if(equipment[1]~=nil)then
+  if(#equipment[mobname]>0)then
    setItemData("itemID",equipment[mobname][getItemData("slot")]["items"][getItemData("tier")] or 0)
   end
  end

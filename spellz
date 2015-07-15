@@ -171,17 +171,21 @@ while string.len(spell)>0 and not invalid and timeout<10 do
   
   -- potion effect
   if(not invalid)then
+   local text = ""
    for i=1,#effects do
     local part = string.sub(spell,1,string.len(effects[i]))
     if(part == effects[i])then
-	 term.setTextColor(colors.orange)
-	 write(part..",")
-	 term.setTextColor(colors.white)
+	 
+	 text = text..part..","
+	 
 	 effect["ID"][i] = true
 	 spell = string.sub(spell,(string.len(effects[i])+1),-1)
 	 spell_length = spell_length + string.len(part)
 	end
    end
+   term.setTextColor(colors.orange)
+   write(string.sub(text,1,-2))
+   term.setTextColor(colors.white)
    if(#effect["ID"]==0)then invalid = true end
   end
   
