@@ -154,11 +154,15 @@ function getPriceOfItem(color_value)
  return math.floor(((getItemData("baseprice")+q)*(3^(q))/2+getItemData("enchprice"))*((10+color_value)/10))
 end
 function getRarityLevelOfItem(_forceQ)
+ -- change back to "_forceQ or 1", when releasing!!!
  local q = _forceQ or 5
  local chance = {0.25,0.3,0.35,0.4,0.4,0.4,0.4,0.4} --{0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75}
  while((math.random(20)/20)<=chance[q] and q<#qualitys)do q = q + 1 end
  return q
 end
+
+
+
 function getLoreOfItem(_colorValue)
  local shopprice = advitem.getPriceOfItem(_colorValue)
  local enchArr = getItemData("loreTable")
@@ -297,6 +301,8 @@ function getEquipment(_dlevel,_typeOfItem,_mobname,_forceQ)
   advitem.getEnchantmentOfItem()
   local colorValue = 0
   -- Colored Armor
+  
+  -- rework, bacuse t and i are not existing anymore!
   if(t==1 and i>1 and math.floor(100)>1)then
    local a,b = advitem.getColorOfArmor()
    setItemData("color",a)
