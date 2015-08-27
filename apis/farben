@@ -1,20 +1,20 @@
 local formatting_colors = {
- {"§0","Black","black"},
- {"§1","Dark Blue","dark_blue"},
- {"§2","Dark Green","dark_green"},
- {"§3","Dark Aqua","dark_aqua"},
- {"§4","Dark Red","dark_red"},
- {"§5","Dark Purple","dark_purple"},
- {"§6","Gold","gold"},
- {"§7","Gray","gray"},
- {"§8","Dark Gray","dark_gray"},
- {"§9","Blue","blue"},
- {"§a","Green","green"},
- {"§b","Aqua","aqua"},
- {"§c","Red","red"},
- {"§d","Light Purple","light_purple"},
- {"§e","Yellow","yellow"},
- {"§f","White","white"}
+ {"§0","Black","black",colors.black},
+ {"§1","Dark Blue","dark_blue",colors.blue},
+ {"§2","Dark Green","dark_green",colors.green},
+ {"§3","Dark Aqua","dark_aqua",colors.cyan},
+ {"§4","Dark Red","dark_red",colors.red},
+ {"§5","Dark Purple","dark_purple",colors.purple},
+ {"§6","Gold","gold",colors.orange},
+ {"§7","Gray","gray",colors.lightGray},
+ {"§8","Dark Gray","dark_gray",colors.gray},
+ {"§9","Blue","blue",colors.lightBlue},
+ {"§a","Green","green",colors.lime},
+ {"§b","Aqua","aqua",colors.cyan},
+ {"§c","Red","red",colors.red},
+ {"§d","Light Purple","light_purple",colors.magenta},
+ {"§e","Yellow","yellow",colors.yellow},
+ {"§f","White","white",colors.white}
 }
 local wool_colors = {
  {"0","White"},
@@ -35,7 +35,7 @@ local wool_colors = {
  {"15","Black"},
 }
 
--- Para: official name of wanted color
+-- Input: official name of wanted color
 -- returns Code, e.g. §e
 function getFCCodeByOfficialName(_offName)
  local foundCode
@@ -48,7 +48,19 @@ function getFCCodeByOfficialName(_offName)
  return foundCode
 end
 
--- Para: color HEX code
+function qColorToCCColor(_qColor)
+ local foundColor
+ for i=1,16 do
+  if(formatting_colors[i][1] == _qColor)then
+   foundColor = formatting_colors[i][4]
+  end
+ end
+ if(foundColor==nil)then error("Color "..tostring(_qColor).." not found!",2) end
+ return foundColor
+end
+
+
+-- Input: color HEX code
 -- returns name of color
 function inspectColor(_color)
  local color = tonumber("0x".._color) or tonumber(_color) or 1 -- 1 to ?

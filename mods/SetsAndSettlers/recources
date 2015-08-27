@@ -1,0 +1,43 @@
+-- Wood
+-- Stone
+-- Wheat
+-- Clay
+-- Iron
+
+
+local wood = 0
+local stone = 0
+local wheat = 0
+local clay = 0
+local iron = 0
+
+local function loadRecources()
+
+end
+
+function loadRecourceData()
+ local fileHandle = fs.open(":dungeon/mods/SetsAndSettlers/saves/resources","r")
+ local rawData = fileHandle.readAll()
+ fileHandle.close() --Just in case
+ resources = textutils.unserialize(rawData)
+ wood = resources["wood"]
+ stone = resources["stone"]
+ wheat = resources["wheat"]
+ clay = resources["clay"]
+ iron = resources["iron"]
+ print("Loaded resources")
+end
+
+function saveRecourceData()
+ local fileHandle = fs.open(":dungeon/mods/SetsAndSettlers/saves/resources","w")
+ local content = textutils.serialize({["wood"] = wood,["stone"] = stone,["wheat"] = wheat,["clay"] = clay,["iron"] = iron,})
+ fileHandle.write(content)
+ fileHandle.close() --Just in case
+end
+
+
+function getWood() return wood end
+function getStone() return stone end
+function getWheat() return stone end
+function getClay() return stone end
+function getIron() return stone end

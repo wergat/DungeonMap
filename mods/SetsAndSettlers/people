@@ -1,0 +1,41 @@
+local people = {}
+
+local names = {"Gustav","Tom","Tim","Jordan","Max","Jack"}
+
+-- "citizens"
+function addCitizen(s,a,i,xp)
+ local newDude = {}
+ newDude["str"] = s
+ newDude["agi"] = a
+ newDude["int"] = i
+ newDude["xp"] = xp
+ newDude["name"] = names[math.random(#names)]
+ 
+ 
+ 
+ table.insert(people,newDude)
+end
+
+function getPeople()
+ return people
+end
+
+function loadPeopleData()
+ local fileHandle = fs.open(":dungeon/mods/SetsAndSettlers/saves/people","r")
+ local rawData = fileHandle.readAll()
+ fileHandle.close() --Just in case
+ people = textutils.unserialize(rawData)
+ print("Loaded "..#people.." citizens")
+end
+
+function savePeopleData()
+ local fileHandle = fs.open(":dungeon/mods/SetsAndSettlers/saves/people","w")
+ local content = textutils.serialize(people)
+ fileHandle.write(content)
+ fileHandle.close() --Just in case
+end
+
+loadPeopleData()
+
+
+--savePeopleData()

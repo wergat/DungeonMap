@@ -1,0 +1,54 @@
+dcore.requireAPI("threats")
+
+local missions = {}
+
+function getNewMission()
+ local missionTypes = {"Land","Naval","Aerial"}
+ local mission = {}
+ -- Where the mission is [land,naval,aerial]
+ mission["type"] = math.random(3)
+ 
+ -- rarity of mission
+ -- guarantees a drop of that rarity at the end of the mission 
+ mission["rarity"] = advitem.getRarityLevelOfItem()
+ -- Base chance of success [25-75]
+ -- decreases with higher mission rarity
+ mission["baseChance"] = (((170-(mission["rarity"]*20))+math.random(730))/1000)
+ 
+ -- XP reward for ships (and player?) (and npc's?) when finishing a mission
+ -- higher when the chances are bad
+ -- higher with higher rarity of mission
+ mission["reward"] = math.floor((1/mission["baseChance"])*(900+math.random(200))*((9+mission["rarity"])/10)/10)*10+math.random(10)
+ 
+ mission["threats"] = {}
+ mission["threats"][1] = threats.getRandomThreat(mission["type"])
+ if(math.random(2)==1)then
+  mission["threats"][2] = threats.getRandomThreat(mission["type"])
+  while(mission["threats"][1] == mission["threats"][2])do mission["threats"][2] = threats.getRandomThreat(mission["type"]) end
+  if(math.random(4)==1)then
+   mission["threats"][3] = threats.getRandomThreat(mission["type"])
+   while(mission["threats"][1] == mission["threats"][3] or mission["threats"][2] == mission["threats"][3])do mission["threats"][3] = threats.getRandomThreat(mission["type"]) end
+  end
+ end
+ 
+ 
+ local randomNameWords = {"siege","blockade","exploration","offensive","treasure hunt","transportation"}
+ 
+ -- name of the mission
+ mission["name"] = missionTypes[mission["type"]].." "..randomNameWords[math.random(#randomNameWords)]
+ mission["id"] = #missions+1
+ return mission
+end
+
+for i=1,100 do
+ missions[i] = getNewMission()
+end
+
+function getMissions()
+ return missions
+end
+
+function startMission(_missionID,_vehicleID,_moar)
+
+
+end

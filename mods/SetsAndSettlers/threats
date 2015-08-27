@@ -1,0 +1,59 @@
+local threats = {}
+
+function addThreat(_name,_description,_types,_chanceOfHappen,_chanceOfAlive)
+ local t = {}
+ t["name"] = _name
+ t["description"] = _description
+ t["types"] = _types -- the types that might encounter this
+ t["id"] = #threats+1
+ --[land,naval,aerial]
+ -- 1 = Land, 2 = Naval, 3 = aerial
+ -- 4 = Land+Naval 5 = Land+aerial 6 = Naval+aerial 7 = all
+ table.insert(threats,t)
+end
+
+addThreat("End","Might encounter creatures of the end",1)
+addThreat("Desert","The crew will travel through a harsh and dry area",5)
+addThreat("Snow","About to encounter dangerously cold weather",7)
+addThreat("Guardian Temple","Might encounter a guardian temple",2)
+addThreat("Forest","Safely looking",1)
+addThreat("Jungle","High trees and heavy plant cover",1)
+addThreat("Mountains","Mission will include travelling through mountains",5)
+addThreat("Icy Water","Dangerous iceberg",2)
+addThreat("Plains","Open flatlands, safe to travel through",5)
+addThreat("Swamp","Worst place to travel through, beware of witches and slimes",4)
+addThreat("Villages","Small populated areas guarded by Irongolems",5)
+addThreat("Underground","The dark below",7)
+addThreat("Squid","You will encounter dangerous squids!",2)
+addThreat("Full moon","More mobs will spawn, swamp will be highly populated by slimes",4)
+addThreat("Nether","To succeed in this mission your crew need to travel through the nether",7)
+
+
+
+-- type = [1 = Land, 2 = Naval, 3 = aerial]
+function getRandomThreat(_type)
+ local typeConverter = {{1,4,5,7},{2,4,5,7},{3,5,6,7}}
+ local found = {} 
+ for i=1,#threats do
+  for j=1,#typeConverter[_type] do
+   if(typeConverter[_type][j] == threats[i]["types"])then
+    table.insert(found,i)
+   end
+  end
+ end
+ return threats[found[math.random(#found)]]
+end
+
+
+
+
+
+
+-- End
+-- Swamp
+-- 
+--
+--
+--
+--
+--

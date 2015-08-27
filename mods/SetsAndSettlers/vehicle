@@ -1,0 +1,13 @@
+local vehicles = {}
+vehicles[1] = {["name"] = "Barefooted",["type"] = 1,["chance"] = .1,["xp"] = 0,["quality"] = 1}
+vehicles[2] = {["name"] = "Saddled Squid",["type"] = 2,["chance"] = .1,["xp"] = 0,["quality"] = 1}
+vehicles[3] = {["name"] = "Flying Pig",["type"] = 3,["chance"] = .1,["xp"] = 0,["quality"] = 1}
+vehicles[4] = {["name"] = "Woodo-plane",["type"] = 3,["chance"] = .3,["xp"] = 12,["quality"] = 1}
+vehicles[5] = {["name"] = "Reinforced pig",["type"] = 3,["chance"] = .721,["xp"] = 15,["quality"] = 1}
+vehicles[6] = {["name"] = "Redstone-o-jet",["type"] = 3,["chance"] = .75,["xp"] = 3,["quality"] = 1}
+vehicles[7] = {["name"] = "Enderplane",["type"] = 3,["chance"] = .825,["xp"] = 9,["quality"] = 1}
+vehicles[8] = {["name"] = "Ghastcopter",["type"] = 3,["chance"] = .932,["xp"] = 12,["quality"] = 1}
+
+function getVehicles()
+ return vehicles
+end

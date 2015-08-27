@@ -8,7 +8,7 @@ local function count(input)
  return int
 end
  
-qualitys = {"usual","unusual","rare","extraordinary","mythical","legendary","lost","forgotten"}
+qualitys = {"usual","unusual","rare","extraordinary","mythical","legendary","epic","forgotten"}
 q_color = {"§f","§b","§3","§1","§5","§d","§6","§4","§2"}
 
 local equipment = {}
@@ -155,8 +155,8 @@ function getPriceOfItem(color_value)
 end
 function getRarityLevelOfItem(_forceQ)
  -- change back to "_forceQ or 1", when releasing!!!
- local q = _forceQ or 5
- local chance = {0.25,0.3,0.35,0.4,0.4,0.4,0.4,0.4} --{0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75}
+ local q = _forceQ or 1
+ local chance = {0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75} --{0.25,0.3,0.35,0.4,0.4,0.4,0.4,0.4}
  while((math.random(20)/20)<=chance[q] and q<#qualitys)do q = q + 1 end
  return q
 end

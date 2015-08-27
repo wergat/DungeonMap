@@ -1,0 +1,50 @@
+-- Smith
+-- Airport
+-- Shipjard
+-- Sawmill
+-- Storage barn
+-- Field [Carrot/Potato/Wheat]
+-- Farm
+--
+--
+
+
+local buildings = {}
+
+local t = {
+ -- Name of building
+ ["name"] = "Smith",
+ 
+ -- Occupied area
+ ["area"] = {{["x1"] = 1,["x2"] = 30,["y1"] = 1,["y2"] = 10},{["x1"] = 1,["x2"] = 10,["y1"] = 1,["y2"] = 30}},
+ 
+ -- Cost to build
+ ["cost"] = {["wood"] = 10,["stone"] = 30,["iron"] = 15}
+ 
+ -- If exists, this is upgrade for building w/ ID X
+ -- ["upgrade"] = X
+}
+
+addBuildingData()
+
+-- Returns building ID
+function addBuildingData(_table)
+ table.insert(buildings,_table)
+ return #buildings
+end
+
+
+function getBuildings()
+
+
+
+end
+
+function addBuilding()
+
+end
+
+function CheckForFreeSpace()
+
+
+end

@@ -294,6 +294,7 @@ function spawnBasePlate(x,y,z)
   setCommandBlock("/clone -683 20 -94 -669 18 -90 "..tx.." "..ty.." "..(tz-5).."")
  end
 end
+
 function spawnRoom(x,y,z)
  local seed = generation.giveSeed(x,y,z)
  

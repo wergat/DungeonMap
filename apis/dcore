@@ -4,6 +4,8 @@ local mods_dir = all_dir.."/mods"
 local logs_dir = all_dir.."/logs"
 local apis_dir = all_dir.."/apis"
 
+local firstError = true
+
 function requireAPI(...)
  local tArgs = { ... }
  for i=1,#tArgs do
@@ -57,16 +59,30 @@ function loadSimilarApis(_forceName)
   if(fs.exists(mods_dir.."/"..l[i].."/"..file_name))then
    print_log("dcore","[API]["..l[i].."] Loading mod-api "..mods_dir.."/"..l[i].."/"..file_name.."")
    -- Load functions of mod-api-file
-   local tEnv = setmetatable( _G[file_name], { __index = _G } )
+   if(_G[file_name]==nil)then _G[file_name] = {} end
+   
+   local tEnv = setmetatable(_G[file_name], { __index = _G } )
    local fnAPI, err = loadfile(mods_dir.."/"..l[i].."/"..file_name)
    if fnAPI then
     setfenv( fnAPI, tEnv )
     local ok, err = pcall( fnAPI )
     if not ok then
      print_log("error","[API]["..l[i].."] While loading "..mods_dir.."/"..l[i].."/"..file_name.."; "..err)
+	 if(firstError)then
+	  if(term.isColor())then term.setTextColor(colors.red) end
+      print("error found while loading api files, check logs/error for more informations")
+	  term.setTextColor(colors.white)
+	  firstError = false
+     end
     end
    else
     print_log("error","[API]["..l[i].."] While loading "..mods_dir.."/"..l[i].."/"..file_name.."; "..err)
+	if(firstError)then
+	 if(term.isColor())then term.setTextColor(colors.red) end
+     print("error found while loading api files, check logs/error for more informations")
+	 term.setTextColor(colors.white)
+	 firstError = false
+    end
    end
    
    for k,v in pairs(tEnv) do
@@ -85,7 +101,7 @@ function getBuild()
  return 1
 end
 
--- 0 == pre-alpha, 1 = alpha, 2 = beta, 3 = realese
+-- 0 = pre-alpha, 1 = alpha, 2 = beta, 3 = realese
 function version()
  return "0.12b";
 end
