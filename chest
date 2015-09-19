@@ -12,7 +12,10 @@ dcore.requireAPI("advitem")
 -- Nearly Broken
 
 local tArgs = {...}
-local startdifficulty = tonumber(tArgs[1]) or 1 -- 1 to ?
+local x = tArgs[1]
+local y = tArgs[2]
+local z = tArgs[3]
+local startdifficulty = tonumber(tArgs[4]) or 1 -- 1 to ?
 local chance = {0.25,0.3,0.35,0.4,0.4,0.4}
 local q = 1
 local chest_types = {" "," Equipment "," Supply "," Food "}
@@ -193,12 +196,12 @@ for i=0,26 do
  end
 end
 
-datatag = datatag.."],CustomName:\""..(advitem.q_color[q]).."§l"..firstToUpper(advitem.qualitys[q])..chest_types[chest_type].."Chest§r\"}"
+datatag = datatag.."],CustomName:\""..(advitem.q_color[q]).."Â§l"..firstToUpper(advitem.qualitys[q])..chest_types[chest_type].."ChestÂ§r\"}"
 
-a,e = commands.setblock("-6","23","0","minecraft:chest","1","replace",datatag)
+a,e = commands.setblock(x,y,z,"minecraft:chest","1","replace",datatag)
 --print(datatag)
 if(not a)then
  print("Error:"..e[1],(e[2] or ""))
- print_log("error","[chest] Failed to execute Command: /setblock -6 23 0 minecraft:chest 1 replace "..datatag.."; Error message:"..e[1]..(e[2] or "").."")
+ print_log("error","[chest] Failed to execute Command: /setblock " .. x .. " " .. y .. " " .. z .. " minecraft:chest 1 replace "..datatag.."; Error message:"..e[1]..(e[2] or "").."")
 end
 write(".\n")
