@@ -243,8 +243,8 @@ function newNPC(_name,_color,_x,_y,_z) -- Returns ID of created NPC
 end
 
 
-local Carl = {["npcID"] = newNPC("Carl","green",-160,65,216)}
-local Carl2 = {["npcID"] = newNPC("Carl","green",-160,65,216)}
+local Carl = {["npcID"] = newNPC("Carl","green",-14,23,0)}
+local Carl2 = {["npcID"] = newNPC("Carl","green",-14,23,0)}
 
 local progress = 1
 
@@ -253,8 +253,8 @@ functions = {}
 functions["talkToCarl"] = function()
  local d = newDialogForNPC(
   Carl.npcID,
-  '{"text":"So how are u doing in this magical world?"}',
-  {'Great, could use something to do tho!','I dont know, running around and looking for loot'},
+  '{"text":"So how are you doing in this magical world?"}',
+  {'Great, could use something to do though!','I don\'t know, running around and looking for loot.'},
   {"getQuestFromCarl","getLootFromCarl"}
  )
  
@@ -264,9 +264,9 @@ end
 functions["getLootFromCarl"] = function()
  local d = newDialogForNPC(
   Carl.npcID,
-  '{"text":"Some loot is what you want? Here is a Chest full of loot for you! But only if you do a job for me! Would you rather..."}',
-  {'get slain Zombies','kill skeletons'},
-  {"startQuestZombie","startQuestSkeleton"}
+  '{"text":"Some loot is what you want? Here is a chest full of loot for you! But only if you do a job for me! Do you accept?"}',
+  {'Yes!', 'No.'},
+  {"startQuestSkeleton", "declineJob"}
   )
  enableDialog(Carl.npcID,d)
  newNPCDialogTrigger(Carl.npcID,d,5)
@@ -274,9 +274,9 @@ end
 functions["getQuestFromCarl"] = function()
  local d = newDialogForNPC(
   Carl.npcID,
-  '{"text":"Oooh, seeking for some quests? Would you rather..."}',
-  {'get slain Zombies','kill skeletons'},
-  {"startQuestZombie","startQuestSkeleton"}
+  '"Oooh, seeking for some quests? Do you want one?"',
+  {'Yes!', 'No.'},
+  {"startQuestSkeleton", "declineJob"}
  )
  enableDialog(Carl.npcID,d)
  newNPCDialogTrigger(Carl.npcID,d,5)
@@ -284,25 +284,18 @@ end
 functions["startQuestSkeleton"] = function()
  local d = newDialogForNPC(
   Carl.npcID,
-  '{"text":"Bring me 120 Bones please. And one of them needs to be a head!"}',
-  {},
-  {}
+  '"Bring me 2 stacks of bones please."',
+  {'I already have them!', 'Goodbye!'},
+  {"finishQuest", "null"}
  )
  enableDialog(Carl.npcID,d)
  newNPCDialogTrigger(Carl.npcID,d,5)
-end
-functions["startQuestZombie"] = function()
- local d = newDialogForNPC(
-  Carl.npcID,
-  '{"text":"Ooohk so... jeahh... can you bring me some rotten flesh then?"}',
-  {},
-  {}
- )
- enableDialog(Carl.npcID,d)
- newNPCDialogTrigger(Carl.npcID,d,5)
+ Carl.gaveQuest = true
 end
 functions["helloCarl"] = function()
- if(Carl.greetings==nil)then
+ if Carl.gaveQuest then
+	Carl.greetings = newDialogForNPC(Carl.npcID, '"Hey, welcome back! Do you have enough bones?"', {'Yeah!', 'Nope.'}, {"finishQuest", "returnNotDone"})
+ elseif(Carl.greetings==nil)then
   Carl.greetings = newDialogForNPC(Carl.npcID,'{"text":"Hey you; wanna talk?"}',{'Sure!','No.'},{"talkToCarl","null"})
  else
   npcs[Carl.npcID]["dialogs"][Carl.greetings]["text"] = '{"text":"Nice to see you again! Wanna talk now?"}'
@@ -310,6 +303,67 @@ functions["helloCarl"] = function()
  end
  enableDialog(Carl.npcID,Carl.greetings)
  newNPCDialogTrigger(Carl.npcID,Carl.greetings,{["t"] = "isInArea",["r"] = 5})
+end
+functions["declineJob"] = function()
+	local d = newDialogForNPC(
+		Carl.npcID,
+		'"Alright, that\'s fine!"',
+		{},
+		{}
+	)
+	enableDialog(Carl.npcID,d)
+	newNPCDialogTrigger(Carl.npcID,d,5)
+end
+functions["finishQuest"] = function()
+	rednet.open("top")
+	local d = newDialogForNPC(
+		Carl.npcID,
+		'"Great! Tell me when you\'re ready, place them in my servant turtle and press any key. He\'ll check them for me."',
+		{'Ready!'},
+		{'waitForVerify'}
+	)
+	enableDialog(Carl.npcID,d)
+	newNPCDialogTrigger(Carl.npcID,d,5)
+end
+functions["waitForVerify"] = function()
+	local id, message = rednet.receive()
+	if message == "suc" then
+		functions["sucQuest"]()
+	else
+		functions["failQuest"]()
+	end
+end
+functions["sucQuest"] = function()
+	local d = newDialogForNPC(
+		Carl.npcID,
+		'"Thanks! Here\'s your reward."',
+		{},
+		{}
+	)
+	enableDialog(Carl.npcID,d)
+	newNPCDialogTrigger(Carl.npcID,d,5)
+	shell.run("dungeon/chest -12 23 0 " .. math.random(1,200))
+	Carl.gaveQuest = nil
+end
+functions["failQuest"] = function()
+	local d = newDialogForNPC(
+		Carl.npcID,
+		'"I need 2 stacks of bones, that\'s not enough!"',
+		{},
+		{}
+	)
+	enableDialog(Carl.npcID,d)
+	newNPCDialogTrigger(Carl.npcID,d,5)
+end
+functions["returnNotDone"] = function()
+	local d = newDialogForNPC(
+		Carl.npcID,
+		'"Alright, I\'ll wait."',
+		{},
+		{}
+	)
+	enableDialog(Carl.npcID,d)
+	newNPCDialogTrigger(Carl.npcID,d,5)
 end
 functions["byeCarl"] = function()
  if(Carl2.bye==nil)then
