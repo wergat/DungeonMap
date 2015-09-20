@@ -177,6 +177,10 @@ end
 function initializeItem(_dlevel,_typeOfItem,mobname,_forceQ)
  -- TODO: Check inputs!
  
+ -- FORCE high quali
+ --_forceQ = 7
+ 
+ 
  setItemData("dataTable",{})
  setItemData("loreTable",{})
  setItemData("enchTable",{})
@@ -208,9 +212,18 @@ function initializeItem(_dlevel,_typeOfItem,mobname,_forceQ)
   end
  end
  
+ -- FORCE Tier three
+ --setItemData("tier",3)
+ 
+ 
  setItemData("itemID",0)
  if(equipment[mobname]~=nil)then
+  write("A")
   if(#equipment[mobname]>0)then
+   write("B")
+   write(equipment[mobname][getItemData("slot")]["items"][getItemData("tier")] or "???")
+   write(getItemData("tier"))
+   write(getItemData("slot"))
    setItemData("itemID",equipment[mobname][getItemData("slot")]["items"][getItemData("tier")] or 0)
   end
  end

@@ -123,7 +123,7 @@ function getChestData(_startDifficulty,_chestType)
   while (count<maxcount and math.random(20)>2) do
    count = count + 1
   end
-
+  -- FORCE CHANGE BACK TO == LATER (WAS math.random(14)>=1)
   if(math.random(14)==1 or (chestRarity>1 and items_choosen==0) or _chestType==2)then
    local itemDataTable = {}
    local moreInfo = false
