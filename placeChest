@@ -1,0 +1,23 @@
+os.loadAPI(":dungeon/apis/dcore")
+dcore.requireAPI("chest")
+
+chest.placeChest(unpack{{...}})
+
+ 
+ 
+
+
+
+
+-- New
+-- Slightly Used
+-- minimal wear
+-- Used
+-- Field Testet
+-- Well worn
+-- Battle Scarred
+-- Nearly Broken
+
+
+
+
