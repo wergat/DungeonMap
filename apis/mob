@@ -67,6 +67,7 @@ function setEquipmentOfMob()
  for i=1,5 do
   local itemTable,info = advitem.getEquipment(getMobData("difficulty"),i,getMobData("mobType"))
   if(type(info)=="table")then
+   itemTable["Count"] = 1
    table.insert(equipment,itemTable)
    addOnMobData("level",info["value"])
   else

@@ -1,0 +1,14 @@
+{
+  {
+    level = 1,
+    xPos = 1,
+    bID = 1,
+    yPos = 1,
+  },
+  {
+    level = 1,
+    xPos = 30,
+    bID = 1,
+    yPos = -30,
+  },
+}

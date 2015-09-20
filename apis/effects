@@ -1,0 +1,90 @@
+-- aka passives on a dude
+
+players = {}
+
+
+function addAuraToPlayer(_player,_eID,_strength)
+ table.insert(players[_player],{["eID"] = _eID,["dur"] = 1,["str"] = _strength,["aura"] = true})
+end
+
+-- Normal Minecraft like, with duration, gets removed once duration ends
+-- Strength can be boolean
+function addEffectToPlayer(_player,_eID,_duration,_strength)
+ table.insert(players[_player],{["eID"] = _eID,["dur"] = _duration*20,["str"] = _strength,["aura"] = false})
+end
+
+-- Gets called every 1/20s
+function tick()
+ for p=1,#players do
+  local effectiveEffects = {}
+  
+  -- Look out for strongest natural effect
+  for e=1,#players[p] do
+   if(not players[p][e]["aura"])then
+    if(players[p][e]["str"]>(effectiveEffects[players[p][e]["eID"]]["str"] or 0))then
+	 if(not effectiveEffects[e])then effectiveEffects[e] = {} end
+     effectiveEffects[e]["str"] = players[p][e]["str"]
+     effectiveEffects[e]["dur"] = players[p][e]["dur"]
+	 players[p][e]["dur"] = players[p][e]["dur"] - 1
+	end
+   end
+  end
+
+  -- Add Aura effects ontop
+  for e=1,#players[p] do
+   if(players[p][e]["aura"])then
+    if(not effectiveEffects[e])then effectiveEffects[e] = {} end
+    effectiveEffects[e]["str"] = (effectiveEffects[e]["str"] or 0) + players[p][e]["str"]
+	effectiveEffects[e]["dur"] = effectiveEffects[e]["dur"] or 1
+   end
+  end
+  -- Apply effects right here
+ end
+end
+
+dcore.registerForTick(tick)
+
+effects = {}
+
+-- Vanilla Effects
+effects[1] = {["name"] = "Speed",["potion"] = "Swiftness",["corrupt"] = true}
+effects[2] = {["name"] = "Slowness",["potion"] = "Slowness",["corrupt"] = true}
+effects[3] = {["name"] = "Haste",["potion"] = "Haste",["corrupt"] = true}
+effects[4] = {["name"] = "Mining Fatigue",["potion"] = "Dullness",["corrupt"] = false}
+effects[5] = {["name"] = "Strength",["potion"] = "Strength",["corrupt"] = true}
+effects[6] = {["name"] = "Instant Health",["potion"] = "Healing",["corrupt"] = false}
+effects[7] = {["name"] = "Instant Damage",["potion"] = "Harming",["corrupt"] = false}
+effects[8] = {["name"] = "Jump Boost",["potion"] = "Leaping",["corrupt"] = true}
+effects[9] = {["name"] = "Nausea",["potion"] = "Nausea",["corrupt"] = false}
+effects[10] = {["name"] = "Regeneration",["potion"] = "Regeneration",["corrupt"] = false}
+effects[11] = {["name"] = "Resistance",["potion"] = "Resistance",["corrupt"] = true}
+effects[12] = {["name"] = "Fire Resistance",["potion"] = "Fire Resistance",["corrupt"] = false}
+effects[13] = {["name"] = "Water Breathing",["potion"] = "Water Breathing",["corrupt"] = false}
+effects[14] = {["name"] = "Invisibility",["potion"] = "Invisibility",["corrupt"] = false}
+effects[15] = {["name"] = "Blindness",["potion"] = "Blindness",["corrupt"] = false}
+effects[16] = {["name"] = "Night Vision",["potion"] = "Night Vision",["corrupt"] = false}
+effects[17] = {["name"] = "Hunger",["potion"] = "Hunger",["corrupt"] = true}
+effects[18] = {["name"] = "Weakness",["potion"] = "Weakness",["corrupt"] = true}
+effects[19] = {["name"] = "Poison",["potion"] = "Poison",["corrupt"] = false}
+effects[20] = {["name"] = "Wither",["potion"] = "Decay",["corrupt"] = false}
+effects[21] = {["name"] = "Health Boost",["potion"] = "Health Boost",["corrupt"] = true}
+effects[22] = {["name"] = "Absorption",["potion"] = "Absorption",["corrupt"] = true}
+effects[23] = {["name"] = "Saturation",["potion"] = "Saturation",["corrupt"] = true}
+
+-- Special Effects
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
