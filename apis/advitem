@@ -180,7 +180,7 @@ function initializeItem(_dlevel,_typeOfItem,mobname,_forceQ)
  setItemData("dataTable",{})
  setItemData("loreTable",{})
  setItemData("enchTable",{})
- --setItemData("color",nil)
+ setItemData("color",nil)
  
  setItemData("difficultyLevel",_dlevel)
  
