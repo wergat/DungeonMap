@@ -193,7 +193,7 @@ function addNewItemToPool(_poolID,_itemTable)
 end
 
 function placeChest(...)
- local tArgs = arg[1]
+ local tArgs = arg
  
  local x = 0
  local y = 23
@@ -233,7 +233,5 @@ function placeChest(...)
   print("Error:"..e[1],(e[2] or ""))
   print_log("error","[chest] Failed to execute Command: /setblock " .. x .. " " .. y .. " " .. z .. " minecraft:chest 1 replace "..datatag.."; Error message:"..e[1]..(e[2] or "").."")
  end
- 
- write(".\n")
 end
 
