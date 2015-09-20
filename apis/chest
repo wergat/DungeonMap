@@ -2,38 +2,11 @@ os.loadAPI(":dungeon/apis/dcore")
 dcore.requireAPI("items")
 dcore.requireAPI("advitem")
 
--- New
--- Slightly Used
--- minimal wear
--- Used
--- Field Testet
--- Well worn
--- Battle Scarred
--- Nearly Broken
+-- TODO: Convert the datatag-string to table
 
-local tArgs = {...}
-local x = tArgs[1]
-local y = tArgs[2]
-local z = tArgs[3]
-local startdifficulty = tonumber(tArgs[4]) or 1 -- 1 to ?
-local chance = {0.25,0.3,0.35,0.4,0.4,0.4}
-local q = 1
 local chest_types = {" "," Equipment "," Supply "," Food "}
-local chest_type = 1
 
-
-
-while((math.random(20)/20)<=chance[q] and q<#chance)do q = q + 1 end
-if(math.random(5)>2)then chest_type = math.random(4) end
-
-function firstToUpper(str)
-    return (str:gsub("^%l", string.upper))
-end
-
-difficulty = startdifficulty*(6+3*q+chest_type)
-local datatag = "{Items:["
 local item_pool = {}
-
 item_pool[1] = { -- Normal
  {["id"] = 263,["value"] = 3,["max"] = 10}, -- apple
  {["id"] = 260,["value"] = 1,["max"] = 18},-- coal
@@ -117,91 +90,148 @@ item_pool[4] = { -- Food
   --{["id"] = ,["value"] = ,["max"] = },
 }
 
-local loot = {}
-local slots = {}
-local items_choosen = 0
 
-loot["item"] = {}
-
-while difficulty>0 do
- local itemIndex = math.random(#item_pool[chest_type])
- while(item_pool[chest_type][itemIndex].value > difficulty)do
-  itemIndex = math.random(#item_pool[chest_type])
- end
-
- local maxitems = (item_pool[chest_type][itemIndex]["max"])
- local maxcapacity = math.floor(difficulty/item_pool[chest_type][itemIndex]["value"])
- local maxcount = math.min(maxitems,maxcapacity)
- local count = 1
- while (count<maxcount and math.random(20)>2) do
-  count = count + 1
- end
-
- if(math.random(14)==1 or (q>1 and items_choosen==0) or chest_type==2)then
-  local itemDataTable = {}
-  local moreInfo = false
-  
-  if(items_choosen>0)then
-   itemDataTable,moreInfo = advitem.getEquipment((difficulty*2),nil,"player",7)
-  else
-   itemDataTable,moreInfo = advitem.getEquipment((startdifficulty*2),nil,"player",q)
-  end
-  items_choosen = items_choosen + 1
-  
-  if(moreInfo~=false)then
-   moreInfo["value"] = moreInfo["value"] * items_choosen
-   difficulty = difficulty - math.floor(moreInfo["value"]*3)
-   itemDataTable["Damage"] = math.floor(((math.random(5)-1)/5)*items.getDurability(moreInfo["itemID"]))
-   itemDataTable["Count"] = 1
-   table.insert(loot["item"],itemDataTable)
-  else
-   difficulty = difficulty - item_pool[chest_type][itemIndex].value*count
-   loot[item_pool[chest_type][itemIndex].id] = (loot[item_pool[chest_type][itemIndex].id] or 0) + count
-  end
- else
-  difficulty = difficulty - item_pool[chest_type][itemIndex].value*count
-  loot[item_pool[chest_type][itemIndex].id] = (loot[item_pool[chest_type][itemIndex].id] or 0) + count
- end
+function getChestRarity()
+ local chance = {0.25,0.3,0.35,0.4,0.4,0.4}
+ local q = 1
+ while((math.random(20)/20)<=chance[q] and q<#chance)do q = q + 1 end
+ return q
 end
 
+function firstToUpper(str) return (str:gsub("^%l", string.upper)) end
 
-for s=1,27 do
- table.insert(slots,(s-1))
-end
+function getChestData(_startDifficulty,_chestType)
+ local chestRarity = chest.getChestRarity()
+ local difficulty = _startDifficulty*(6+3*chestRarity+_chestType)
+ local datatag = "{Items:["
 
+ local loot = {}
+ local slots = {}
+ local items_choosen = 0
+ loot["item"] = {}
 
-if(loot["item"][1]==nil)then loot["item"] = nil end
+ while difficulty>0 do
+  local itemIndex = math.random(#item_pool[_chestType])
+  while(item_pool[_chestType][itemIndex].value > difficulty)do
+   itemIndex = math.random(#item_pool[_chestType])
+  end
 
-for i=0,26 do
- for k,v in pairs(loot) do
-  local slot = math.random(#slots)
-  --
-  if(loot["item"]~=nil)then
-   local data = loot["item"][1]
-   data["Slot"] = slots[slot]
-   datatag = datatag..dcore.getNBTStringFromTable(data)..","
-   table.remove(loot["item"],1)
-   if(loot["item"][1]==nil)then loot["item"] = nil end
-  else
-   datatag = datatag.."{Slot:"..slots[slot]..",id:"..k..",Count:"..math.min(v,64).."},"
-   if(v>64)then
-    loot[k] = loot[k] - 64
+  local maxitems = (item_pool[_chestType][itemIndex]["max"])
+  local maxcapacity = math.floor(difficulty/item_pool[_chestType][itemIndex]["value"])
+  local maxcount = math.min(maxitems,maxcapacity)
+  local count = 1
+  while (count<maxcount and math.random(20)>2) do
+   count = count + 1
+  end
+
+  if(math.random(14)==1 or (chestRarity>1 and items_choosen==0) or _chestType==2)then
+   local itemDataTable = {}
+   local moreInfo = false
+  
+   if(items_choosen>0)then
+    itemDataTable,moreInfo = advitem.getEquipment((difficulty*2),nil,"player",7)
    else
-   
-    loot[k] = nil
+    itemDataTable,moreInfo = advitem.getEquipment((_startDifficulty*2),nil,"player",chestRarity)
    end
+   items_choosen = items_choosen + 1
+  
+   if(moreInfo~=false)then
+    moreInfo["value"] = moreInfo["value"] * items_choosen
+    difficulty = difficulty - math.floor(moreInfo["value"]*3)
+    itemDataTable["Damage"] = math.floor(((math.random(5)-1)/5)*items.getDurability(moreInfo["itemID"]))
+    itemDataTable["Count"] = 1
+    table.insert(loot["item"],itemDataTable)
+   else
+    difficulty = difficulty - item_pool[_chestType][itemIndex].value*count
+    loot[item_pool[_chestType][itemIndex].id] = (loot[item_pool[_chestType][itemIndex].id] or 0) + count
+   end
+  else
+   difficulty = difficulty - item_pool[_chestType][itemIndex].value*count
+   loot[item_pool[_chestType][itemIndex].id] = (loot[item_pool[_chestType][itemIndex].id] or 0) + count
   end
-  table.remove(slots,slot)
-  break
+ end
+
+ for s=1,27 do
+  table.insert(slots,(s-1))
+ end
+
+ if(loot["item"][1]==nil)then loot["item"] = nil end
+
+ for i=0,26 do 
+  for k,v in pairs(loot) do
+   local slot = math.random(#slots)
+   --
+   if(loot["item"]~=nil)then
+    local data = loot["item"][1]
+    data["Slot"] = slots[slot]
+    datatag = datatag..dcore.getNBTStringFromTable(data)..","
+    table.remove(loot["item"],1)
+    if(loot["item"][1]==nil)then loot["item"] = nil end
+   else
+    datatag = datatag.."{Slot:"..slots[slot]..",id:"..k..",Count:"..math.min(v,64).."},"
+    if(v>64)then
+     loot[k] = loot[k] - 64
+    else   
+     loot[k] = nil
+    end
+   end
+   table.remove(slots,slot)
+   break
+  end
+ end
+ return datatag.."],CustomName:\""..(advitem.q_color[chestRarity]).."§l"..firstToUpper(advitem.qualitys[chestRarity])..chest_types[_chestType].."Chest§r\"}"
+end
+
+
+function addNewItemPool(_table,_name)
+ item_pool[#item_pool+1] = _table
+ chest_types[#chest_types+1] = _name
+end
+
+function addNewItemToPool(_poolID,_itemTable)
+ item_pool[_poolID][#item_pool[_poolID]+1] = _itemTable
+end
+
+function placeChest(...)
+ local tArgs = arg
+ 
+ local x = 0
+ local y = 23
+ local z = 0
+ local chestType = 1
+ if(math.random(5)>2)then chestType = math.random(#item_pool) end
+ 
+ local startDifficulty = 1
+
+ if(#tArgs==1)then
+  startDifficulty = tonumber(tArgs[1])
+ elseif(#tArgs==2)then
+  startDifficulty = tonumber(tArgs[1])
+  chestType = tonumber(tArgs[2])
+ elseif(#tArgs==3)then
+  x = tonumber(tArgs[1])
+  y = tonumber(tArgs[2])
+  z = tonumber(tArgs[3])
+ elseif(#tArgs==4)then
+  startDifficulty = tonumber(tArgs[1])
+  x = tonumber(tArgs[2])
+  y = tonumber(tArgs[3])
+  z = tonumber(tArgs[4])
+ elseif(#tArgs==5)then
+  startDifficulty = tonumber(tArgs[1])
+  x = tonumber(tArgs[2])
+  y = tonumber(tArgs[3])
+  z = tonumber(tArgs[4])
+  chestType = tonumber(tArgs[5])   
+ end
+
+ local datatag =  chest.getChestData(startDifficulty,chestType)
+ 
+ a,e = commands.setblock(x,y,z,"minecraft:chest","1","replace",datatag)
+ 
+ if(not a)then
+  print("Error:"..e[1],(e[2] or ""))
+  print_log("error","[chest] Failed to execute Command: /setblock " .. x .. " " .. y .. " " .. z .. " minecraft:chest 1 replace "..datatag.."; Error message:"..e[1]..(e[2] or "").."")
  end
 end
 
-datatag = datatag.."],CustomName:\""..(advitem.q_color[q]).."Â§l"..firstToUpper(advitem.qualitys[q])..chest_types[chest_type].."ChestÂ§r\"}"
-
-a,e = commands.setblock(x,y,z,"minecraft:chest","1","replace",datatag)
---print(datatag)
-if(not a)then
- print("Error:"..e[1],(e[2] or ""))
- print_log("error","[chest] Failed to execute Command: /setblock " .. x .. " " .. y .. " " .. z .. " minecraft:chest 1 replace "..datatag.."; Error message:"..e[1]..(e[2] or "").."")
-end
-write(".\n")

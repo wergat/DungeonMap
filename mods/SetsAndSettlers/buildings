@@ -1,3 +1,6 @@
+-- Raw storage of building information and data
+-- For actual handling of buildings see   > village <
+
 -- Smith
 -- Airport
 -- Shipjard
@@ -25,26 +28,24 @@ local t = {
  -- ["upgrade"] = X
 }
 
-addBuildingData()
+
+
+function upgrade()
+
+end
 
 -- Returns building ID
-function addBuildingData(_table)
- table.insert(buildings,_table)
+function registerBuilding(_table)
+ local t = _table
+ -- Add building id to table for future reference or so
+ t["id"] = #buildings+1
+ table.insert(buildings,t)
  return #buildings
 end
 
 
-function getBuildings()
-
-
-
+function getBuildingByID(_buildingID)
+ return buildings[_buildingID]
 end
 
-function addBuilding()
-
-end
-
-function CheckForFreeSpace()
-
-
-end
+registerBuilding(t)

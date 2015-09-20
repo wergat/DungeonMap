@@ -1,17 +1,138 @@
 -- Village API
+dcore.requireAPI("resources")
+dcore.requireAPI("buildings")
 
 
 
+local cityData = {}
+	  cityData["ground"] = {}
+	  cityData["buildings"] = {}
+
+-- Input: Building ID
+
+local function reserveGroundForBuilding(k)
+ local startX = cityData["buildings"][k]["xPos"]
+ local startY = cityData["buildings"][k]["yPos"]
+ local buildingType = cityData["buildings"][k]["bID"]
+ local areaTable = buildings.getBuildingByID(buildingType)["area"]
+ 
+ -- For each areas
+ for i=1,#areaTable do
+  for x=startX+areaTable[i]["x1"],startX+areaTable[i]["x2"] do
+   for y=startY+areaTable[i]["y1"],startY+areaTable[i]["y2"] do
+    if(cityData["ground"][x]==nil)then cityData["ground"][x] = {} end
+ 	cityData["ground"][x][y] = true
+   end
+  end
+ end
+end
+	  
+function loadVillageData()
+ local fileHandle = fs.open(":dungeon/mods/SetsAndSettlers/saves/village","r")
+ if(fileHandle)then
+  local rawData = fileHandle.readAll()
+  fileHandle.close() --Just in case
+  local resources = textutils.unserialize(rawData)
+  if(#resources>0)then
+   for k,v in pairs(resources) do
+    cityData["buildings"][k] = v
+    reserveGroundForBuilding(k)
+   end
+   print("Loaded village data")
+  else
+   print("No village data was found; but the file was alright.")
+  end  
+ else
+  print("Could not open or find village data file")
+ end
+end
+
+function saveVillageData()
+ local fileHandle = fs.open(":dungeon/mods/SetsAndSettlers/saves/village","w")
+ local content = textutils.serialize(cityData["buildings"])
+ fileHandle.write(content)
+ fileHandle.close() --Just in case
+ print("Saved village data")
+end
+
+function removeBuilding(_buildingID)
+ local t = cityData["buildings"][_buildingID]
+ cityData["buildings"][_buildingID] = 0
+ 
+ 
+end
+
+-- So we don't build buildings into each other
+function isSpaceFree(x,y)
+ if(cityData["ground"][x] == nil)then
+  return true
+ else
+  if(cityData["ground"][x][y] == nil)then
+   return true
+  else
+   return not cityData["ground"][x][y]
+  end
+ end
+end
+
+
+function getAmountOfBuildings() return #cityData["buildings"] end
+function getBuildingDataByID(_id) return cityData["buildings"][_id] end
 
 
 -- Builds a building
-function build(_what,_x,_y)
-
-
-
-
-
-
-
-
+function placeBuilding(_buildingID,_x,_y)
+ -- Check for parameters!
+ 
+ local buildingData = buildings.getBuildingByID(_buildingID)
+ local canBuild = true
+ local whyNot = {}
+ 
+ 
+ -- Check for resource costs
+ for rn,rv in pairs(buildingData["cost"]) do
+  if(rv>resources.getResource(rn))then
+   canBuild = false
+   whyNot[#whyNot+1] = {["cause"] = "ner",["desc"] = rn}
+  end
+ end
+ 
+ -- Check for space
+ local startX = _x
+ local startY = _y
+ local areaTable = buildings.getBuildingByID(_buildingID)["area"]
+ 
+ -- For each areas
+ for i=1,#areaTable do
+  for x=startX+areaTable[i]["x1"],startX+areaTable[i]["x2"] do
+   for y=startY+areaTable[i]["y1"],startY+areaTable[i]["y2"] do
+    if(not isSpaceFree(x,y))then
+	 canBuild = false
+	 whyNot[#whyNot+1] = {["cause"] = "space",["x"] = x,["y"] = y}
+	end
+   end
+  end
+ end
+ 
+ -- If it can build, take away resources
+ if(canBuild)then
+  dcore.print_log("SetsAndSettlers","[Building] Added new building \""..buildings.getBuildingByID(_buildingID)["name"].."\" at ".._x.."/".._y.."!")
+  for rn,rv in pairs(buildingData["cost"]) do
+   resources.addResource(rn,-rv)
+  end
+  -- Save building in data
+  local t = {}
+  t["xPos"] = _x
+  t["yPos"] = _y
+  t["level"] = 1
+  t["bID"] = _buildingID
+  
+  table.insert(cityData["buildings"],t)
+  -- Override the ground data
+  reserveGroundForBuilding(#cityData["buildings"])
+ end
+ -- Returns true if building was build
+ return canBuild,whyNot
 end
+
+loadVillageData()

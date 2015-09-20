@@ -1,8 +1,6 @@
 {
-["version"] = "" -- Where the newest version number can be found
-
-
-
-
-
+ ["newestVersion"] = "" -- Where the newest version number can be found (online)
+ ["name"] = "Sets and Settlers"
+ ["author"] = "Wergat"
+ ["active"] = false
 }

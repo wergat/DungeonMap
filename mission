@@ -1,0 +1,403 @@
+term.clear()
+
+os.loadAPI(":dungeon/apis/dcore")
+dcore.requireAPI("advitem")
+dcore.requireAPI("mission")
+dcore.requireAPI("vehicle")
+dcore.requireAPI("farben")
+
+-- UI, down/up scrolling for missions
+scrolled = 1
+selected = 1
+secondScrolled = 1
+secondSelected = 1
+-- 0 = Mission selection
+-- 1 = Mission view [Scrollable trough missions]
+-- 2 = Special selection NOT [Scrollable trough missions]
+-- 3 = Start
+uimode = 0
+selectMode = 0
+
+
+
+sortFor = ""
+sortDir = true
+
+missionSettings = {["vehicle"] = 1}
+
+
+
+local mx,my = term.getSize()
+
+missions = mission.getMissions()
+vehicles = vehicle.getVehicles()
+
+
+
+
+-- name: name of vehicle
+-- type: where you can use it [land,naval,aerial]
+-- chance: reduction of failure chance, higher = better
+-- xp: xp of vehicle
+-- quality, random on spawn, might be changed???
+
+
+ local missionTypes = {"Land","Naval","Aerial"}
+
+-- Names:
+-- blockade of
+
+
+function printMissions()
+ for i=scrolled,math.min(#missions,my-6+scrolled) do
+  term.setTextColor(colors.white)
+  if(i%2==1)then term.setBackgroundColor(colors.gray) else term.setBackgroundColor(colors.black) end
+  term.setCursorPos(1,5+i-scrolled)
+  term.clearLine()
+  
+  
+  if(selected==i)then term.setBackgroundColor(colors.white) term.setTextColor(colors.black) write("> ") else write("  ") end
+  
+  local rarityColor = farben.qColorToCCColor(advitem.q_color[missions[i]["rarity"]])
+  
+  
+  local name = string.sub(missions[i]["name"].."               ",1,20)
+  local xpreward = string.sub(missions[i]["reward"].."       ",1,7)
+  local place = string.sub(missionTypes[missions[i]["type"]].."       ",1,6)
+  local chance = string.sub((math.floor(((missions[i]["baseChance"]+((1-missions[i]["baseChance"])/10))*100)+0.5)).."%     ",1,5)
+  term.setTextColor(rarityColor)
+  if(selected==i and rarityColor==colors.white)then term.setTextColor(colors.black) end
+  write(name)
+  if(selected==i)then term.setTextColor(colors.black) else term.setTextColor(colors.white) end
+  write("| "..xpreward.."| "..place.." | "..chance.."      ")  
+ end
+ term.setBackgroundColor(colors.black)
+ term.setTextColor(colors.white)
+end
+
+function sortMissions(forWhat,reverse)
+ local reverse = reverse or false
+ local sortarray = missions
+ local newArray = {}
+ local keys = {}
+ for k in pairs(sortarray) do keys[#keys+1] = k end
+ if(forWhat)then
+  if(reverse)then
+   table.sort(keys, function(a,b) return sortarray[b][forWhat] > sortarray[a][forWhat] end)
+  else
+   table.sort(keys, function(a,b) return sortarray[b][forWhat] < sortarray[a][forWhat] end)
+  end
+ else table.sort(keys) end
+ missions = {}
+ for k,v in pairs(keys) do
+  missions[k] = sortarray[v]
+ end
+end
+
+function ShowMission(missionID)
+ term.setCursorPos(20,3)
+ term.clearLine()
+ write(missions[missionID]["name"])
+ term.setCursorPos(2,5)
+ term.clearLine()
+ write("This is a ")
+ term.setTextColor(farben.qColorToCCColor(advitem.q_color[missions[missionID]["rarity"]]))
+ write(advitem.qualitys[missions[missionID]["rarity"]])
+ term.setTextColor(colors.white)
+ write(" mission")
+ 
+ 
+ term.setCursorPos(2,6)
+ term.clearLine()
+ local chance = (math.floor(missions[missionID]["baseChance"]*1000)/10)
+ write(string.sub(chance.."% base chance of success       ",1,30))
+ 
+ term.setCursorPos(2,7)
+ term.clearLine()
+ write(string.sub(missions[missionID]["reward"].."XP reward         ",1,20)) 
+ term.setCursorPos(1,1)
+
+ 
+ 
+ if(uimode>=1)then
+  local foundVehicles = {}
+  for i=1,#vehicles do
+   if(vehicles[i]["type"] == missions[missionID]["type"])then
+    table.insert(foundVehicles,i)
+   end
+  end
+  
+  term.setCursorPos(2,8)
+  term.clearLine()
+  write(string.sub(vehicles[foundVehicles[secondSelected]]["name"].." selected for transportation",1,mx)) 
+
+
+  -- change change based on selected vehicle
+  chance = chance+((100-chance)*(vehicles[foundVehicles[missionSettings["vehicle"]]]["chance"]))
+  chance = math.floor((chance*10)+0.5)/10
+ else
+  chance = math.floor(((chance+((100-chance)/10))*10)+0.5)/10
+ end
+ 
+ 
+ 
+ 
+ 
+ 
+ local startX,startY = 1,11
+ 
+ for i=1,7 do term.setCursorPos(1,startY+i) term.clearLine() end
+ 
+ for i=1,4 do
+  local function drawPixel(x,y)
+   term.setCursorPos(startX+(i-1)*6+x,startY+y)
+   if(chance<50)then
+    term.setBackgroundColor(colors.red)
+   elseif(chance<60)then
+    term.setBackgroundColor(colors.orange)
+   elseif(chance<80)then
+    term.setBackgroundColor(colors.yellow)
+   elseif(chance<95)then
+    term.setBackgroundColor(colors.lime)
+   else
+    term.setBackgroundColor(colors.green)
+   end
+   write(" ")
+   term.setBackgroundColor(colors.black)
+  end
+  
+  local function drawPixels(_table)
+   for i=1,#_table do
+    drawPixel(_table[i][1],_table[i][2])
+   end   
+  end
+  
+  local char = ""
+  if(string.sub(chance,i,i)=="")then
+   if(i==3)then
+    char = "."
+   else
+    char = "0"
+   end
+  else
+   char = string.sub(chance,i,i)
+  end
+  
+  if(char=="0")then drawPixels({{1,1},{1,2},{1,3},{1,4},{1,5},{1,6},{1,7},{2,1},{2,7},{3,1},{3,7},{4,1},{4,7},{5,1},{5,2},{5,3},{5,4},{5,5},{5,6},{5,7}})
+  elseif(char=="1")then drawPixels({{5,1},{5,2},{5,3},{5,4},{5,5},{5,6},{5,7}})
+  elseif(char=="2")then drawPixels({{1,1},{1,4},{1,5},{1,6},{1,7},{2,1},{2,4},{2,7},{3,1},{3,4},{3,7},{4,1},{4,4},{4,7},{5,1},{5,2},{5,3},{5,4},{5,7}})
+  elseif(char=="3")then drawPixels({{1,1},{1,4},{1,7},{2,1},{2,4},{2,7},{3,1},{3,4},{3,7},{4,1},{4,4},{4,7},{5,1},{5,2},{5,3},{5,4},{5,5},{5,6},{5,7}})
+  elseif(char=="4")then drawPixels({{1,1},{1,2},{1,3},{1,4},{2,4},{3,4},{4,4},{5,1},{5,2},{5,3},{5,4},{5,5},{5,6},{5,7}})
+  elseif(char=="5")then drawPixels({{1,1},{1,2},{1,3},{1,4},{1,7},{2,1},{2,4},{2,7},{3,1},{3,4},{3,7},{4,1},{4,4},{4,7},{5,1},{5,4},{5,5},{5,6},{5,7}})
+  elseif(char=="6")then drawPixels({{1,1},{1,2},{1,3},{1,4},{1,5},{1,6},{1,7},{2,1},{2,4},{2,7},{3,1},{3,4},{3,7},{4,1},{4,4},{4,7},{5,1},{5,4},{5,5},{5,6},{5,7}})
+  elseif(char=="7")then drawPixels({{1,1},{5,1},{2,1},{3,1},{4,1},{5,2},{5,3},{5,4},{5,5},{5,6},{5,7}})
+  elseif(char=="8")then drawPixels({{1,1},{1,2},{1,3},{1,4},{1,5},{1,6},{1,7},{2,1},{2,4},{2,7},{3,1},{3,4},{3,7},{4,1},{4,4},{4,7},{5,1},{5,2},{5,3},{5,4},{5,5},{5,6},{5,7}})
+  elseif(char=="9")then drawPixels({{1,1},{1,2},{1,3},{1,4},{1,7},{2,1},{2,4},{2,7},{3,1},{3,4},{3,7},{4,1},{4,4},{4,7},{5,1},{5,2},{5,3},{5,4},{5,5},{5,6},{5,7}})
+  elseif(char==".")then drawPixels({{1,7}}) startX = startX - 4
+  end
+ end
+ 
+ if(uimode==2)then
+  if(selectMode==2)then -- VEHICLES
+   local foundVehicles = {}
+   for i=1,#vehicles do
+    if(vehicles[i]["type"] == missions[missionID]["type"])then
+     table.insert(foundVehicles,i)
+    end
+   end
+   term.setCursorPos(2,2)
+   term.setCursorPos(2,3)
+   for i=secondScrolled,math.min(#foundVehicles,my-13+secondScrolled) do
+    term.setTextColor(colors.white)
+    if(i%2==1)then term.setBackgroundColor(colors.gray) else term.setBackgroundColor(colors.black) end
+    term.setCursorPos(23,12+i-secondScrolled)
+    if(secondSelected==i)then term.setBackgroundColor(colors.white) term.setTextColor(colors.black) write("> ") else write("  ") end
+    local name = string.sub(vehicles[foundVehicles[i]]["name"].."               ",1,15)
+    local chance = string.sub((vehicles[foundVehicles[i]]["chance"]*100).."     ",1,5)
+    local level = string.sub(vehicles[foundVehicles[i]]["xp"].."       ",1,3)
+    write(name.."| "..chance.."| "..level.."") 
+    term.setBackgroundColor(colors.black)
+    term.setTextColor(colors.white)
+   end 
+  end
+ end
+end
+
+function updateGUI()
+ if(uimode==0)then -- Show all missions
+  term.setCursorPos(15,1)
+  write("Select a mission")
+  term.setCursorPos(1,2)
+  write("----------------------+--------+--------+-----------")
+  term.setCursorPos(1,3)
+  write(" Mission Name        ")
+  if(sortFor == "Name")then if(sortDir)then write("^") else write(",") end else write(" ") end
+  write("| Reward")
+  if(sortFor == "Reward")then if(sortDir)then write("^") else write(",") end else write(" ") end
+  write("| Type  ")
+  if(sortFor == "Type")then if(sortDir)then write("^") else write(",") end else write(" ") end
+  write("| Chance  ")
+  if(sortFor == "Chance")then if(sortDir)then write("^") else write(",") end else write(" ") end
+  term.setCursorPos(1,4)
+  write("----------------------+--------+--------+-----------")
+  printMissions()
+ elseif(uimode==1)then
+  ShowMission(selected)
+  term.setCursorPos(15,1)
+  if(selectMode==1)then -- VEHICLES
+   write("View threats for mission #"..missions[selected]["id"].."      ")
+   for t=1,#missions[selected]["threats"] do
+	term.setCursorPos(23,13+t) write(missions[selected]["threats"][t]["name"])
+   end
+  else
+   write("Informations about mission #"..missions[selected]["id"].."     ")
+  end
+  if(selectMode==0)then
+   term.setCursorPos(23,13) write("[T] view threats")
+   term.setCursorPos(23,15) write("[V] select vehicle")
+   term.setCursorPos(23,16) write("[G] select group")
+   term.setCursorPos(23,17) write("[R] select resources")
+  end
+ elseif(uimode==2)then
+  ShowMission(selected)
+  term.setCursorPos(15,1)
+  if(selectMode==1)then
+   write("View threats for mission #"..missions[selected]["id"].." ")
+   for t=1,#missions[selected]["threats"] do
+	term.setCursorPos(23,13+t) write(missions[selected]["threats"][t]["name"])
+   end
+  elseif(selectMode==2)then -- VEHICLES
+   write("Select vehicle for mission #"..missions[selected]["id"].." ")
+  elseif(selectMode==3)then
+   write("Select group for mission #"..missions[selected]["id"].." ")
+  elseif(selectMode==4)then
+   write("Select resources for mission #"..missions[selected]["id"].." ")
+  else
+   write("Equipment selection for mission #"..missions[selected]["id"].." ")
+   term.setCursorPos(23,13) write("[T] view threats")
+   term.setCursorPos(23,15) write("[V] select vehicle")
+   term.setCursorPos(23,16) write("[G] select group")
+   term.setCursorPos(23,17) write("[R] select resources")
+  end
+ end
+end
+
+updateGUI()
+
+while (uimode>=0) do
+ local event,key,isHeld,y = os.pullEvent()
+ if(event == "key")then
+  if(key==28 or key==205)then -- Enter
+   uimode = uimode + 1
+   if(uimode==2)then secondScrolled = 1 end
+   term.clear()
+   if((uimode==3 and selectMode<4) or (uimode==2 and selectMode==1))then uimode = 2 selectMode = selectMode + 1 end
+   if(uimode==2 and selectMode==0)then selectMode = 1 end
+   updateGUI()
+  elseif(key==203)then -- Escape
+   uimode = uimode - 1
+   term.clear()
+   
+   if(selectMode>0 and uimode==1)then selectMode=0 uimode=2 end
+   if(uimode==0 and selectMode==1)then uimode = 1 end
+   selectMode = 0
+   --if(uimode==2 and selectMode==0)then uimode = 1 end
+   
+   if(uimode<2)then secondSelected = 1 missionSettings["vehicle"] = 1 end
+   updateGUI()
+  elseif(tostring(keys.getName(key)) == "t")then -- T
+   if(selectMode==1)then selectMode = 0 else selectMode = 1 end
+   updateGUI()
+  elseif(tostring(keys.getName(key)) == "v")then -- V
+   if(selectMode==2)then selectMode = 0 uimode = 2 else selectMode = 2 uimode = 2 end
+   updateGUI()
+  elseif(tostring(keys.getName(key)) == "g")then -- F
+   if(selectMode==3)then selectMode = 0 uimode = 2 else selectMode = 3 uimode = 2 end
+   updateGUI()
+  elseif(tostring(keys.getName(key)) == "r")then -- R
+   if(selectMode==4)then selectMode = 0 uimode = 2 else selectMode = 4 uimode = 2 end
+   updateGUI()
+  elseif(key==17 or key==200)then -- Up
+   if(uimode<2)then
+    if(selected-3<scrolled)then scrolled = scrolled - 1 end
+    if(scrolled<1)then scrolled = 1 end
+
+    selected = selected - 1
+    if(selected<1)then selected = 1 end
+   elseif(selectMode==2)then
+    if(secondSelected-3<secondScrolled)then secondScrolled = secondScrolled - 1 end
+    if(secondScrolled<1)then secondScrolled = 1 end
+
+    secondSelected = secondSelected - 1
+    if(secondSelected<1)then secondSelected = 1 end
+	if(selectMode==2)then missionSettings["vehicle"] = secondSelected end
+   end
+   updateGUI()
+  elseif(key==31 or key==208)then -- Down
+   if(uimode<2)then
+    if(selected>my-9+scrolled and selected+3<=#missions)then scrolled = scrolled + 1 end
+    if(scrolled>#missions)then scrolled = #missions end
+   
+    selected = selected + 1
+    if(selected>#missions)then selected = #missions end
+   elseif(selectMode==2)then
+    local foundVehicles = 0
+    for i=1,#vehicles do if(vehicles[i]["type"] == missions[selected]["type"])then foundVehicles = foundVehicles + 1 end end
+    if(secondSelected>my-14+secondScrolled and secondSelected+3<=foundVehicles)then secondScrolled = secondScrolled + 1 end
+    if(secondScrolled>foundVehicles)then secondScrolled = foundVehicles end
+   
+    secondSelected = secondSelected + 1
+    if(secondSelected>foundVehicles)then secondSelected = foundVehicles end
+	if(selectMode==2)then missionSettings["vehicle"] = secondSelected end
+   end
+   updateGUI()
+  end
+ elseif(event=="mouse_click")then -- MOOUSE UI CONTROLL
+  if(uimode==0)then
+   term.setCursorPos(1,1)
+   write(string.sub(isHeld.."/"..y.."      ",1,14))
+   local x = isHeld
+   -- Select Reward
+   if(y==1 and x==1)then 
+    if(sortFor == "Rarity")then
+	 sortDir = not sortDir
+	 if(sortDir)then sortFor = "" sortMissions("id",true) else sortMissions("rarity",sortDir) end
+    else sortFor = "Rarity" sortMissions("rarity",sortDir) sortDir = true end
+   end
+   if(y==3 and x>=1 and x<=22)then 
+    if(sortFor == "Name")then
+	 sortDir = not sortDir
+	 if(sortDir)then sortFor = "" sortMissions("id",true) else sortMissions("name",sortDir) end
+    else sortFor = "Name" sortMissions("name",sortDir) sortDir = true end
+   end
+   if(y==3 and x>=25 and x<=31)then
+    if(sortFor == "Reward")then
+	 sortDir = not sortDir
+	 if(sortDir)then sortFor = "" sortMissions("id",true) else sortMissions("reward",not sortDir) end
+    else sortFor = "Reward" sortMissions("reward",not sortDir) sortDir = true end
+   end
+   if(y==3 and x>=33 and x<=40)then
+    if(sortFor == "Type")then
+	 sortDir = not sortDir
+	 if(sortDir)then sortFor = "" sortMissions("id",true) else sortMissions("type",not sortDir) end
+    else sortFor = "Type" sortMissions("type",not sortDir) sortDir = true end
+   end
+   if(y==3 and x>=42 and x<=51)then
+    if(sortFor == "Chance")then
+	 sortDir = not sortDir
+	 if(sortDir)then sortFor = "" sortMissions("id",true) else sortMissions("baseChance",not sortDir) end
+    else sortFor = "Chance" sortMissions("baseChance",not sortDir) sortDir = true end
+   end
+   if(y>=5)then
+    selected = y-5+scrolled
+   end   
+   updateGUI()
+  end
+ end
+end
+
+print("")
+
+
+
+

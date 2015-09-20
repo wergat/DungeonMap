@@ -150,6 +150,8 @@ end
 function getNBTStringFromTable(t)
  return "{"..string.sub(tableToNBT(t),1,-2).."}"
 end
+
+
 function scanG()
  local i = 0
  local text = ""

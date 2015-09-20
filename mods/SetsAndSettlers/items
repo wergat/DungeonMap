@@ -1,0 +1,61 @@
+local function count(input)
+ local int = 0
+ for k,v in pairs(input) do
+  int = int+1
+ end
+ return int
+end
+
+function addSetToItem(_itemID,_setID)
+ local itemTable = items.getItem(_itemID)
+ if(not itemTable["sets"])then itemTable["sets"] = {} end
+ table.insert(itemTable["sets"],_setID)
+ items.setItem(_itemID,itemTable)
+end
+
+function addSetToItems(_itemIDs,_setID)
+ for i=1,#_itemIDs do
+  addSetToItem(_itemIDs[i],_setID)
+ end
+end
+ 
+
+local itemSets = {}
+ -- {["name"] = [setname],["pre"] = [set pre-name],{[hand],[feet],[legs],[chest],[head]}},...
+ -- itemSets[] = {["name"] = "",["pre"] = "",["items"] = {"","","","",""}}
+ 
+ 
+
+ 
+ -- 1-10 basic sets
+ itemSets[1] = {["name"] = "Villagers cloths",["pre"] = "Villager's",["items"] = {"Defender","Run-a-way boots","Leggings","Protection","Helmet"}}
+ addSetToItems({268,298,299,300,301},1) 
+ itemSets[2] = {["name"] = "Zombies's best",["pre"] = "Zombies's",["items"] = {"Head-opener","Chasers","Leggings","Chestplate","Head Protection"}}
+ addSetToItems({272,302,303,304,305},2) 
+ itemSets[3] = {["name"] = "Blacksmith's ware",["pre"] = "Reinforced",["items"] = {"Sword","Treads","Leggings","Chestplate","Helmet"}}
+ addSetToItems({267,306,307,308,309},3)
+ itemSets[4] = {["name"] = "Pigmen's treasure",["pre"] = "Pigmen's",["items"] = {"Sword","Boots","Leggings","Chestplate","Helmet"}}
+ addSetToItems({283,314,315,316,317},4)
+ itemSets[5] = {["name"] = "Steve's collection",["pre"] = "Steve's",["items"] = {"Bow","Boots","Leggings","Chestplate","Helmet"}}
+ addSetToItems({261,310,311,312,313},5)
+ 
+-- 100+ Makers/Testers/Supporters Sets
+ itemSets[101] = {["name"] = "Wergat's arsenal",["pre"] = "Wergat's",["items"] = {"Executer","Treads","Pace","Tunic","Helmet"}}
+ addSetToItems({267,300,306,307,309},101)
+ --itemSets[103] = {["name"] = "",["pre"] = "",["items"] = {"","","","",""}}
+ --addSetToItems({,,,,},)
+ 
+ 
+
+
+function getSetByID(_setId)
+ return itemSets[_setId]
+end
+
+function getRandomSetIDByItem(_itemId)
+ local setsToChooseFrom = #getItem(_itemId)["sets"]
+ if(setsToChooseFrom<1 or getItem(_itemId)["sets"]==nil)then return nil else
+  local choosenSet = math.random(setsToChooseFrom)
+  return getItem(_itemId)["sets"][choosenSet]
+ end
+end

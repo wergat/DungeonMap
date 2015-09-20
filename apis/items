@@ -1,30 +1,3 @@
-local function count(input)
- local int = 0
- for k,v in pairs(input) do
-  int = int+1
- end
- return int
-end
-
-local itemSets = {}
- -- {["name"] = [setname],["pre"] = [set pre-name],{[hand],[feet],[legs],[chest],[head]}},...
- -- itemSets[] = {["name"] = "",["pre"] = "",["items"] = {"","","","",""}}
- 
- -- 1-10 basic sets
- itemSets[1] = {["name"] = "Villagers cloths",["pre"] = "Villager's",["items"] = {"Defender","Run-a-way boots","Leggings","Protection","Helmet"}}
- itemSets[2] = {["name"] = "Zombies's best",["pre"] = "Zombies's",["items"] = {"Head-opener","Chasers","Leggings","Chestplate","Head Protection"}}
- itemSets[3] = {["name"] = "Blacksmith's ware",["pre"] = "Reinforced",["items"] = {"Sword","Treads","Leggings","Chestplate","Helmet"}}
- itemSets[4] = {["name"] = "Pigmen's treasure",["pre"] = "Pigmen's",["items"] = {"Sword","Boots","Leggings","Chestplate","Helmet"}}
- itemSets[5] = {["name"] = "Steve's collection",["pre"] = "Steve's",["items"] = {"Bow","Boots","Leggings","Chestplate","Helmet"}}
- 
- -- 100+ Makers/Testers/Supporters Sets
- itemSets[101] = {["name"] = "Wergat's arsenal",["pre"] = "Wergat's",["items"] = {"Executer","Treads","Pace","Tunic","Helmet"}}
- itemSets[103] = {["name"] = "",["pre"] = "",["items"] = {"","","","",""}}
- 
- 
- 
-local amountOfSets = count(itemSets)
- 
 local items = {}
 
  -- Weapons
@@ -73,15 +46,11 @@ function getItem(itemID)
  return items[itemID]
 end
 
-function setItem(itemID,name,sets,durability)
- if(items[itemID]~=nil)then
-  if((tonumber(items[itemID]) or 0) > 0)then
-   items[itemID] = {["name"] = name,["sets"] = sets,["durability"] = durability}
-  else
-   dcore.Error("Item ID "..tostring(item_id).." invalid",2)
-  end
+function setItem(itemID,data)
+ if((tonumber(itemID) or 0) > 0)then
+  items[itemID] = data
  else
-  dcore.Error("Item ID "..tostring(item_id).." not set",2)
+  dcore.Error("Item ID "..tostring(itemID).." invalid",2)
  end
 end
  
@@ -111,17 +80,5 @@ function getDurability(itemID)
   else
    dcore.Error("Durability for Item ID "..tostring(itemID).." could not be found",2)
   end
- end
-end
-
-function getSetByID(set_id)
- return itemSets[set_id]
-end
-
-function getRandomSetIDByItem(item_id)
- local setsToChooseFrom = #items[item_id]["sets"]
- if(setsToChooseFrom<1 or items[item_id]["sets"]==nil)then return nil else
-  local choosenSet = math.random(setsToChooseFrom)
-  return items[item_id]["sets"][choosenSet]
  end
 end

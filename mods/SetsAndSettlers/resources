@@ -1,0 +1,44 @@
+-- Wood
+-- Stone
+-- Wheat
+-- Clay
+-- Iron
+
+
+local inStorage = {}
+
+
+function loadResourceData()
+ local fileHandle = fs.open(":dungeon/mods/SetsAndSettlers/saves/resources","r")
+ local rawData = fileHandle.readAll()
+ fileHandle.close() --Just in case
+ local resources = textutils.unserialize(rawData)
+ for k,v in pairs(resources) do
+  inStorage[k] = v
+ end
+ print("Loaded resources")
+ 
+end
+
+function saveResourceData()
+ local fileHandle = fs.open(":dungeon/mods/SetsAndSettlers/saves/resources","w")
+ local content = textutils.serialize(inStorage)
+ fileHandle.write(content)
+ fileHandle.close() --Just in case
+end
+
+function getResource(_resourceName)
+ return inStorage[_resourceName] or 0
+end
+
+function setResource(_resourceName,_value)
+ if(inStorage[_resourceName] == nil)then dcore.print_log("SetsAndSettlers","[Resources] Added new resource \"".._resourceName.."\"") inStorage[_resourceName] = 0 end
+ inStorage[_resourceName] = _value
+end
+
+function addResource(_resourceName,_value)
+ if(inStorage[_resourceName] == nil)then dcore.print_log("SetsAndSettlers","[Resources] Added new resource \"".._resourceName.."\"") inStorage[_resourceName] = 0 end
+ inStorage[_resourceName] = inStorage[_resourceName] + _value
+end
+
+loadResourceData()
