@@ -303,7 +303,8 @@ function getEquipment(_dlevel,_typeOfItem,_mobname,_forceQ)
   -- Colored Armor
   
   -- rework, bacuse t and i are not existing anymore!
-  if(t==1 and i>1 and math.floor(100)>1)then
+  if(getItemData("tier")==1 and getItemData("slot")>1 and math.floor(100)>1)then
+   print("LEATHER ARMOR")
    local a,b = advitem.getColorOfArmor()
    setItemData("color",a)
    colorValue = b
