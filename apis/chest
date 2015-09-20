@@ -129,7 +129,7 @@ function getChestData(_startDifficulty,_chestType)
    local moreInfo = false
   
    if(items_choosen>0)then
-    itemDataTable,moreInfo = advitem.getEquipment((difficulty*2),nil,"player",7)
+    itemDataTable,moreInfo = advitem.getEquipment((difficulty*2),nil,"player",1)
    else
     itemDataTable,moreInfo = advitem.getEquipment((_startDifficulty*2),nil,"player",chestRarity)
    end
