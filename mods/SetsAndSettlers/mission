@@ -1,6 +1,12 @@
 dcore.requireAPI("threats")
+dcore.requireAPI("advitem")
+dcore.requireAPI("items")
+dcore.requireAPI("tick")
+dcore.requireAPI("people")
 
 local missions = {}
+local missionUUIDCOunter = 1
+local activeMission = {}
 
 function getNewMission()
  local missionTypes = {"Land","Naval","Aerial"}
@@ -20,6 +26,9 @@ function getNewMission()
  -- higher with higher rarity of mission
  mission["reward"] = math.floor((1/mission["baseChance"])*(900+math.random(200))*((9+mission["rarity"])/10)/10)*10+math.random(10)
  
+ -- Duration in ticks
+ mission["duration"] = 60+math.random(20)
+ 
  mission["threats"] = {}
  mission["threats"][1] = threats.getRandomThreat(mission["type"])
  if(math.random(2)==1)then
@@ -37,16 +46,52 @@ function getNewMission()
  -- name of the mission
  mission["name"] = missionTypes[mission["type"]].." "..randomNameWords[math.random(#randomNameWords)]
  mission["id"] = #missions+1
+ mission["uuid"] = missionUUIDCOunter
+ missionUUIDCOunter = missionUUIDCOunter + 1
  return mission
 end
 
-function startMission(_vehicleID,_group,_resources)
+function getMissionByUUID(_uuid)
+ for i=1,#missions do
+  if(missions[i]["uuid"] == _uuid)then return missions[i] end
+ end
+end
+
+function startMission(_missionID,_vehicleID,_group,_resources)
  local canStart = true
  local whyNot = ""
  
+ local storageRequired = 0
+ local storageGiven = getVehicleById(_vehicleID)["storage"] + #_group * getVehicleById(_vehicleID)["storagePerPerson"]
+ 
+ -- Check for storage capacities!
+  for i=1,#_group do
+   storageRequired = storageRequired + people.getPersonById(_group[i])["weight"]
+  end
+  
+  for i=1,#_resources do
+   storageRequired = storageRequired + items.getWeightOfItem(_resources[i]["id"])*_resources[i]["amount"]
+  end
+ 
+ if(storageRequired>storageRequired)then
+  canStart = false
+  whyNot = "storageLimitReached"
+ end
+ 
+ -- More checks...
  
  
- 
+ if(canStart)then
+  local missionData = getMissionByUUID(_missionID)
+  local missionTable = {}
+  missionTable["crew"] = _group
+  missionTable["resources"] = _resources
+  missionTable["vehicle"] = _vehicleID
+  missionTable["missionID"] = _missionID
+  missionTable["duration"] = missionData["duration"]
+  print(missionData["name"].." started!")
+  table.insert(activeMission,missionTable)
+ end
  
  return canStart,whyNot
 end
@@ -59,7 +104,13 @@ function getMissions()
  return missions
 end
 
-function startMission(_missionID,_vehicleID,_moar)
-
-
+function missionTick()
+ for i = 1,#activeMission do
+  activeMission[i]["duration"] = activeMission[i]["duration"] - 1
+  if(activeMission[i]["duration"]<=0)then
+   print(getMissionByUUID(activeMission[i]["missionID"])["name"].." ended!")
+  end
+ end
 end
+
+tick.add(missionTick)

@@ -1,0 +1,13 @@
+local f = {}
+function add(_newF)
+ table.insert(f,_newF)
+end
+
+function run()
+ while true do
+  for i=1,#f do
+   f[i]()
+  end
+  sleep(0.05)
+ end
+end

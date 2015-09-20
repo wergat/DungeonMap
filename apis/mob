@@ -71,6 +71,7 @@ function setEquipmentOfMob()
    table.insert(equipment,itemTable)
    addOnMobData("level",info["value"])
   else
+   if(getMobData("mobType") == "ranged_skeleton" and i==1)then setMobData("mobType","melee_skeleton") end
    table.insert(equipment,{})
   end
  end

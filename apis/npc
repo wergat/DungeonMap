@@ -1,0 +1,218 @@
+dcore.requireAPI("tick")
+
+local npcs = {}
+local dialogueData = {}
+local openDialogId = {}
+
+-- Currently disabled
+function print_log(file,...)
+ --dcore.print_log(file,...)
+end
+
+function ezCmd(command,_r,_errorOutput)
+ local a,b = commands.exec(command)
+ local errorOutput = _errorOutput or false
+ if(not a and errorOutput)then
+  local errorText = "Error while executing command:"..command
+  for i=1,#b do
+   errorText = errorText..(b[i] or "?")
+  end
+  print_log("cmd",errorText)
+ end
+ local r = _r or 0
+ if(r==1)then
+  return a
+ elseif(r==2)then
+  return b
+ elseif(r==3)then
+  return a,b
+ end 
+end
+
+function dialogueCheckForDialogueAnswers()
+ for j=1,#openDialogId do
+  local a = ezCmd("/scoreboard players list "..j,2)
+  for i=2,#a do
+   if(scoreboard_GetObjective(a[i])=="dc_dialog")then
+    local v = scoreboard_GetValue(a[i]) or 0
+    if(v>0)then
+	 -- openDialogId[j] == UUID
+	 local npc = dialogdata[openDialogId[j]]["npc"]
+	 local dialogID = dialogdata[openDialogId[j]]["dialog"]
+ 
+	 if(not npcs[npc]["dialogs"][dialogID]["answered"])then
+	  if(npcs[npc]["dialogs"][dialogID]["showed"])then
+	   print_log("dialog","- [ODID:"..j.."][UUID:"..openDialogId[j].."] found answer to dialog "..dialogID.." with \""..npcs[npc]["name"].."\" ("..npc.."); Answer is \""..npcs[npc]["dialogs"][dialogID]["answers"][v].."\" ("..v..") and valid")
+	   npcs[npc]["dialogs"][dialogID]["answered"] = true
+	   npcs[npc]["dialogs"][dialogID]["showed"] = false
+	   TriggerFunction(npc,dialogID,v)
+	  else
+	   print_log("dialog","- [ODID"..j.."][UUID:"..openDialogId[j].."] found answer to dialog "..dialogID.." with \""..npcs[npc]["name"].."\" ("..npc.."); Answer is "..v.." but invalid, because dialog itself has not been displayed yet!")
+	  end
+	 else
+	  print_log("dialog","- [ODID"..j.."][UUID:"..openDialogId[j].."] found answer to dialog "..dialogID.." with \""..npcs[npc]["name"].."\" ("..npc.."); Answer is "..v.." but invalid")
+	 end
+	 ezCmd("/scoreboard players set "..j.." dc_dialog 0")
+	end
+   end
+  end
+ end
+end
+
+function dialogueCheckForStart()
+ for npcID=1,#npcs do
+  local dialog_open = false
+  local dialogID = 1
+  if(npcs[npcID]["trigger"]["t"] == "range")then
+   local isInside = ezCmd("/testfor @p[r="..npcs[npcID]["trigger"]["range"]..",x="..npcs[npcID]["x"]..",y="..npcs[npcID]["y"]..",z="..npcs[npcID]["z"].."]",1,false)
+   --write(npcs[npcID]["trigger"]["o"])
+   if(npcs[npcID]["trigger"]["o"]=="gotIn")then -- Fixxen
+    dialog_open = (not npcs[npcID]["trigger"]["wasIn"] and isInside)
+	npcs[npcID]["trigger"]["wasIn"] = isInside
+   end
+   if(npcs[npcID]["trigger"]["o"]=="isIn")then
+    dialog_open = isInside
+   end
+   if(npcs[npcID]["trigger"]["o"]=="gotOut")then
+    dialog_open = (npcs[npcID]["trigger"]["wasIn"] and not isInside)
+	npcs[npcID]["trigger"]["wasIn"] = isInside
+	local dID = npcs[npcID]["trigger"]["dialog"]
+	if(dialog_open)then
+	 if(#npcs[npcID]["dialogs"][dID]["functions"]>#npcs[npcID]["dialogs"][dID]["answers"])then
+	  TriggerFunction(npcID,dID,#npcs[npcID]["dialogs"][dID]["functions"])
+	 end
+	end
+   end
+  end
+  
+  while (dialogID<=#npcs[npcID]["dialogs"] and dialog_open) do
+   if(npcs[npcID]["dialogs"][dialogID]["enabled"])then
+    if(npcs[npcID]["dialogs"][dialogID]["ODID"]==nil)then
+     npcs[npcID]["dialogs"][dialogID]["ODID"] = (#openDialogId+1)
+	 -- Insert dialog UUID to openDialogId
+	  print_log("dialog","# Added Dialog "..dialogID..",UUID:"..npcs[npcID]["dialogs"][dialogID]["id"]..",ODID:"..npcs[npcID]["dialogs"][dialogID]["ODID"].." to open dialogs")
+	 table.insert(openDialogId,npcs[npcID]["dialogs"][dialogID]["id"])
+	end
+    print_log("dialog","* Started Dialog "..dialogID..",UUID:"..npcs[npcID]["dialogs"][dialogID]["id"]..",ODID:"..npcs[npcID]["dialogs"][dialogID]["ODID"].." with \""..npcs[npcID]["name"].."\" ("..npcID..") and text: \""..npcs[npcID]["dialogs"][dialogID]["text"].."\"")
+
+	local json = '{"text":" ","color":"white","bold":"false","extra":[{"text":"'..npcs[npcID]["name"]..': ","bold":"true","color":"'..npcs[npcID]["color"]..'"},'..npcs[npcID]["dialogs"][dialogID]["text"]
+	math.randomseed(npcID)
+	for a=1,#npcs[npcID]["dialogs"][dialogID]["answers"] do
+	 local color = "white"
+	 while color==npcs[npcID]["color"] or color == "white" do
+	  color = chat_colors[math.random(#chat_colors)]
+	 end
+	 json = json..',{"text":" ['..npcs[npcID]["dialogs"][dialogID]["answers"][a]..']","color":"'..color..'","clickEvent":{"action":"run_command","value":"/scoreboard players set '..npcs[npcID]["dialogs"][dialogID]["ODID"]..' dc_dialog '..a..'"}}'
+	end
+    --print("* Started Dialog "..dialogID..",UUID:"..getUUIDOfDialog(npcID,dialogID)..",ODID:"..npcs[npcID]["dialogs"][dialogID]["ODID"].." with \""..npcs[npcID]["name"].."\" ("..npcID..")")
+	ezCmd('/tellraw @a '..json..']}',0,true)
+	npcs[npcID]["dialogs"][dialogID]["enabled"] = false
+	npcs[npcID]["dialogs"][dialogID]["showed"] = true
+   end
+   dialogID = dialogID + 1
+  end
+ end
+end
+
+function TriggerFunction(_npcID,_dID,_aID)
+ local f = npcs[_npcID]["dialogs"][_dID]["functions"][_aID]
+ if(type(f)=="table")then
+  if(#f==2)then
+   _G[f[1]](f[2])
+  elseif(#f>2)then
+   local arguments = {unpack(f)}
+   local function_name = f[1]
+   table.remove(arguments,1)
+   _G[function_name](unpack(arguments))
+  else
+   _G[f[1]]()
+  end
+ else
+  functions[f]()
+ end
+end
+
+function getUUIDOfDialog(_npcID,_dID) return npcs[_npcID]["dialogs"][_dID]["id"] end
+function enableDialog(_npcID,_dID) npcs[_npcID]["dialogs"][_dID]["enabled"] = true end
+function disableDialog(_npcID,_dID) npcs[_npcID]["dialogs"][_dID]["enabled"] = false end
+
+-- newDialogForNPC(npcID,[NBT Tags],_functions,_reputationdifferenz)
+
+function newDialogForNPC(_npcID,_text,_answers,_functions)
+ local arr = {["text"] = _text,["answers"] = _answers,["functions"] = _functions,["enabled"] = false,["answered"] = false,["showed"] = false}
+ table.insert(dialogdata,{["npc"] = _npcID,["dialog"] = (#npcs[_npcID]["dialogs"]+1)})
+ arr["id"] = #dialogdata
+ table.insert(npcs[_npcID]["dialogs"],arr)
+ 
+ print_log("dialog","+ Created Dialog for \""..npcs[_npcID]["name"].."\" (".._npcID..") with UUID "..arr["id"].." and inNPCID "..(#npcs[_npcID]["dialogs"]))
+ 
+ return #npcs[_npcID]["dialogs"]
+end
+
+function newNPCDialogueTrigger(_npcID,_dID,_trigger)
+ local trigger_array = {}
+ if(_trigger~=nil)then
+  if(type(_trigger)=="table")then
+   if(_trigger["t"]~=nil)then
+    if(_trigger["t"]=="range" or _trigger["t"]=="isInArea")then
+	 trigger_array = {["t"] = "range",["o"] = "isIn",["range"] = (_trigger["r"] or 3)}
+	elseif(_trigger["t"]=="entryArea")then
+	 trigger_array = {["t"] = "range",["o"] = "gotIn",["range"] = (_trigger["r"] or 3),["wasIn"] = (npcs[_npcID]["trigger"]["wasIn"] or false)}
+	elseif(_trigger["t"]=="leaveArea")then
+	 trigger_array = {["t"] = "range",["o"] = "gotOut",["range"] = (_trigger["r"] or 3),["wasIn"] = (npcs[_npcID]["trigger"]["wasIn"] or false)}
+	elseif(_trigger["t"]=="item")then
+	 if(type(_trigger["id"])=="number")then
+	  if((tonumber(_trigger["id"]) or 0) > 0)then
+	   trigger_array = {["t"] = "item",["id"] = _trigger["id"]}
+	   if(_trigger["damage"]~=nil)then trigger_array["damage"] = _trigger["damage"] end
+	   if(_trigger["name"]~=nil)then trigger_array["name"] = _trigger["name"] end
+	  else
+	   if(tonumber(_trigger["id"]) == 0)then
+	    trigger_array = {["t"] = "tookItem"}
+	   end
+	  end
+	 end
+	end
+   end
+  elseif(type(_trigger)=="number")then
+   trigger_array = {["t"] = "range",["o"] = "isIn",["range"] = _trigger}
+  elseif(_trigger=="range")then
+   trigger_array = {["t"] = "range",["o"] = "isIn",["range"] = 3}
+  elseif(_trigger=="tookItem")then
+   trigger_array = {["t"] = "tookItem"}
+  elseif(_trigger=="gaveItem")then
+   trigger_array = {["t"] = "gaveItem"}
+  elseif(_trigger=="switchedItem")then
+   trigger_array = {["t"] = "switchedItem"}
+  end
+ end
+ if(trigger_array["t"]==nil)then trigger_array = {["t"] = "range",["o"] = "isIn",["range"] = 3} end
+ trigger_array["dialog"] = _dID
+ print_log("dialog"," + New Trigger of type "..trigger_array["t"].." for (UUID:"..getUUIDOfDialog(_npcID,_dID).."/DID:".._dID..") for \""..npcs[_npcID]["name"].."\" (".._npcID..")")
+ npcs[_npcID]["trigger"] = trigger_array
+end
+
+function npcSetName(_id,_name) npcs[_id]["name"] = _name or "" end
+function npcSetColor(_id,_color) npcs[_id]["color"] = _color or "blue" end
+
+
+function newNPC(_name,_color,_x,_y,_z) -- Returns ID of created NPC
+ local npcData = {}
+ npcData.repuation = 0 -- How much that NPC likes you
+ npcData.dialogs = {} --{text,{answers},{functions},{reputationdifferenz},enabled}
+ npcData.name = _name or ""
+ npcData.color = _color or "blue"
+ npcData.trigger = {} --{["t"]=type,}
+ npcData.itemOnTable = false
+ npcData.itemTableCoords = {} 
+ npcData["x"] = _x
+ npcData["y"] = _y
+ npcData["z"] = _z
+ table.insert(npcs,npcData)
+ return #npcs -- Return ID of that just created npc
+end
+
+
+-- Dialogue answer checking
+tick.add(dialogueCheckForStart)
+tick.add(dialogueCheckForDialogueAnswers)

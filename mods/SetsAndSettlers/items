@@ -19,6 +19,10 @@ function addSetToItems(_itemIDs,_setID)
  end
 end
  
+-- TODO: This:
+function getWeightOfItem(_itemID)
+ return 1
+end
 
 local itemSets = {}
  -- {["name"] = [setname],["pre"] = [set pre-name],{[hand],[feet],[legs],[chest],[head]}},...
