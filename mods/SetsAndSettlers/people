@@ -10,14 +10,23 @@ function addCitizen(s,a,i,xp)
  newDude["int"] = i
  newDude["xp"] = xp
  newDude["name"] = names[math.random(#names)]
- 
+ newDude["weight"] = math.random(3)+2
+ newDude["job"] = {}
  
  
  table.insert(people,newDude)
 end
 
+function setJob(_personID,_jobTable)
+ people[_personID]["job"] = _jobTable
+end
+
 function getPeople()
  return people
+end
+
+function getPersonById(_id)
+ return people[_id]
 end
 
 function loadPeopleData()

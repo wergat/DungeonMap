@@ -1,0 +1,7 @@
+function getObjective(data)
+ return string.sub(string.match(string.match(data,"([^,]+):([^,]+)")," .*"),2,-1)
+end
+
+function getValue(data)
+ return tonumber(string.sub(string.match(string.match(data,":([^,]+)")," .* "),2,-2))
+end
