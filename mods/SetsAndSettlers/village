@@ -8,8 +8,8 @@ local cityData = {}
 	  cityData["ground"] = {}
 	  cityData["buildings"] = {}
 
-	  
-	  -- Input: Building ID
+-- Input: Building ID
+
 local function reserveGroundForBuilding(k)
  local startX = cityData["buildings"][k]["xPos"]
  local startY = cityData["buildings"][k]["yPos"]

@@ -40,6 +40,17 @@ function getNewMission()
  return mission
 end
 
+function startMission(_vehicleID,_group,_resources)
+ local canStart = true
+ local whyNot = ""
+ 
+ 
+ 
+ 
+ 
+ return canStart,whyNot
+end
+
 for i=1,100 do
  missions[i] = getNewMission()
 end
