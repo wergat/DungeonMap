@@ -293,7 +293,9 @@ functions["startQuestSkeleton"] = function()
  Carl.gaveQuest = true
 end
 functions["helloCarl"] = function()
- if Carl.gaveQuest then
+ if Carl.isDone then
+	Carl.greetings = newDialogForNPC(Carl.npcID, '"Sorry, but I\'m out of treasure for you. Thanks, though!"', {}, {}) 
+ elseif Carl.gaveQuest then
 	Carl.greetings = newDialogForNPC(Carl.npcID, '"Hey, welcome back! Do you have enough bones?"', {'Yeah!', 'Nope.'}, {"finishQuest", "returnNotDone"})
  elseif(Carl.greetings==nil)then
   Carl.greetings = newDialogForNPC(Carl.npcID,'{"text":"Hey you; wanna talk?"}',{'Sure!','No.'},{"talkToCarl","null"})
@@ -342,8 +344,10 @@ functions["sucQuest"] = function()
 	)
 	enableDialog(Carl.npcID,d)
 	newNPCDialogTrigger(Carl.npcID,d,5)
-	shell.run("dungeon/chest -12 23 0 " .. math.random(1,200))
+	math.randomseed(os.time())
+	shell.run("dungeon/chest -13 23 0 " .. math.random(1,200))
 	Carl.gaveQuest = nil
+	Carl.isDone = true
 end
 functions["failQuest"] = function()
 	local d = newDialogForNPC(
