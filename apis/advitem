@@ -28,7 +28,7 @@ local itemData = {}
  equipment["melee_skeleton"] = equipment["zombie"]
  equipment["player"] = equipment["zombie"]
  equipment["ranged_skeleton"] = {
-  {["chance"] = 1,["items"] = {261},["type"] = "Bow"}, -- HAND
+  {["chance"] = 1,["items"] = {261,261,261,261,261},["type"] = "Bow"}, -- HAND
   {["chance"] = 0.3,["items"] = {301,305,317,309,313},["type"] = "Feet"}, -- FEET
   {["chance"] = 0.3,["items"] = {300,304,316,308,312},["type"] = "Legs"}, -- LEGS
   {["chance"] = 0.4,["items"] = {299,303,315,307,311},["type"] = "Chest"}, -- CHEST
@@ -177,10 +177,6 @@ end
 function initializeItem(_dlevel,_typeOfItem,mobname,_forceQ)
  -- TODO: Check inputs!
  
- -- FORCE high quali
- --_forceQ = 7
- 
- 
  setItemData("dataTable",{})
  setItemData("loreTable",{})
  setItemData("enchTable",{})
@@ -200,9 +196,6 @@ function initializeItem(_dlevel,_typeOfItem,mobname,_forceQ)
  -- what slot the item is in
  setItemData("slot",_typeOfItem or math.random(#equipment[mobname]))
  
- -- For bows in Chest
-
- 
  if(equipment[mobname][getItemData("slot")]~=nil)then
   -- getTierOfWeapon()
   while(advitem.equipmentRandTier(equipment[mobname][getItemData("slot")]["chance"],_dlevel) and getItemData("tier")<#equipment[mobname][getItemData("slot")]["items"])do --+math.floor(difficulty+3/(difficulty))
@@ -212,18 +205,9 @@ function initializeItem(_dlevel,_typeOfItem,mobname,_forceQ)
   end
  end
  
- -- FORCE Tier three
- --setItemData("tier",3)
- 
- 
  setItemData("itemID",0)
  if(equipment[mobname]~=nil)then
-  write("A")
   if(#equipment[mobname]>0)then
-   write("B")
-   write(equipment[mobname][getItemData("slot")]["items"][getItemData("tier")] or "???")
-   write(getItemData("tier"))
-   write(getItemData("slot"))
    setItemData("itemID",equipment[mobname][getItemData("slot")]["items"][getItemData("tier")] or 0)
   end
  end
@@ -235,7 +219,7 @@ function getMobName(_mobname)
   mobname = "zombie"
  end 
  
- if(math.random(11)==1 and mobname=="player")then
+ if(math.random(10)==1 and mobname=="player")then
   mobname = "ranged_skeleton"
   setItemData("slot",1)
  end

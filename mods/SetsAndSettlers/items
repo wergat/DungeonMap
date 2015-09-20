@@ -32,9 +32,9 @@ local itemSets = {}
 
  
  -- 1-10 basic sets
- itemSets[1] = {["name"] = "Villagers cloths",["pre"] = "Villager's",["items"] = {"Defender","Run-a-way boots","Leggings","Protection","Helmet"}}
+ itemSets[1] = {["name"] = "Villager's cloths",["pre"] = "Villager's",["items"] = {"Defender","Run-a-way boots","Leggings","Protection","Helmet"}}
  addSetToItems({268,298,299,300,301},1) 
- itemSets[2] = {["name"] = "Zombies's best",["pre"] = "Zombies's",["items"] = {"Head-opener","Chasers","Leggings","Chestplate","Head Protection"}}
+ itemSets[2] = {["name"] = "Zombie's best",["pre"] = "Zombies's",["items"] = {"Head-opener","Chasers","Leggings","Chestplate","Head Protection"}}
  addSetToItems({272,302,303,304,305},2) 
  itemSets[3] = {["name"] = "Blacksmith's ware",["pre"] = "Reinforced",["items"] = {"Sword","Treads","Leggings","Chestplate","Helmet"}}
  addSetToItems({267,306,307,308,309},3)
@@ -46,7 +46,7 @@ local itemSets = {}
 -- 100+ Makers/Testers/Supporters Sets
  itemSets[101] = {["name"] = "Wergat's arsenal",["pre"] = "Wergat's",["items"] = {"Executer","Treads","Pace","Tunic","Helmet"}}
  addSetToItems({267,300,306,307,309},101)
- itemSets[102] = {["name"] = "Atenefyr's panoply",["pre"] = "Kittens's",["items"] = {"Wrath","Paws","Legs","Furry Torso","Head"}}
+ itemSets[102] = {["name"] = "Atenefyr's panoply",["pre"] = "Kitten's",["items"] = {"Wrath","Paws","Legs","Furry Torso","Head"}}
  addSetToItems({283,314,315,316,316},102)
  --itemSets[103] = {["name"] = "",["pre"] = "",["items"] = {"","","","",""}}
  --addSetToItems({,,,,},)
