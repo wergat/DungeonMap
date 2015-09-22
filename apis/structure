@@ -1,4 +1,4 @@
-local function scan(x,y,z)
+local function scan(x,y,z,basex,basey,basez,res)
 	local binf = commands.getBlockInfo(x,y,z)
 	if binf["name"] ~= "minecraft:air" then
 		res[#res+1] = {binf["name"], x-basex, y-basey, z-basez, binf["metadata"]}
@@ -7,6 +7,7 @@ end
 
 
 savestructure = function(path, x1, y1, z1, x2, y2, z2)
+	local res = {}
 	local basex = math.min(x1, x2)
 	local basey = math.min(y1, y2)
 	local basez = math.min(z1, z2)
@@ -16,7 +17,7 @@ savestructure = function(path, x1, y1, z1, x2, y2, z2)
 	for x = 0, sidex do
 		for y = 0, sidey do
 			for z = 0, sidez do
-				scan(basex+x, basey+y, basez+z)
+				scan(basex+x, basey+y, basez+z, basex, basey, basez,res)
 			end
 		end
 	end
@@ -25,7 +26,7 @@ savestructure = function(path, x1, y1, z1, x2, y2, z2)
 	open.close()
 end
 
-loadstructure = function(path)
+loadstructure = function(file)
 	local open = fs.open(file, "r")
 	local table = textutils.unserialize(open.readAll())
 	open.close()
