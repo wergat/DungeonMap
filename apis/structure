@@ -1,1 +1,35 @@
--- Insert loading/saving structures right here
+local function scan(x,y,z)
+	local binf = commands.getBlockInfo(x,y,z)
+	if binf["name"] ~= "minecraft:air" then
+		res[#res+1] = {binf["name"], x-basex, y-basey, z-basez, binf["metadata"]}
+	end
+end
+
+
+savestructure = function(path, x1, y1, z1, x2, y2, z2)
+	local basex = math.min(x1, x2)
+	local basey = math.min(y1, y2)
+	local basez = math.min(z1, z2)
+	local sidex = math.max(x1, x2)-math.min(x1, x2)
+	local sidey = math.max(y1, y2)-math.min(y1, y2)
+	local sidez = math.max(z1, z2)-math.min(z1, z2)
+	for x = 0, sidex do
+		for y = 0, sidey do
+			for z = 0, sidez do
+				scan(basex+x, basey+y, basez+z)
+			end
+		end
+	end
+	local open = fs.open(path, "w")
+	open.write(textutils.serialize(res))
+	open.close()
+end
+
+loadstructure = function(path)
+	local open = fs.open(file, "r")
+	local table = textutils.unserialize(open.readAll())
+	open.close()
+	for k, v in pairs(table) do
+		commands.setblock("~" .. v[2]+1, "~" .. v[3]+1-1, "~" .. v[4]+1, v[1], v[5])
+	end
+end
