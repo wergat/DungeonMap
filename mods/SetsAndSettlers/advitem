@@ -15,6 +15,7 @@ function getLoreOfItem(_colorValue)
  local loreArr = getItemData("loreTable")
  table.insert(loreArr,"\"Rarity is "..advitem.q_color[getItemData("quality")].."§o"..advitem.qualitys[getItemData("quality")].."§5§o\"")
  table.insert(loreArr,"\"Price is exactly "..shopprice.." gold\"")
+ table.insert(loreArr,"\"Tier "..getItemData("tier").."\"")
 
  local name = items.getName(itemID)
  local quali = getItemData("quality")
@@ -27,7 +28,7 @@ function getLoreOfItem(_colorValue)
   if(setID~=nil)then
    local setTable = items.getSetByID(setID)
    table.insert(loreArr,"\"This item is part of the set\"")
-   table.insert(loreArr,"\"     §r'§2"..setTable["name"].."§r' \"")
+   table.insert(loreArr,"\"   §r\\\"§2"..setTable["name"].."§r\\\" \"")
    table.insert(loreArr,"\"  Other set items are \"")
    table.insert(loreArr,"\"  \"")
    for s=1,(#setTable["items"]) do

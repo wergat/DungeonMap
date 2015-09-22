@@ -28,7 +28,7 @@ local itemData = {}
  equipment["melee_skeleton"] = equipment["zombie"]
  equipment["player"] = equipment["zombie"]
  equipment["ranged_skeleton"] = {
-  {["chance"] = 1,["items"] = {261},["type"] = "Bow"}, -- HAND
+  {["chance"] = 1,["items"] = {261,261,261,261,261},["type"] = "Bow"}, -- HAND
   {["chance"] = 0.3,["items"] = {301,305,317,309,313},["type"] = "Feet"}, -- FEET
   {["chance"] = 0.3,["items"] = {300,304,316,308,312},["type"] = "Legs"}, -- LEGS
   {["chance"] = 0.4,["items"] = {299,303,315,307,311},["type"] = "Chest"}, -- CHEST
@@ -180,7 +180,7 @@ function initializeItem(_dlevel,_typeOfItem,mobname,_forceQ)
  setItemData("dataTable",{})
  setItemData("loreTable",{})
  setItemData("enchTable",{})
- --setItemData("color",nil)
+ setItemData("color",nil)
  
  setItemData("difficultyLevel",_dlevel)
  
@@ -195,9 +195,6 @@ function initializeItem(_dlevel,_typeOfItem,mobname,_forceQ)
  
  -- what slot the item is in
  setItemData("slot",_typeOfItem or math.random(#equipment[mobname]))
- 
- -- For bows in Chest
-
  
  if(equipment[mobname][getItemData("slot")]~=nil)then
   -- getTierOfWeapon()
@@ -222,7 +219,7 @@ function getMobName(_mobname)
   mobname = "zombie"
  end 
  
- if(math.random(11)==1 and mobname=="player")then
+ if(math.random(10)==1 and mobname=="player")then
   mobname = "ranged_skeleton"
   setItemData("slot",1)
  end
