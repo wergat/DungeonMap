@@ -66,19 +66,19 @@ function loadSimilarApis(_forceName)
     setfenv( fnAPI, tEnv )
     local ok, err = pcall( fnAPI )
     if not ok then
-     print_log("error","[API]["..l[i].."] While loading "..mods_dir.."/"..l[i].."/"..file_name.."; "..err)
+     print_log("error","[API]["..l[i].."] While loading "..mods_dir.."/"..l[i].."/"..file_name.."; ")
 	 if(firstError)then
 	  if(term.isColor())then term.setTextColor(colors.red) end
-      print("error found while loading api files, check logs/error for more informations")
+      print("error found while loading api files, check logs/error for more informations"..err)
 	  term.setTextColor(colors.white)
 	  firstError = false
      end
     end
    else
-    print_log("error","[API]["..l[i].."] While loading "..mods_dir.."/"..l[i].."/"..file_name.."; "..err)
+    print_log("error","[API]["..l[i].."] While loading "..mods_dir.."/"..l[i].."/"..file_name.."; ")
 	if(firstError)then
 	 if(term.isColor())then term.setTextColor(colors.red) end
-     print("error found while loading api files, check logs/error for more informations")
+     print("error found while loading api files, check logs/error for more informations"..err)
 	 term.setTextColor(colors.white)
 	 firstError = false
     end
@@ -147,7 +147,11 @@ local function tableToNBT(t)
  return nbt 
 end
 function getNBTStringFromTable(t)
- return "{"..string.sub(tableToNBT(t),1,-2).."}"
+	if(type(t)=="table")then
+		return "{"..string.sub(tableToNBT(t),1,-2).."}"
+	else
+		error("GIFF MEAH TABLE YO FOOL!")
+	end
 end
 
 

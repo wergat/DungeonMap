@@ -71,6 +71,7 @@ function setEquipmentOfMob()
    table.insert(equipment,itemTable)
    addOnMobData("level",info["value"])
   else
+   -- Ranged Skeleon w/o bow = melee skeleton!
    if(getMobData("mobType") == "ranged_skeleton" and i==1)then setMobData("mobType","melee_skeleton") end
    table.insert(equipment,{})
   end
@@ -164,6 +165,24 @@ end
 
 
 
+function getMobDataForSummon()
+ local mobDataTag = {}
+ mobDataTag["Equipment"] = getMobData("equipmentTable")
+ 
+ -- Potion Effects: --
+ mob.setPotionEffectsOfMob()
+ mobDataTag["ActiveEffects"] = getMobData("effectTable")
+ 
+ -- Others: --
+ mobDataTag["CustomName"] = mob.getMobName()
+ mobDataTag["DropChances"] = mob.getDropChances()
+ local t = overrideTable(mobDataTag,getMobData("dataTable"))
+ return t
+end
+
+
+
+
 -- SummonMob()
 --  @x: x-pos of target spawn position in real coords
 --  @y: z-pos of target spawn position in real coords
@@ -182,24 +201,12 @@ function summonMob(x,y,z,mobName,difficulty)
  mob.initializeMob(x,y,z,mobName,difficulty)
  local additionalInfo = {}
 
- local mobDataTag = {}
- 
-
- 
-
  -- Equipment: -- 
  mob.setEquipmentOfMob()
- mobDataTag["Equipment"] = getMobData("equipmentTable")
- 
- -- Potion Effects: --
- mob.setPotionEffectsOfMob()
- mobDataTag["ActiveEffects"] = getMobData("effectTable")
- 
- -- Others: --
- mobDataTag["CustomName"] = mob.getMobName()
- mobDataTag["DropChances"] = mob.getDropChances()
 
- local finalTable = overrideTable(mobDataTag,getMobData("dataTable"))
+ -- Putting it all together
+ local finalTable = mob.getMobDataForSummon()
+ 
  local dataTag = dcore.getNBTStringFromTable(finalTable)
  local cmd = "summon "..mob.getEntityName(getMobData("mobType")).." "..getMobData("xCoord").." "..getMobData("yCoord").." "..getMobData("zCoord").." "..dataTag
  local success,answer = commands.exec(cmd)

@@ -103,7 +103,8 @@ function firstToUpper(str) return (str:gsub("^%l", string.upper)) end
 function getChestData(_startDifficulty,_chestType)
  local chestRarity = chest.getChestRarity()
  local difficulty = _startDifficulty*(6+3*chestRarity+_chestType)
- local datatag = "{Items:["
+ local dataTable = {}
+ dataTable["Items"] = {}
 
  local loot = {}
  local slots = {}
@@ -164,11 +165,11 @@ function getChestData(_startDifficulty,_chestType)
    if(loot["item"]~=nil)then
     local data = loot["item"][1]
     data["Slot"] = slots[slot]
-    datatag = datatag..dcore.getNBTStringFromTable(data)..","
+    table.insert(dataTable["Items"],data)
     table.remove(loot["item"],1)
     if(loot["item"][1]==nil)then loot["item"] = nil end
    else
-    datatag = datatag.."{Slot:"..slots[slot]..",id:"..k..",Count:"..math.min(v,64).."},"
+    table.insert(dataTable["Items"],{["Slot"] = slots[slot],["id"] = k,["Count"] = math.min(v,64)})
     if(v>64)then
      loot[k] = loot[k] - 64
     else   
@@ -179,7 +180,8 @@ function getChestData(_startDifficulty,_chestType)
    break
   end
  end
- return datatag.."],CustomName:\""..(advitem.q_color[chestRarity]).."§l"..firstToUpper(advitem.qualitys[chestRarity])..chest_types[_chestType].."Chest§r\"}"
+ dataTable["CustomName"] = (advitem.q_color[chestRarity]).."§l"..firstToUpper(advitem.qualitys[chestRarity])..chest_types[_chestType].."Chest§r"
+ return dataTable
 end
 
 
@@ -225,7 +227,7 @@ function placeChest(...)
   chestType = tonumber(tArgs[5])   
  end
 
- local datatag =  chest.getChestData(startDifficulty,chestType)
+ local datatag =  dcore.getNBTStringFromTable(chest.getChestData(startDifficulty,chestType))
  
  a,e = commands.setblock(x,y,z,"minecraft:chest","1","replace",datatag)
  

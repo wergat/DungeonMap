@@ -1,0 +1,28 @@
+local function overrideTable(_a,_b)
+ local c = _a
+ for k,v in pairs(_b) do
+  if(type(v)=="table")then
+   c[k] = overrideTable(_a[k],v)
+  else
+   c[k] = v
+  end
+ end
+ return c
+end
+
+print("A!")
+
+function summonBoss(x,y,z,mobType,difficulty)
+	mob.initializeMob(x,y,z,mobType,difficulty)
+	mob.setEquipmentOfMob()
+	local data = mob.getMobDataForSummon()
+	data["CustomName"] = getMobName().."Boss"
+	
+	local dataTag = dcore.getNBTStringFromTable(data)
+	local cmd = "summon "..mob.getEntityName(mob.getMobData("mobType")).." "..mob.getMobData("xCoord").." "..mob.getMobData("yCoord").." "..mob.getMobData("zCoord").." "..dataTag
+	local success,answer = commands.exec(cmd)
+
+	if(not answer)then
+		print_log("command","[error] Failed to execute Command: "..cmd.."; Error message:"..answer[1]..(answer[2] or "").."")
+	end
+end
