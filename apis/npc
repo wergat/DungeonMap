@@ -1,12 +1,21 @@
 dcore.requireAPI("tick")
 
 local npcs = {}
-local dialogueData = {}
+local dialogdata = {}
 local openDialogId = {}
+local chat_colors = {"dark_aqua","gold","gray","blue","green","aqua","red","light_purple","yellow"}
 
 -- Currently disabled
 function print_log(file,...)
  --dcore.print_log(file,...)
+end
+
+function scoreboard_GetObjective(data)
+ return string.sub(string.match(string.match(data,"([^,]+):([^,]+)")," .*"),2,-1)
+end
+
+function scoreboard_GetValue(data)
+ return tonumber(string.sub(string.match(string.match(data,":([^,]+)")," .* "),2,-2))
 end
 
 function ezCmd(command,_r,_errorOutput)
@@ -29,7 +38,7 @@ function ezCmd(command,_r,_errorOutput)
  end 
 end
 
-function dialogueCheckForDialogueAnswers()
+function dialogCheckForDialogAnswers(functions)
  for j=1,#openDialogId do
   local a = ezCmd("/scoreboard players list "..j,2)
   for i=2,#a do
@@ -45,7 +54,7 @@ function dialogueCheckForDialogueAnswers()
 	   print_log("dialog","- [ODID:"..j.."][UUID:"..openDialogId[j].."] found answer to dialog "..dialogID.." with \""..npcs[npc]["name"].."\" ("..npc.."); Answer is \""..npcs[npc]["dialogs"][dialogID]["answers"][v].."\" ("..v..") and valid")
 	   npcs[npc]["dialogs"][dialogID]["answered"] = true
 	   npcs[npc]["dialogs"][dialogID]["showed"] = false
-	   TriggerFunction(npc,dialogID,v)
+	   TriggerFunction(functions,npc,dialogID,v)
 	  else
 	   print_log("dialog","- [ODID"..j.."][UUID:"..openDialogId[j].."] found answer to dialog "..dialogID.." with \""..npcs[npc]["name"].."\" ("..npc.."); Answer is "..v.." but invalid, because dialog itself has not been displayed yet!")
 	  end
@@ -59,7 +68,7 @@ function dialogueCheckForDialogueAnswers()
  end
 end
 
-function dialogueCheckForStart()
+function dialogCheckForStart()
  for npcID=1,#npcs do
   local dialog_open = false
   local dialogID = 1
@@ -114,7 +123,7 @@ function dialogueCheckForStart()
  end
 end
 
-function TriggerFunction(_npcID,_dID,_aID)
+function TriggerFunction(functions,_npcID,_dID,_aID)
  local f = npcs[_npcID]["dialogs"][_dID]["functions"][_aID]
  if(type(f)=="table")then
   if(#f==2)then
@@ -149,7 +158,7 @@ function newDialogForNPC(_npcID,_text,_answers,_functions)
  return #npcs[_npcID]["dialogs"]
 end
 
-function newNPCDialogueTrigger(_npcID,_dID,_trigger)
+function newNPCDialogTrigger(_npcID,_dID,_trigger)
  local trigger_array = {}
  if(_trigger~=nil)then
   if(type(_trigger)=="table")then
@@ -198,8 +207,8 @@ function npcSetColor(_id,_color) npcs[_id]["color"] = _color or "blue" end
 
 function newNPC(_name,_color,_x,_y,_z) -- Returns ID of created NPC
  local npcData = {}
- npcData.repuation = 0 -- How much that NPC likes you
- npcData.dialogs = {} --{text,{answers},{functions},{reputationdifferenz},enabled}
+ npcData.reputation = 0 -- How much that NPC likes you
+ npcData.dialogs = {} --{text,{answers},{functions},{reputationdifference},enabled}
  npcData.name = _name or ""
  npcData.color = _color or "blue"
  npcData.trigger = {} --{["t"]=type,}
@@ -213,6 +222,6 @@ function newNPC(_name,_color,_x,_y,_z) -- Returns ID of created NPC
 end
 
 
--- Dialogue answer checking
-tick.add(dialogueCheckForStart)
-tick.add(dialogueCheckForDialogueAnswers)
+-- dialog answer checking
+tick.add(dialogCheckForStart)
+tick.add(dialogCheckForDialogAnswers)
