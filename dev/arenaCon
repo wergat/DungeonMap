@@ -1,0 +1,45 @@
+--                          +-------+
+-- X-Connection (X-1/Y) [--<| ROOM  |>--} X-Connection (X/Y)
+--                          | (X/Y) |
+--                          +-------+
+--                            \/ Y-Connection X/Y
+--
+
+-- Reset area from -4 20 -21 to 4 20 -13
+function reset()
+	for x=-4,4 do
+		for z=-21,-13 do
+			commands.execAsync("/setblock "..x.." 20 "..z.." air")
+		end
+	end
+	
+	-- Redraw stone "rooms"
+	for x=1,5 do
+		for z=1,5 do
+			commands.execAsync("/setblock "..(-4+x*2).." 20 "..(-21+z*2).." stone")
+		end
+	end
+end
+
+function removeXConnection(x,y)
+ commands.execAsync("/setblock "..(-3+x*2).." 20 "..(-21+y*2).." air")
+end
+
+function removeYConnection(x,y)
+ commands.execAsync("/setblock "..(-4+x*2).." 20 "..(-20+y*2).." air")
+end
+
+
+function addXConnection(x,y)
+ commands.execAsync("/setblock "..(-3+x*2).." 20 "..(-21+y*2).." fence")
+end
+
+function addYConnection(x,y)
+ commands.execAsync("/setblock "..(-4+x*2).." 20 "..(-20+y*2).." fence")
+end
+
+reset()
+addYConnection(1,1)
+addYConnection(2,1)
+addYConnection(4,2)
+addXConnection(2,2)
