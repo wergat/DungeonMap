@@ -1,0 +1,128 @@
+os.loadAPI(":dungeon/apis/dcore")
+dcore.requireAPI("advitem")
+
+local function getShopPrice(price)
+ local i = 0
+ local found = price
+ local lowest_factor = 1.5
+ 
+ while i<(string.len(tostring(price))-1) do
+  i = i + 1
+  local upper = (tonumber(string.sub(price,1,-(i+1))..string.sub(string.rep("9",20),-i,-1)))
+  local lower = (tonumber(string.sub((price-(10^i)),1,-(i+1))..string.sub(string.rep("9",20),-i,-1)))
+ 
+ 
+ 
+  local lower_factor = (price/lower)
+  local upper_factor = (1/(price/upper))
+ 
+  --print(i..":"..(math.floor((lower_factor-1)*10000)/100).."("..lower..")/"..(math.floor((upper_factor-1)*10000)/100).."("..upper..")    T:"..math.floor((i/2)+3).."%     ")
+ 
+  if(lower_factor<upper_factor)then
+   if(price*(1-(math.floor((i/2)+3)/100))<lower and lower_factor<(lowest_factor*((i+1)/2)))then
+    found = lower
+    lowest_factor = lower_factor
+    --write("lower:"..lower_factor)
+   end
+  end
+ 
+  if(upper_factor<lower_factor)then
+   if(price*(1+(math.floor((i/2)+3)/100))>upper and upper_factor<(lowest_factor*((i+1)/2)))then
+    found = upper
+    lowest_factor = upper_factor
+    --write("upper:"..upper_factor)
+   end
+  end
+  --print(".")
+ end
+ return found+1
+end
+ 
+local function dis(num)
+ local a = (math.floor((num*100000))/1000-100)
+ if(a>0)then return "+"..a else return a end
+end
+
+local function generateDifficulty()
+	local stage = math.random(1,170)
+	if stage <= 50 then --Lowest stage. Pretty rare. 1-50
+		difficulty = math.random(1,20)
+	elseif stage >= 51 and stage <= 120  then --Second to lowest stage. Pretty rare, but more common than lowest. 51-120
+		difficulty = math.random(21,40)
+	elseif stage >= 121 and stage <= 160  then --Medium stage. Not hard to find, but not exactly "common". 121-160
+		difficulty = math.random(41,100)
+	elseif stage >= 161 and stage <= 170 then --High stage. Very rare. 161-170
+		difficulty = math.random(100,200)
+	else --Backup for high stage
+		difficulty = math.random(100,200)
+	end
+	return difficulty
+end
+
+function summon(xc,yc,zc,difficulty,trades)
+	local xc = xc or 0
+	local yc = yc or 23
+	local zc = zc or 0
+	local difficulty = difficulty
+	if not difficulty then
+		difficulty = generateDifficulty()
+	end
+	if not trades then
+		trades = 1
+	end
+	local trade = {}
+	for i = 1, trades do
+		local idt, mi = advitem.getEquipment(difficulty,nil,"player",1)
+		if idt["tag"] then
+			local r = idt.tag.display.Lore[2]
+			local a = r:gsub('"Price is exactly ', "")
+			a = a:gsub(' gold"', "")
+			local n = getShopPrice(tonumber(a))
+			a = '"Price is about ' .. n .. ' gold"'
+			idt.tag.display.Lore[2] = a
+			local y = n / 1000
+			local iron = (n % 1000)/50
+			local buyB = ""
+			if iron ~= 0 and y > 1 then
+				buyB = "buyB:{id:265,Count:" .. iron .. "},"
+			end
+			local id = 264
+			if y < 1 and n / 50 <= 64 then
+				y = n / 50
+				id = 265
+			elseif y < 1 and n / 150 <= 64 then
+				y = n / 150
+				id = 266
+			elseif y > 64 and n / 5000 <= 64 then
+				y = n / 5000
+				id = 388
+			elseif y > 64 and n / 9000 <= 64 then
+				y = n / 9000
+				id = 57
+			elseif y > 64 and n / 45000 <= 64 then
+				y = n / 45000
+				id = 133
+			elseif n >= 2880000 then
+				y = 64
+				id = 133
+			end
+			y = math.floor(y)
+			trade[#trade+1] = "{buy:{id:" .. id .. ",Count:" .. y .. "}," .. buyB .. "maxUses:999999,sell:{id:" .. idt.id .. ",Count:1,tag:" .. dcore.getNBTStringFromTable(idt.tag) .. "},rewardExp:false}"
+		else
+			return summon(xc,yc,zc,difficulty,trades)	
+		end
+	end
+	local tstr = ""
+	for k, v in pairs(trade) do
+		tstr = tstr .. v .. ","
+	end
+	tstr = tstr:sub(1,-2)
+	local cmd = "/summon Villager " .. xc .. " " .. yc .. " " .. zc .. " {CustomName:\"Level " .. difficulty .. " Trader\",CustomNameVisible:0,Offers:{Recipes:[" .. tstr .. "]}}"
+	local _r = commands.exec(cmd)
+	return _r, cmd
+end
+function summon_currency(x,y,z)
+	local cmd = '/summon Villager ' .. x .. " " .. y .. " " .. z .. ' {Profession:1,CustomName:"Currency Trader",CustomNameVisible:0,CanPickUpLoot:0,Offers:{Recipes:[{buy:{id:41,Count:1},maxUses:9999999,sell:{id:388,Count:1},rewardExp:false},{buy:{id:264,Count:5},maxUses:9999999,sell:{id:388,Count:1},rewardExp:false},{buy:{id:388,Count:1},maxUses:9999999,sell:{id:264,Count:5},rewardExp:false},{buy:{id:264,Count:1},maxUses:9999999,sell:{id:265,Count:20},rewardExp:false},{buy:{id:265,Count:20},maxUses:9999999,sell:{id:264,Count:1},rewardExp:false},{buy:{id:388,Count:1},maxUses:9999999,sell:{id:41,Count:1},rewardExp:false}]}}'
+	commands.exec(cmd)
+	return true, cmd
+end
