@@ -39,7 +39,7 @@ end
 --@difficulty: How good/bad the potion is.
 --@positive: If the potion effect is good or bad. Good = true, bad = false
 --@count: How many potion effects to apply.
-function createpotion(difficulty,positive,count,name)
+function createpotion(difficulty,positive,count)
 	local r = {}
 	local past = ""
 	for i = 1, count do
@@ -66,7 +66,7 @@ function compileToNBT(table,name)
 	end
 	str = str:sub(1,-2)
 	if name then
-		str = str .. "],display:{Name:\"Customized Potion\"}}"
+		str = str .. "],display:{Name:\"" .. name .. "\"}}"
 	else
 		str = str .. "]}"
 	end
