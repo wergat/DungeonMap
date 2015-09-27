@@ -4,7 +4,20 @@ local mods_dir = all_dir.."/mods"
 local logs_dir = all_dir.."/logs"
 local apis_dir = all_dir.."/apis"
 
+
+
+
 local firstError = true
+
+local file_used = {}
+function print_log(file,text)
+	local logfile = fs.open(logs_dir.."/"..file, file_used[file] and "a" or "w")
+	if(logfile and type(text)=="string")then
+		if(not file_used[file])then file_used[file] = true end
+		logfile.writeLine(text)
+		logfile.close()
+	end
+end
 
 function requireAPI(...)
  local tArgs = { ... }
@@ -32,14 +45,6 @@ function requireAPI(...)
    loadSimilarApis(tArgs[i])
   end
  end
-end
-
-local file_used = {}
-function print_log(file,text)
- local logfile = fs.open(logs_dir.."/"..file, file_used[file] and "a" or "w")
- if(not file_used[file])then file_used[file] = true end
- logfile.writeLine(text)
- logfile.close()
 end
 
 function Error(text,level)
