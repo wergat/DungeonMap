@@ -1,4 +1,4 @@
-os.loadAPI(":dungeon/apis/dcore")
+--os.loadAPI(":dungeon/apis/dcore")
 dcore.requireAPI("advitem")
 
 local function getShopPrice(price)

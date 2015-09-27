@@ -1,0 +1,115 @@
+--Compress: http://www.computercraft.info/forums2/index.php?/topic/22587-compress-transform-a-folder-structure-into-a-single-self-extracting-file/
+if not http then
+	printError("Turn the HTTP api on!")
+	error()
+end
+local ccode = [[
+if http.get("http://pastebin.com/raw.php?i=" .. id) == nil then
+	error()
+end
+local modinfo = http.get("http://pastebin.com/raw.php?i=" .. id).readAll()
+local tabl = textutils.unserialize(modinfo)
+local info = tabl["newestVersion"]
+
+local open = fs.open(path .. "/_version", "r")
+local cver = tonumber(open.readAll())
+open.close()
+if info ~= cver then
+	write("New version avaliable for " .. tabl["name"] .. "! Update? (y/n) ")
+	local n = read()
+	if n ~= "y" then
+		print("Abort.")
+		error()
+	end
+	shell.run("/dungeon/install_mod", id, "-bp")
+end
+]]
+
+local tArgs = {...}
+local id = ""
+if #tArgs == 0 then
+	write("Mod ID (for example, whan1dt2): ")
+	id = read()
+else
+	id = tArgs[1]
+end
+if http.get("http://pastebin.com/raw.php?i=" .. id) == nil then
+	printError("Invalid ID!")
+	error()
+end
+local modinfo = http.get("http://pastebin.com/raw.php?i=" .. id).readAll()
+local tabl = textutils.unserialize(modinfo)
+if not tabl["install_file"] or not tabl["name"] or not tabl["author"] or not tabl["description"] or not tabl["newestVersion"] then
+	printError("Invalid format! (Missing install file, name, author, description, or newest version)")
+	error()
+elseif not http.get("http://pastebin.com/raw.php?i=" .. tabl["install_file"]) then
+	printError("Invalid format! (Invalid install file)")
+	error()
+elseif #tabl["description"] > 140 then
+	printError("Invalid format! (Description is " .. #tabl["description"] .. " characters, max is 140 characters)")
+	error()
+end
+if fs.exists("/dungeon/mods/" .. tabl["name"]:gsub(" ", "")) and tArgs[2] ~= "-bp" then
+	write("This mod has already been installed! Delete installation? (y/n) ")
+	local _ = read()
+	if _ ~= "y" then
+		error()
+	else
+		fs.delete("/dungeon/mods/" .. tabl["name"]:gsub(" ", ""))
+		write("\n")
+	end
+elseif fs.exists("/dungeon/mods/" .. tabl["name"]:gsub(" ", "")) then
+	fs.delete("/dungeon/mods/" .. tabl["name"]:gsub(" ", ""))
+end
+if tArgs[2] ~= "-bp" then
+	local builtin = {"whan1dt2"}
+	print("Installing " .. tabl["name"] .. ", by " .. tabl["author"] .. ".")
+	print(tabl["description"])
+	for k, v in pairs(builtin) do
+		if v == id then
+			print("This mod is included by default in Dungeon Map.")
+		end
+	end
+	write("Continue? (y/n) ")
+	local c = read()
+	if c ~= "y" then
+		print("Abort.")
+		error()
+	end
+end
+local compress = http.get("http://pastebin.com/raw.php?i=" .. tabl["install_file"]).readAll()
+if tArgs[2] ~= "-bp" then
+	print("Found compress file, executing..")
+end
+local open = fs.open("/.temp_file__", "w")
+open.write(compress)
+open.close()
+shell.run("/.temp_file__", "/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. "/")
+if fs.exists("/dungeon/mods/" .. tabl["name"]:gsub(" ", "")) then
+	local open = fs.open("/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. "/_version", "w")
+	open.write(tabl["newestVersion"])
+	open.close()
+	local open = fs.open("/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. "/check_v", "w")
+	open.write("local path = \"" .. "/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. "\"\n" .. "local id = \"" .. id .. "\"\n" .. ccode)
+	open.close()
+	
+	if not fs.exists("startup") then
+		local open = fs.open("startup", "w")
+		open.write("")
+		open.close()
+	end
+	local open = fs.open("startup", "r")
+	local all = open.readAll()
+	open.close()
+	
+	if not all:find("/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. "/check_v") and tArgs[2] ~= "-bp" then
+		local open = fs.open("startup", "a")
+		open.write('\nshell.run("' .. "/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. '/check_v")')
+		open.close()
+	end
+	
+	print("Successfully installed " .. tabl["name"] .. ".")
+else
+	printError("Failed to install " .. tabl["name"] .. ". Perhaps the install format is incorrect?")
+end
+fs.delete(".temp_file__")
