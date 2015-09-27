@@ -59,7 +59,7 @@ local function generateDifficulty()
 	return difficulty
 end
 
-function summon(xc,yc,zc,difficulty,trades)
+function summon(xc,yc,zc,difficulty,trades,coat)
 	local xc = xc or 0
 	local yc = yc or 23
 	local zc = zc or 0
@@ -109,7 +109,7 @@ function summon(xc,yc,zc,difficulty,trades)
 			y = math.floor(y)
 			trade[#trade+1] = "{buy:{id:" .. id .. ",Count:" .. y .. "}," .. buyB .. "maxUses:999999,sell:{id:" .. idt.id .. ",Count:1,tag:" .. dcore.getNBTStringFromTable(idt.tag) .. "},rewardExp:false}"
 		else
-			return summon(xc,yc,zc,difficulty,trades)	
+			return summon(xc,yc,zc,difficulty,trades,coat)	
 		end
 	end
 	local tstr = ""
@@ -122,7 +122,7 @@ function summon(xc,yc,zc,difficulty,trades)
 	return _r, cmd
 end
 function summon_currency(x,y,z)
-	local cmd = '/summon Villager ' .. x .. " " .. y .. " " .. z .. ' {Profession:1,CustomName:"Currency Trader",CustomNameVisible:0,CanPickUpLoot:0,Offers:{Recipes:[{buy:{id:41,Count:1},maxUses:9999999,sell:{id:388,Count:1},rewardExp:false},{buy:{id:264,Count:5},maxUses:9999999,sell:{id:388,Count:1},rewardExp:false},{buy:{id:388,Count:1},maxUses:9999999,sell:{id:264,Count:5},rewardExp:false},{buy:{id:264,Count:1},maxUses:9999999,sell:{id:265,Count:20},rewardExp:false},{buy:{id:265,Count:20},maxUses:9999999,sell:{id:264,Count:1},rewardExp:false},{buy:{id:388,Count:1},maxUses:9999999,sell:{id:41,Count:1},rewardExp:false}]}}'
+	local cmd = '/summon Villager ' .. x .. " " .. y .. " " .. z .. ' {Profession:' .. coat .. ',CustomName:"Currency Trader",CustomNameVisible:0,CanPickUpLoot:0,Offers:{Recipes:[{buy:{id:41,Count:1},maxUses:9999999,sell:{id:388,Count:1},rewardExp:false},{buy:{id:264,Count:5},maxUses:9999999,sell:{id:388,Count:1},rewardExp:false},{buy:{id:388,Count:1},maxUses:9999999,sell:{id:264,Count:5},rewardExp:false},{buy:{id:264,Count:1},maxUses:9999999,sell:{id:265,Count:20},rewardExp:false},{buy:{id:265,Count:20},maxUses:9999999,sell:{id:264,Count:1},rewardExp:false},{buy:{id:388,Count:1},maxUses:9999999,sell:{id:41,Count:1},rewardExp:false}]}}'
 	commands.exec(cmd)
 	return true, cmd
 end
