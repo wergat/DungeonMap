@@ -8,7 +8,7 @@ local function count(input)
  return int
 end
  
-qualitys = {"usual","unusual","rare","extraordinary","mythical","legendary","epic","forgotten"}
+qualitys = {"usual","unusual","rare","extraordinary","epic","mythical","legendary","forgotten"}
 q_color = {"§f","§b","§3","§1","§5","§d","§6","§4","§2"}
 
 local equipment = {}
