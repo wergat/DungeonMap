@@ -59,7 +59,7 @@ local function generateDifficulty()
 	return difficulty
 end
 
-function summon(xc,yc,zc,difficulty,trades)
+function summon(xc,yc,zc,difficulty,trades,coat)
 	local xc = xc or 0
 	local yc = yc or 23
 	local zc = zc or 0
@@ -109,7 +109,7 @@ function summon(xc,yc,zc,difficulty,trades)
 			y = math.floor(y)
 			trade[#trade+1] = "{buy:{id:" .. id .. ",Count:" .. y .. "}," .. buyB .. "maxUses:999999,sell:{id:" .. idt.id .. ",Count:1,tag:" .. dcore.getNBTStringFromTable(idt.tag) .. "},rewardExp:false}"
 		else
-			return summon(xc,yc,zc,difficulty,trades)	
+			return summon(xc,yc,zc,difficulty,trades,coat)	
 		end
 	end
 	local tstr = ""
@@ -117,7 +117,7 @@ function summon(xc,yc,zc,difficulty,trades)
 		tstr = tstr .. v .. ","
 	end
 	tstr = tstr:sub(1,-2)
-	local cmd = "/summon Villager " .. xc .. " " .. yc .. " " .. zc .. " {CustomName:\"Level " .. difficulty .. " Trader\",CustomNameVisible:0,Offers:{Recipes:[" .. tstr .. "]}}"
+	local cmd = "/summon Villager " .. xc .. " " .. yc .. " " .. zc .. " {Profession:" .. coat .. ",CustomName:\"Level " .. difficulty .. " Trader\",CustomNameVisible:0,Offers:{Recipes:[" .. tstr .. "]}}"
 	local _r = commands.exec(cmd)
 	return _r, cmd
 end
