@@ -117,12 +117,12 @@ function summon(xc,yc,zc,difficulty,trades,coat)
 		tstr = tstr .. v .. ","
 	end
 	tstr = tstr:sub(1,-2)
-	local cmd = "/summon Villager " .. xc .. " " .. yc .. " " .. zc .. " {CustomName:\"Level " .. difficulty .. " Trader\",CustomNameVisible:0,Offers:{Recipes:[" .. tstr .. "]}}"
+	local cmd = "/summon Villager " .. xc .. " " .. yc .. " " .. zc .. " {Profession:" .. coat .. ",CustomName:\"Level " .. difficulty .. " Trader\",CustomNameVisible:0,Offers:{Recipes:[" .. tstr .. "]}}"
 	local _r = commands.exec(cmd)
 	return _r, cmd
 end
 function summon_currency(x,y,z)
-	local cmd = '/summon Villager ' .. x .. " " .. y .. " " .. z .. ' {Profession:' .. coat .. ',CustomName:"Currency Trader",CustomNameVisible:0,CanPickUpLoot:0,Offers:{Recipes:[{buy:{id:41,Count:1},maxUses:9999999,sell:{id:388,Count:1},rewardExp:false},{buy:{id:264,Count:5},maxUses:9999999,sell:{id:388,Count:1},rewardExp:false},{buy:{id:388,Count:1},maxUses:9999999,sell:{id:264,Count:5},rewardExp:false},{buy:{id:264,Count:1},maxUses:9999999,sell:{id:265,Count:20},rewardExp:false},{buy:{id:265,Count:20},maxUses:9999999,sell:{id:264,Count:1},rewardExp:false},{buy:{id:388,Count:1},maxUses:9999999,sell:{id:41,Count:1},rewardExp:false}]}}'
+	local cmd = '/summon Villager ' .. x .. " " .. y .. " " .. z .. ' {Profession:1,CustomName:"Currency Trader",CustomNameVisible:0,CanPickUpLoot:0,Offers:{Recipes:[{buy:{id:41,Count:1},maxUses:9999999,sell:{id:388,Count:1},rewardExp:false},{buy:{id:264,Count:5},maxUses:9999999,sell:{id:388,Count:1},rewardExp:false},{buy:{id:388,Count:1},maxUses:9999999,sell:{id:264,Count:5},rewardExp:false},{buy:{id:264,Count:1},maxUses:9999999,sell:{id:265,Count:20},rewardExp:false},{buy:{id:265,Count:20},maxUses:9999999,sell:{id:264,Count:1},rewardExp:false},{buy:{id:388,Count:1},maxUses:9999999,sell:{id:41,Count:1},rewardExp:false}]}}'
 	commands.exec(cmd)
 	return true, cmd
 end
