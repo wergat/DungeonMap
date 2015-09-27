@@ -1,0 +1,6 @@
+{
+ ["newestVersion"] = "" -- Where the newest version number can be found (online)
+ ["name"] = "Drugs And Dealers"
+ ["author"] = "Atenefyr"
+ ["active"] = false
+}
