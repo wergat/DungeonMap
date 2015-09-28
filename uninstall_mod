@@ -1,0 +1,18 @@
+write("Mod name (without spaces. For example, DrugsAndDealers): ")
+local mn = read()
+local path = "/dungeon/mods/" .. mn
+if not fs.exists(path) then
+	printError("Mod is not installed!")
+	error()
+end
+if fs.exists(path .. "/onUninstall") then
+	fs.move(path .. "/onUninstall", ".ou__")
+end
+fs.delete(path)
+fs.delete("/dungeon/event/boot/" .. mn .. "_checkv")
+if fs.exists(".ou__") then
+	shell.run(".ou__")
+	fs.delete(".ou__")
+else
+	print("Successfully uninstalled " .. mn .. ".")
+end
