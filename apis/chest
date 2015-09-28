@@ -5,7 +5,7 @@ dcore.requireAPI("potion")
 
 -- TODO: Convert the datatag-string to table
 
-local chest_types = {" "," Equipment "," Supply "," Food "}
+local chest_types = {" "," Equipment "," Supply "," Food "," Potion "}
 
 local item_pool = {}
 item_pool[1] = { -- Normal
@@ -90,6 +90,10 @@ item_pool[4] = { -- Food
  {["id"] = 357,["value"] = 1,["max"] = 5}, -- cookie
   --{["id"] = ,["value"] = ,["max"] = },
 }
+item_pool[5] = {
+ {["id"] = 50,["value"] = 3,["max"] = 13}, -- torch 
+}
+
 
 
 function getChestRarity()
@@ -151,9 +155,9 @@ function getChestData(_startDifficulty,_chestType)
    end
   else
    -- Add Potion instead of item
-   if(math.random(10)==1)then
+   if(math.random(10)==1 or _chestType==5)then
     local lootData = {}
-    local potionData,name,damage = potion.generateDropPotion(difficulty)
+    local potionData,name,damage = potion.generateDropPotion(difficulty*1.1)
 	lootData["tag"] = {}
 	lootData["tag"]["CustomPotionEffects"] = potionData
 	lootData["id"] = 373

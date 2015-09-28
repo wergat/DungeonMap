@@ -1,27 +1,27 @@
 local effects = {}
-effects[1] = {["name"] = "Speed",["potion"] = "Swiftness",["corrupt"] = true,["good"] = true,["max"] = -1}
-effects[2] = {["name"] = "Slowness",["potion"] = "Slowness",["corrupt"] = true,["good"] = false,["max"] = -1}
-effects[3] = {["name"] = "Haste",["potion"] = "Haste",["corrupt"] = true,["good"] = true,["max"] = -1}
-effects[4] = {["name"] = "Mining Fatigue",["potion"] = "Dullness",["corrupt"] = false,["good"] = false,["max"] = -1}
-effects[5] = {["name"] = "Strength",["potion"] = "Strength",["corrupt"] = true,["good"] = true,["max"] = -1}
-effects[6] = {["name"] = "Instant Health",["potion"] = "Healing",["corrupt"] = false,["good"] = true,["max"] = -1}
-effects[7] = {["name"] = "Instant Damage",["potion"] = "Harming",["corrupt"] = false,["good"] = false,["max"] = -1}
-effects[8] = {["name"] = "Jump Boost",["potion"] = "Leaping",["corrupt"] = true,["good"] = true,["max"] = -1}
-effects[9] = {["name"] = "Nausea",["potion"] = "Nausea",["corrupt"] = false,["good"] = false,["max"] = 1}
-effects[10] = {["name"] = "Regeneration",["potion"] = "Regeneration",["corrupt"] = false,["good"] = true,["max"] = -1}
-effects[11] = {["name"] = "Resistance",["potion"] = "Resistance",["corrupt"] = true,["good"] = true,["max"] = 4}
-effects[12] = {["name"] = "Fire Resistance",["potion"] = "Fire Resistance",["corrupt"] = false,["good"] = true,["max"] = 1}
-effects[13] = {["name"] = "Water Breathing",["potion"] = "Water Breathing",["corrupt"] = false,["good"] = true,["max"] = 1}
-effects[14] = {["name"] = "Invisibility",["potion"] = "Invisibility",["corrupt"] = false,["good"] = true,["max"] = 1}
-effects[15] = {["name"] = "Blindness",["potion"] = "Blindness",["corrupt"] = false,["good"] = false,["max"] = 1}
-effects[16] = {["name"] = "Night Vision",["potion"] = "Night Vision",["corrupt"] = false,["good"] = true,["max"] = 1}
-effects[17] = {["name"] = "Hunger",["potion"] = "Hunger",["corrupt"] = true,["good"] = false,["max"] = -1}
-effects[18] = {["name"] = "Weakness",["potion"] = "Weakness",["corrupt"] = true,["good"] = false,["max"] = -1}
-effects[19] = {["name"] = "Poison",["potion"] = "Poison",["corrupt"] = false,["good"] = false,["max"] = -1}
-effects[20] = {["name"] = "Wither",["potion"] = "Decay",["corrupt"] = false,["good"] = false,["max"] = -1}
-effects[21] = {["name"] = "Health Boost",["potion"] = "Health Boost",["corrupt"] = true,["good"] = true,["max"] = -1}
-effects[22] = {["name"] = "Absorption",["potion"] = "Absorption",["corrupt"] = true,["good"] = true,["max"] = -1}
-effects[23] = {["name"] = "Saturation",["potion"] = "Saturation",["corrupt"] = true,["good"] = true,["max"] = -1}
+effects[1] = {["name"] = "Speed",["potion"] = "Swiftness",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true}
+effects[2] = {["name"] = "Slowness",["potion"] = "Slowness",["corrupt"] = true,["good"] = false,["max"] = -1,["allowDuration"] = true}
+effects[3] = {["name"] = "Haste",["potion"] = "Haste",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true}
+effects[4] = {["name"] = "Mining Fatigue",["potion"] = "Dullness",["corrupt"] = false,["good"] = false,["max"] = -1,["allowDuration"] = true}
+effects[5] = {["name"] = "Strength",["potion"] = "Strength",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true}
+effects[6] = {["name"] = "Instant Health",["potion"] = "Healing",["corrupt"] = false,["good"] = true,["max"] = -1,["allowDuration"] = false}
+effects[7] = {["name"] = "Instant Damage",["potion"] = "Harming",["corrupt"] = false,["good"] = false,["max"] = -1,["allowDuration"] = false}
+effects[8] = {["name"] = "Jump Boost",["potion"] = "Leaping",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true}
+effects[9] = {["name"] = "Nausea",["potion"] = "Nausea",["corrupt"] = false,["good"] = false,["max"] = 1,["allowDuration"] = true}
+effects[10] = {["name"] = "Regeneration",["potion"] = "Regeneration",["corrupt"] = false,["good"] = true,["max"] = -1,["allowDuration"] = true}
+effects[11] = {["name"] = "Resistance",["potion"] = "Resistance",["corrupt"] = true,["good"] = true,["max"] = 4,["allowDuration"] = true}
+effects[12] = {["name"] = "Fire Resistance",["potion"] = "Fire Resistance",["corrupt"] = false,["good"] = true,["max"] = 1,["allowDuration"] = true}
+effects[13] = {["name"] = "Water Breathing",["potion"] = "Water Breathing",["corrupt"] = false,["good"] = true,["max"] = 1,["allowDuration"] = true}
+effects[14] = {["name"] = "Invisibility",["potion"] = "Invisibility",["corrupt"] = false,["good"] = true,["max"] = 1,["allowDuration"] = true}
+effects[15] = {["name"] = "Blindness",["potion"] = "Blindness",["corrupt"] = false,["good"] = false,["max"] = 1,["allowDuration"] = true}
+effects[16] = {["name"] = "Night Vision",["potion"] = "Night Vision",["corrupt"] = false,["good"] = true,["max"] = 1,["allowDuration"] = true}
+effects[17] = {["name"] = "Hunger",["potion"] = "Hunger",["corrupt"] = true,["good"] = false,["max"] = -1,["allowDuration"] = true}
+effects[18] = {["name"] = "Weakness",["potion"] = "Weakness",["corrupt"] = true,["good"] = false,["max"] = -1,["allowDuration"] = true}
+effects[19] = {["name"] = "Poison",["potion"] = "Poison",["corrupt"] = false,["good"] = false,["max"] = -1,["allowDuration"] = true}
+effects[20] = {["name"] = "Wither",["potion"] = "Decay",["corrupt"] = false,["good"] = false,["max"] = -1,["allowDuration"] = true}
+effects[21] = {["name"] = "Health Boost",["potion"] = "Health Boost",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true}
+effects[22] = {["name"] = "Absorption",["potion"] = "Absorption",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true}
+effects[23] = {["name"] = "Saturation",["potion"] = "Saturation",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true}
 
 --@positive: If the potion effect is good or bad. Good = true, bad = false
 local function findEffect(positive,past)
@@ -72,10 +72,9 @@ function generateDropPotion(_difficulty,seed)
 	local damage = math.random(16000,17000)
 	
 	while dif>0 do
-		if(math.random(20)==1)then end
 		local pickedEffect = math.random(#effects)
 		-- Increase chance of good effects by a little bit
-		--if(effects[pickedEffect]["good"] == false)then pickedEffect = math.random(#effects) end
+		if(effects[pickedEffect]["good"] == false)then pickedEffect = math.random(#effects) end
 		-- Prevent over-using a effect
 		
 		if(choosenEffects[pickedEffect]==nil)then	choosenEffects[pickedEffect] = {["potency"] = 0,["duration"] = 1}	end
@@ -88,11 +87,11 @@ function generateDropPotion(_difficulty,seed)
 		end
 		local improve = math.random(5,math.floor(dif/10+6))
 		while(improve>0 and dif>0)do
-			if(choosenEffects[pickedEffect]["potency"]>=effects[pickedEffect]["max"] and math.random(2)==1)then
+			if(((choosenEffects[pickedEffect]["potency"]<(effects[pickedEffect]["max"]-1) or (effects[pickedEffect]["max"]<0)) and math.random(2)==1) or effects[pickedEffect]["allowDuration"]==false)then
 				choosenEffects[pickedEffect]["potency"] = choosenEffects[pickedEffect]["potency"] + 1
 				dif = dif - choosenEffects[pickedEffect]["potency"]
 			else
-				choosenEffects[pickedEffect]["duration"] = choosenEffects[pickedEffect]["duration"] + 200
+				choosenEffects[pickedEffect]["duration"] = choosenEffects[pickedEffect]["duration"] + 100 + math.random(2)*100
 				dif = dif - 1
 			end
 			improve = improve - 1
@@ -133,7 +132,7 @@ function generateDropPotion(_difficulty,seed)
 			if((choosenEffects[highestID]["potency"] or -1)<v["potency"])then
 				highestID = k
 			end
-			seed = seed + k*(v["potency"]+v["duration"])
+			seed = seed + 2^k--k*(v["potency"]+v["duration"])
 			table.insert(t,p)
 		end
 	end
@@ -163,14 +162,17 @@ function generateDropPotion(_difficulty,seed)
 	potionNames[22] = {"Health-Boosting","Healthy"}
 	potionNames[23] = {"Anti-Hunger"}
 	
-	splash = (effects[highestID]["good"] and math.random(1,3) == 1) or (not effects[highestID]["good"] and math.random(1,3) == 1)
-	
+	local eName = ""
+	if(highestID>0)then
+		splash = (effects[highestID]["good"] and math.random(1,3) == 1) or (not effects[highestID]["good"] and math.random(1,3) == 1)
+		eName = potionNames[highestID][math.random(#potionNames[highestID])]
+	end
 	local pName = firstupper(potion_name(1,seed))
-	local eName = potionNames[highestID][math.random(#potionNames[highestID])]
+
 	
 	name = eName.." Potion of "..pName
 	
-	return t,name,damage
+	return t,pName,damage
 end
 
 --Creates a randomized table that represents a potion.
