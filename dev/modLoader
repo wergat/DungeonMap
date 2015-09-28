@@ -1,0 +1,29 @@
+local built_in = {["BossesAndBards"] = true, ["RuinsAndRituals"] = true, ["SetsAndSettlers"] = true,["DrugsAndDealers"] = true}
+local mods = fs.list("/dungeon/mods")
+local cbi = false
+for _, v in pairs(mods) do
+	local mod = v
+	write(mod .. ": ")
+	if built_in[mod] and not fs.exists("/dungeon/mods/" .. mod .. "/mod.info") then
+		write("BUILT-IN, BY WERGAT")
+	elseif built_in[mod] then
+		write("BUILT-IN, ")
+	end
+	if not fs.exists("/dungeon/mods/" .. mod .. "/mod.info") and not built_in[mod] then
+		write("INVALID!")
+	elseif fs.exists("/dungeon/mods/" .. mod .. "/mod.info") then
+		local open = fs.open("/dungeon/mods/" .. mod .. "/mod.info", "r")
+		local all = open.readAll()
+		open.close()
+		local all = textutils.unserialize(all)
+		if all["newestVersion"] then
+			write("VERSION " .. all["newestVersion"])
+		else
+			write("INVALID!")
+		end
+		if all["author"] then
+			write(", BY " .. all["author"]:upper())
+		end
+	end
+	write("\n")
+end
