@@ -11,17 +11,22 @@ local modinfo = http.get("http://pastebin.com/raw.php?i=" .. id).readAll()
 local tabl = textutils.unserialize(modinfo)
 local info = tabl["newestVersion"]
 
-local open = fs.open(path .. "/_version", "r")
-local cver = tonumber(open.readAll())
+local open = fs.open(path .. "/mod.info", "r")
+local tabl2 = open.readAll()
 open.close()
+local tabl2 = textutils.unserialize(tabl2)
+local cver = tabl2["newestVersion"]
+
 if info ~= cver then
 	write("New version avaliable for " .. tabl["name"] .. "! Update? (y/n) ")
 	local n = read()
 	if n ~= "y" then
-		print("Abort.")
 		error()
 	end
 	shell.run("/dungeon/install_mod", id, "-bp")
+	if fs.exists(path .. "/onUpdate") then
+		shell.run(path .. "/onUpdate")
+	end
 end
 ]]
 
@@ -76,39 +81,24 @@ if tArgs[2] ~= "-bp" then
 		print("Abort.")
 		error()
 	end
+	write("\n")
 end
 local compress = http.get("http://pastebin.com/raw.php?i=" .. tabl["install_file"]).readAll()
-if tArgs[2] ~= "-bp" then
-	print("Found compress file, executing..")
-end
 local open = fs.open("/.temp_file__", "w")
 open.write(compress)
 open.close()
 shell.run("/.temp_file__", "/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. "/")
+local open = fs.open("/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. "/mod.info", "w")
+open.write(modinfo)
+open.close()
 if fs.exists("/dungeon/mods/" .. tabl["name"]:gsub(" ", "")) then
-	local open = fs.open("/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. "/_version", "w")
-	open.write(tabl["newestVersion"])
-	open.close()
-	local open = fs.open("/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. "/check_v", "w")
+	local open = fs.open("/dungeon/event/boot/" .. tabl["name"]:gsub(" ", "") .. "_checkv", "w")
 	open.write("local path = \"" .. "/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. "\"\n" .. "local id = \"" .. id .. "\"\n" .. ccode)
 	open.close()
-	
-	if not fs.exists("startup") then
-		local open = fs.open("startup", "w")
-		open.write("")
-		open.close()
+	--print("Successfully installed " .. tabl["name"] .. ".\n")
+	if fs.exists("/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. "/onInstall") and tArgs[2] ~= "-bp" then
+		shell.run("/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. "/onInstall")
 	end
-	local open = fs.open("startup", "r")
-	local all = open.readAll()
-	open.close()
-	
-	if not all:find("/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. "/check_v") and tArgs[2] ~= "-bp" then
-		local open = fs.open("startup", "a")
-		open.write('\nshell.run("' .. "/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. '/check_v")')
-		open.close()
-	end
-	
-	print("Successfully installed " .. tabl["name"] .. ".")
 else
 	printError("Failed to install " .. tabl["name"] .. ". Perhaps the install format is incorrect?")
 end
