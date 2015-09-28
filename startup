@@ -1,0 +1,36 @@
+--Run onStartup in each mod folder
+for k, v in pairs(fs.list("/dungeon/mods/")) do
+	if fs.exists("/dungeon/mods/" .. v .. "/onStartup") then
+		shell.run("/dungeon/mods/" .. v .. "/onStartup")
+	end
+end
+--Run boot events
+for k, v in pairs(fs.list("/dungeon/event/boot")) do
+	shell.run("/dungeon/event/boot/" .. v)
+end
+local function onShutdown()
+	for k, v in pairs(fs.list("/dungeon/mods/")) do
+		if fs.exists("/dungeon/mods/" .. v .. "/onShutdown") then
+			shell.run("/dungeon/mods/" .. v .. "/onShutdown")
+		end
+	end
+end
+
+local se = shell.exit
+local sh = os.shutdown
+local rb = os.reboot
+shell.exit = function(...)
+	onShutdown()
+	sleep(1)
+	return se(unpack({...}))
+end
+os.shutdown = function(...)
+	onShutdown()
+	sleep(1)
+	return sh(unpack({...}))
+end
+os.reboot = function(...)
+	onShutdown()
+	sleep(1)
+	return rb(unpack({...}))
+end
