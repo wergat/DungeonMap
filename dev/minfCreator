@@ -1,0 +1,39 @@
+term.setBackgroundColor(colors.orange)
+term.setTextColor(colors.lightBlue)
+term.clear()
+term.setCursorPos(1,1)
+print("-----------------mod.info Creator------------------")
+print("This tool will assist you in forming a mod.info for your mod.")
+
+local mf = {}
+write("First of all, what do you go by? ")
+mf["author"] = read()
+write("Second of all, as a number, what release is this? (1,2,3,etc.) ")
+mf["newestVersion"] = tonumber(read())
+write("Third of all, what is your mod called? ")
+mf["name"] = read()
+print("Fourth, give me a pastebin ID with a compress (google \"compress creator computercraft\") file. ")
+mf["install_file"] = read()
+repeat
+	print("Fifth and last of all, give me a short (no more than 140 characters) description describing what your mod is.")
+	local n = read()
+	if #n > 140 then
+		print("That description is too long. Try again!")
+	end
+	mf["description"] = n
+until #n <= 140
+local open = fs.open("/mod.info", "w")
+open.write(textutils.serialize(mf))
+open.close()
+print("You can find your mod.info file in the root directory. Would you like me to put it on pastebin? (y/n) ")
+local x = read()
+if x ~= "y" then
+else
+	shell.run("pastebin", "put", "/mod.info")
+	print("Press any key to continue..")
+	os.pullEvent("key")
+end
+term.setBackgroundColor(colors.black)
+term.setTextColor(colors.white)
+term.clear()
+term.setCursorPos(1,1)
