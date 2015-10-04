@@ -1,3 +1,5 @@
+os.loadAPI(":dungeon/apis/dcore")
+dcore.requireAPI("achievement")
 write("Mod name (without spaces. For example, DrugsAndDealers): ")
 local mn = read()
 local path = "/dungeon/mods/" .. mn
@@ -16,3 +18,4 @@ if fs.exists(".ou__") then
 else
 	print("Successfully uninstalled " .. mn .. ".")
 end
+achievement.makeAchievement("Mod Uninstaller","Uninstall your first mod",achievement.getNearestPlayer(),1,true)
