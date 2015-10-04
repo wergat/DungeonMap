@@ -1,0 +1,37 @@
+local qualities = {"usual","unusual","rare","extraordinary","epic","mythical","legendary","forgotten", "nil"}
+local q_color = {"white","aqua","dark_aqua","dark_blue","dark_purple","light_purple","gold","dark_red","dark_green"}
+
+function getNearestPlayer()
+	local _, res = commands.xp(0, "@p")
+	local result = string.match(res[1], "Given 0 experience to (%w+)")
+	return result
+end
+function checkAchievement(name, player)
+	local path = "/dungeon/event/achievements/" .. name .. "." .. player
+	if not fs.exists(path) then
+		return false, path
+	else
+		return true, path
+	end
+end
+function setDoneAchievement(name, player)
+	local open = fs.open("/dungeon/event/achievements/" .. name .. "." .. player, "w")
+	open.write("1")
+	open.close()
+end
+function makeAchievement(name,desc,player,tier,repeatable)
+	tier = tier or 1
+	repeatable = repeatable or false
+	if not qualities[tier] then
+		return false
+	end
+	local d, path = checkAchievement(name, player)
+	if not d and not repeatable then
+		setDoneAchievement(name, player)
+	elseif not repeatable then
+		return false
+	end
+	local command = '/tellraw @a ["",{"text":"' .. player .. ' has just earned the "},{"text":"' .. qualities[tier] ..'","color":' .. q_color[tier] .. '},{"text":" achievement "},{"text":"[' .. name .. ']","color":"green","hoverEvent":{"action":"show_text","value":{"text":"","extra":[{"text":"' .. name .. '\n","color":"green"},{"text":"'.. qualities[tier]:gsub("^%l", string.upper) .. ' achievement\n","color":"' .. q_color[tier] .. '","italic":true},{"text":"' .. desc .. '"}]}}}]'
+	commands.exec(command)
+	return true
+end
