@@ -1,3 +1,5 @@
+os.loadAPI(":dungeon/apis/dcore")
+dcore.requireAPI("achievement")
 --Compress: http://www.computercraft.info/forums2/index.php?/topic/22587-compress-transform-a-folder-structure-into-a-single-self-extracting-file/
 if not http then
 	printError("Turn the HTTP api on!")
@@ -92,13 +94,15 @@ local open = fs.open("/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. "/mod.inf
 open.write(modinfo)
 open.close()
 if fs.exists("/dungeon/mods/" .. tabl["name"]:gsub(" ", "")) then
-	local open = fs.open("/dungeon/event/boot/" .. tabl["name"]:gsub(" ", "") .. "_checkv", "w")
+	local open = fs.open("/dungeon/event/boot/checkv." .. tabl["name"]:gsub(" ", ""), "w")
 	open.write("local path = \"" .. "/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. "\"\n" .. "local id = \"" .. id .. "\"\n" .. ccode)
 	open.close()
-	--print("Successfully installed " .. tabl["name"] .. ".\n")
 	if fs.exists("/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. "/onInstall") and tArgs[2] ~= "-bp" then
 		shell.run("/dungeon/mods/" .. tabl["name"]:gsub(" ", "") .. "/onInstall")
+	else
+		print("Successfully installed " .. tabl["name"] .. ".")
 	end
+	achievement.makeAchievement("Mod Installer","Install your first mod",achievement.getNearestPlayer())
 else
 	printError("Failed to install " .. tabl["name"] .. ". Perhaps the install format is incorrect?")
 end
