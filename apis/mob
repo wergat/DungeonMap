@@ -1,7 +1,7 @@
 dcore.requireAPI("advitem")
 
 -- LORE: some things destroy the world, difficulty gets increased!
--- TODO fähigkeiten-spawnsystem
+-- TODO fÃ¤higkeiten-spawnsystem
 local mobData = {}
 local function count(input)
  local int = 0
@@ -38,19 +38,25 @@ function getMobData(_key)
 end
 
 -- returning functions
+local moblist = {["zombie"] = "Zombie",["ranged_skeleton"] = "Ranged Skeleton",["melee_skeleton"] = "Melee Skeleton",["spider"] = "Spider",["pigman"] = "Zombie Pigman",["spider_jockey"] = "Spider Jockey"}
 function getMobName()
  local name = getMobData("mobType")
- local a = {["zombie"] = "Zombie",["ranged_skeleton"] = "Ranged Skeleton",["melee_skeleton"] = "Melee Skeleton",["spider"] = "Spider"}
- if(a[name]~=nil)then
-  return "Lv. "..math.floor(getMobData("level")).." "..a[name].." " 
+ if(moblist[name]~=nil)then
+  return "Lv. "..math.floor(getMobData("level")).." "..moblist[name]
  else
-  return "Lv. "..math.floor(getMobData("level")).." Zombie "
+  return "Lv. "..math.floor(getMobData("level")).." Zombie"
  end
  
 end
+local moblist2 = {["zombie"] = "Zombie",["ranged_skeleton"] = "Skeleton",["melee_skeleton"] = "Skeleton",["spider"] = "Spider",["pigman"] = "PigZombie",["spider_jockey"] = "Skeleton"}
 function getEntityName(_name)
- local a = {["zombie"] = "Zombie",["ranged_skeleton"] = "Skeleton",["melee_skeleton"] = "Skeleton",["spider"] = "Spider"}
- return (a[_name] or "Zombie")
+ return (moblist2[_name] or "Zombie")
+end
+function getMobList()
+	return moblist
+end
+function getSummonMobList()
+	return moblist2
 end
 function getDropChances()
  -- TODO: check for something
@@ -142,14 +148,15 @@ function initializeMob(x,y,z,mobName,difficulty)
  setMobData("effectTable",{})
  
  if(mobName==nil)then
-  if(math.random(3)==1)then
-    setMobData("mobType","melee_skeleton")
-   if(math.random(3)>1)then
-    setMobData("mobType","ranged_skeleton")
-   end
-  else
-   setMobData("mobType","zombie")
-  end
+	 if(math.random(3)==1)then
+		 setMobData("mobType","melee_skeleton")
+	 elseif(math.random(3)>1)then
+		 setMobData("mobType","ranged_skeleton")
+	 elseif math.random(5) <= 2 then
+		 setMobData("mobType","pigman")
+	 elseif math.random(100) == 1 then
+		 setMobData("mobType","spider_jockey")
+	 end
  end
 
  if(getMobData("mobType") == "melee_skeleton" or getMobData("mobType") == "ranged_skeleton")then
@@ -206,6 +213,9 @@ function summonMob(x,y,z,mobName,difficulty)
 
  -- Putting it all together
  local finalTable = mob.getMobDataForSummon()
+ if getMobData("mobType") == "spider_jockey" then
+	finalTable["Riding"] = {["id"] = "Spider"}
+ end
  
  local dataTag = dcore.getNBTStringFromTable(finalTable)
  local cmd = "summon "..mob.getEntityName(getMobData("mobType")).." "..getMobData("xCoord").." "..getMobData("yCoord").." "..getMobData("zCoord").." "..dataTag
@@ -223,5 +233,3 @@ function summonMob(x,y,z,mobName,difficulty)
  
  return success,additionalInfo
 end
-
-
