@@ -1,0 +1,94 @@
+local text = {
+[[
+Hello!
+Thanks for trying out Wergat and I's map.
+This book will help you if there is anything you don't know of.
+For details on modding, visit the wiki at github.com/wergat/DungeonMap.
+Have fun!
+-Atenefyr
+]],
+[[
+--Table of Contents--
+4-5.. Generation
+6.. Chests
+7.. Villagers
+8.. Potions
+9.. Currency
+10.. Enemies
+11.. Rarity
+12.. Sets
+13.. Quests
+14-15.. Installing Mods
+]],
+[[
+--Table of Contents--
+]],
+[[
+The map works by making tons of rooms, going up and down, with connections.
+The \"connections\" can block you, make passage difficult, or just let you through.
+You can go up and down with stairs found randomly without the rooms.
+]],
+[[
+The rooms are totally random; some are water fountains, others are pits of fiery death.
+]],
+[[
+Chests are mini-rewards in some of the rooms. Dialog quests are just one way to get them.
+They contain a variety of materials, such as equipment, food, and potions.
+Loot is randomized based off of the Chest's difficulty, or level.
+]],
+[[
+Occasionally, you can find little shops with villagers that trade currency (page 9) for equipment.
+Like Chests, villagers are graded based off of difficulty. The higher, the better.
+1/10th of the time, Drug Dealers will spawn, which will sell you randomized and pre-set potions.
+]],
+[[
+Potions are randomized based off of a difficulty value. They can have a mix of positive and negative effects.
+They spawn in chests, and Drug Dealers will sell them aswell.
+You can find negative splash potions to troll, and positive potions. Be warned; the better, the more costly!
+]],
+[[
+Equipment always have a gold value, seen if you hover over it. Gold is the \"currency value\".
+1000 gold = 1 diamond; 1 emerald = 5 diamonds; 1 gold block = 1 emerald; 20 iron = 1 diamond.
+Shops usually have a Currency Trader to exchange material value.
+]],
+[[
+This map has mobs; what is a map without them?
+Mobs, like everything else, have a level. The farther you progress, the higher this is.
+What they wear is determined from the level; level 2000 zombies have full enchanted diamond, while level 2 zombies have nothing.
+]],
+[[
+Usual, Unusual, Rare, Extraordinary, Rare, Epic, Mythical, Legendary, Forgotten. Those are rarity values.
+The rarity values get more costly and rare as it increases; Forgotten items go for at least $1mil.
+]],
+[[
+Sets are legendary and forgotten quality. They contain 5 items, armor & weapon, and contain the same prefix.
+For example, the Kitten's set contains Kitten's Paws (boots) and Kitten's Wrath (sword).
+4/5 of the time, any legendary/forgotten item will become a set.
+]],
+[[
+Around the map, villagers that talk can spawn that will offer to give you a quest for some loot.
+Developers can add their own quests that are generated randomly, aswell.
+]],
+[[
+Installing mods is designed to be as easy as possible.
+Each mod has it's own ID on Pastebin that serves as the unique identifier.
+To install a mod, type \"dungeon/install_mod\", then type the identifier provided.
+]],
+[[
+A few confirmations might appear. Usually you can just type \"y\", but not always.
+After that, you're done! The mod has been installed. It will check for updates on boot and run automatically.
+]]
+}
+
+local pagestr = ""
+local pagen = 0
+for k, v in pairs(text) do
+	pagen = pagen + 1
+	if v:find(":") then
+		printError("Found colon on page " .. pagen .. "!")
+		error()
+	end
+	pagestr = pagestr .. '"' .. v.. '", '
+end
+pagestr = pagestr:sub(1,-3)
+commands.exec('/give @p written_book 1 0 {pages:[' .. pagestr .. '],title:"DungeonMap Official Guide",author:"Atenefyr"}')
