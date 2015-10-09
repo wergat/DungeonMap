@@ -285,6 +285,15 @@ end
 -- _typeOfItem = slot the item is in
 -- _mobname = {zombie,player,ranged_skeleton,...}
 function getEquipment(_dlevel,_typeOfItem,_mobname,_forceQ)
+	-- CHECK INPUTS
+	if(type(_dlevel)=="number")then
+		if(_dlevel<0)then
+			_dlevel = 0
+		end
+	else
+		error("getEquipment's first argument needs to be a number and is not optional!",2)
+	end
+
  --dcore.evaluateInputs(_dlevel,_typeOfItem,_mobname,_forceQ)
  local mobname = advitem.getMobName(_mobname)
  advitem.initializeItem(_dlevel,_typeOfItem,mobname,_forceQ)
