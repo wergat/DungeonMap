@@ -37,7 +37,7 @@ local function pluralname(name)
 	if exceptions[name] then
 		return exceptions[name]
 	else
-		return name .. "s"
+		return (name or "Mob") .. "s"
 	end
 end
 
