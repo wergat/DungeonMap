@@ -180,18 +180,22 @@ _G["scan"] = scanG
 
 
 local nativeExecAsync = commands.execAsync
+local nativeAsyncCommands = {}
+
 local nativeSleep = sleep
+
 
 local asyncCounter = 0
 
 _G["sleep"] = function(...)
 	asyncCounter = 0
-	return nativeSleep(arg)
+	
+	return nativeSleep(unpack(arg))
 end
 
 
 function checkForAsyncTimeout()
-	asyncCounter++
+	asyncCounter = asyncCounter + 1
 	if(asyncCounter>=ASYNC_TIMEOUT_MAXIMUM)then
 		sleep(0.05)
 	end
@@ -199,11 +203,16 @@ end
 
 _G["commands"]["execAsync"] = function(...)
 	checkForAsyncTimeout()
-	return nativeExecAsync(arg)
+	return nativeExecAsync(unpack(arg))
 end
 
-
-
+for k,v in pairs(_G["commands"]["async"]) do
+	nativeAsyncCommands[k] = v
+	_G["commands"]["async"][k] = function(...)
+		checkForAsyncTimeout()
+		return nativeAsyncCommands[k](arg)
+	end
+end
 
 
 
