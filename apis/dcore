@@ -155,7 +155,7 @@ function getNBTStringFromTable(t)
 	if(type(t)=="table")then
 		return "{"..string.sub(tableToNBT(t),1,-2).."}"
 	else
-		error("GIFF MEAH TABLE YO FOOL!")
+		error("GIFF MEAH TABLE YO FOOL!",2)
 	end
 end
 
