@@ -4,7 +4,7 @@ local mods_dir = all_dir.."/mods"
 local logs_dir = all_dir.."/logs"
 local apis_dir = all_dir.."/apis"
 
-
+ASYNC_TIMEOUT_MAXIMUM = 20
 
 
 local firstError = true
@@ -173,6 +173,53 @@ end
 
 
 _G["scan"] = scanG
+
+-- ASYNC Grabbing to prevent timeout's
+
+
+
+
+local nativeExecAsync = commands.execAsync
+local nativeSleep = sleep
+
+local asyncCounter = 0
+
+_G["sleep"] = function(...)
+	asyncCounter = 0
+	return nativeSleep(arg)
+end
+
+
+function checkForAsyncTimeout()
+	asyncCounter++
+	if(asyncCounter>=ASYNC_TIMEOUT_MAXIMUM)then
+		sleep(0.05)
+	end
+end
+
+_G["commands"]["execAsync"] = function(...)
+	checkForAsyncTimeout()
+	return nativeExecAsync(arg)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -- maybe grab commands executed, and but them in table to print when system shuts down unexpected
 
 
