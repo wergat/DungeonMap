@@ -1,13 +1,3 @@
--- Returns player Object
--- Requires name
-function scoreboard_GetObjective(data)
- return 
-end
-
-function scoreboard_GetValue(data)
- return 
-end
-
 function getPlayerByName(_playerName)
 	local playerObject = {}
 	playerObject.name = _playerName
