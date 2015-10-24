@@ -3,6 +3,7 @@ function add(_newF)
  table.insert(f,_newF)
 end
 
+-- Call this every like .05 secs
 function run()
  while true do
   for i=1,#f do

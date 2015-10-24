@@ -1,0 +1,82 @@
+-- Returns player Object
+-- Requires name
+function scoreboard_GetObjective(data)
+ return 
+end
+
+function scoreboard_GetValue(data)
+ return 
+end
+
+function getPlayerByName(_playerName)
+	local playerObject = {}
+	playerObject.name = _playerName
+	
+	-- Returns the player name
+	playerObject.getName = function(self)
+		return self.name
+	end
+	
+	-- You can now add xp to the player
+	playerObject.addExp = function(self,v)
+		commands.xp(v,self.name)
+	end
+	
+	-- Test if the player is on any scoreboaqrd
+	playerObject.hasScoreboard = function(self)
+		local a,_ = commands.exec("/scoreboard players list "..self.name)
+		return a
+	end
+	
+	-- Get a specific value of a scoreboard of a player
+	playerObject.getScoreboardValue = function(self,scoreBoardName)
+		local s,t = commands.exec("/scoreboard players list "..self.name)
+		if(s)then
+			for i=2,#t do
+				if(string.sub(string.match(string.match(t[i],"([^,]+):([^,]+)")," .*"),2,-1) == scoreBoardName)then
+					return tonumber(string.sub(string.match(string.match(t[i],":([^,]+)")," .* "),2,-2))
+				end
+			end
+		else
+			return nil
+		end
+	end
+	
+	-- Get all values of all scoreboard of a player	
+	playerObject.getScoreboardData = function(self)
+		local s,t = commands.exec("/scoreboard players list "..self.name)
+		local data = {}
+		if(s)then
+			for i=2,#t do
+				data[string.sub(string.match(string.match(t[i],"([^,]+):([^,]+)")," .*"),2,-1)] = tonumber(string.sub(string.match(string.match(t[i],":([^,]+)")," .* "),2,-2))
+			end
+		end
+		return data
+	end
+	
+	-- Teleports a player to a location or other player
+	playerObject.teleportTo = function(self,...)
+		if(#arg==1)then -- Teleport to a player
+			local s,e = commands.exec("/tp "..self.name.." "..arg[1])
+			if(not s) then print(e[1]) end
+		elseif(#arg==3)then -- Teleport to a location
+			local s,e = commands.exec("/tp "..self.name.." "..arg[1].." "..arg[2].." "..arg[3])
+			if(not s) then print(e[1]) end
+		end
+	end
+	
+	-- REturns the players current position
+	playerObject.getPosition = function(self)
+		local s,d = commands.exec("/tp "..self.name.." ~ ~ ~")
+		if(s)then
+			local data = d[1]
+			local s = string.match(data,"([^,]+),([^,]+),([^,]+)$") -- Special string required for calculation of the X-coord.
+			local x = tonumber(string.match(s,"(%d+).(%d*)$").."."..string.match(s,"(%d*)$"))
+			local y = tonumber(tostring(string.match(data,"([^,]+),([^,]+)$")))
+			local z = tonumber(tostring(string.match(data,"([^,]+)$")))
+			return x,y,z
+		end
+	end
+	
+	return playerObject
+end

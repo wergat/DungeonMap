@@ -1,0 +1,16 @@
+-- gets All player names
+-- customSearch is usually @a, can be changed to something like "@r" or "@a[10,50,53,rm=40]" or else
+
+function getAllPlayerNames(customSearch)
+	local r,t = commands.xp(0,(customSearch or "@a"))
+	local players = {}
+	if(r)then
+		for i=1,#t do
+			players[#players+1] = string.match(t[i],"%a+$")
+		end
+		return players
+	else
+		print(t[1])
+		return nil
+	end
+end
