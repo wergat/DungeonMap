@@ -164,7 +164,7 @@ function getChestData(_startDifficulty,_chestType)
 	lootData["Count"] = 1
 	lootData["Damage"] = damage
 	lootData["tag"]["display"] = {}
-	lootData["tag"]["display"]["Name"] = name
+	lootData["tag"]["display"]["Name"] = potion.prefixOrSuffixName(name)
 	table.insert(loot["item"],lootData)
     difficulty = difficulty - 30
    else
@@ -203,7 +203,7 @@ function getChestData(_startDifficulty,_chestType)
    break
   end
  end
- dataTable["CustomName"] = (advitem.q_color[chestRarity]).."§l"..firstToUpper(advitem.qualitys[chestRarity])..chest_types[_chestType].."Chest§r"
+ dataTable["CustomName"] = (advitem.q_color[chestRarity]).."Â§l"..firstToUpper(advitem.qualitys[chestRarity])..chest_types[_chestType].."ChestÂ§r"
  return dataTable
 end
 
