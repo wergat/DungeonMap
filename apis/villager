@@ -117,7 +117,7 @@ function summon(xc,yc,zc,difficulty,trades,coat)
 		tstr = tstr .. v .. ","
 	end
 	tstr = tstr:sub(1,-2)
-	local cmd = "/summon Villager " .. xc .. " " .. yc .. " " .. zc .. " {Profession:" .. coat .. ",CustomName:\"Level " .. difficulty .. " Trader\",CustomNameVisible:0,Offers:{Recipes:[" .. tstr .. "]}}"
+	local cmd = "/summon Villager " .. xc .. " " .. yc .. " " .. zc .. " {Profession:" .. coat .. ",CustomName:\"Level " .. math.floor(difficulty+0.5) .. " Trader\",CustomNameVisible:0,Offers:{Recipes:[" .. tstr .. "]}}"
 	local _r = commands.exec(cmd)
 	return _r, cmd
 end
