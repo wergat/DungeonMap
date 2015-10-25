@@ -90,9 +90,9 @@ item_pool[4] = { -- Food
  {["id"] = 357,["value"] = 1,["max"] = 5}, -- cookie
   --{["id"] = ,["value"] = ,["max"] = },
 }
-item_pool[5] = {
- {["id"] = 50,["value"] = 3,["max"] = 13}, -- torch 
-}
+--item_pool[5] = {
+-- {["id"] = 50,["value"] = 3,["max"] = 13}, -- torch 
+--}
 
 
 
