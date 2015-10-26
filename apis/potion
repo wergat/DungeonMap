@@ -119,10 +119,12 @@ function generateDropPotion(_difficulty,seed)
 	
 	local highestID = 0
 	local seed = 0
+	local cost = 0
 	
 	for k,v in pairs(choosenEffects) do
 		if(v["potency"]>=0)then -- No potion potency? Not gonna put that in!
 			local p = {}
+			cost = cost + round(value+((v["potency"]/4)*3)+math.floor(v["duration"]/200+0.5), 1)*1000
 			p["Id"] = k
 			p["Amplifier"] = v["potency"]
 			p["Duration"] = v["duration"]
@@ -171,7 +173,9 @@ function generateDropPotion(_difficulty,seed)
 
 	
 	name = eName.." Potion of "..pName
-	
+	t["Price"] = cost
+	t["Seed"] = seed
+	t["Lore"] = {"Price is about " .. cost .. " gold"}
 	return t,pName,damage
 end
 
@@ -234,7 +238,10 @@ function compileToNBT(t,name)
 		str = str .. "{Id:" .. c["Id"] .. ",Amplifier:" .. c["Amplifier"] .. ",Duration:" .. c["Duration"] .. ",Ambient:" .. c["Ambient"] .. ",ShowParticles:" .. c["ShowParticles"] .. "},"
 	end
 	str = str:sub(1,-2)
-	if name then
+	if name and t["Lore"] then
+		name = prefixOrSuffixName(name,t["Seed"])
+		str = str .. "],display:{Name:\"" .. name .. "\",Lore:[\"" .. t["Lore"][1] .. "\"]}}"
+	elseif name then
 		name = prefixOrSuffixName(name)
 		str = str .. "],display:{Name:\"" .. name .. "\"}}"
 	else
