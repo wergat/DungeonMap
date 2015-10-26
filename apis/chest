@@ -165,6 +165,7 @@ function getChestData(_startDifficulty,_chestType)
 	lootData["Damage"] = damage
 	lootData["tag"]["display"] = {}
 	lootData["tag"]["display"]["Name"] = potion.prefixOrSuffixName(name)
+	lootData["tag"]["display"]["Lore"] = potionData["Lore"]
 	table.insert(loot["item"],lootData)
     difficulty = difficulty - 30
    else
