@@ -39,6 +39,9 @@ local items = {}
  items[322] = {["type"] = "food",["id"] = "minecraft:golden_apple",["name"] = "Golden Apple",["foodPoints"] = 9.6,["saturation"] = 13.6,["stack_size"] = 64}
 -- items[] = {["type"] = "food",["id"] = "",["name"] = "",["foodPoints"] = ,["saturation"] = ,["stack_size"] = }
 
+ --Misc stuff
+ items[86] = {["type"] = "armor",["id"] = "minecraft:pumpkin",["name"] = "Pumpkin",["sets"] = {},["durability"] = 0,["stack_size"] = 64}
+
  
 
 
