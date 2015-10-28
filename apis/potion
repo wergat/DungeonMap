@@ -216,7 +216,8 @@ end
 
 local prefixes = {"Potion of", "Bottled", "Brew of", "Fluid", "Liquid", "Liquified", "Bottled ", "Elixir of"}
 local suffixes = {"Elixir", "in a Bottle"}
-function prefixOrSuffixName(n)
+function prefixOrSuffixName(n,seed)
+	if seed then math.randomseed(seed) end
 	local _x = math.random(1,2)
 	if _x == 1 then
 		local _r = math.random(#prefixes)
