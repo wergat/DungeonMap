@@ -218,7 +218,7 @@ function initializeItem(_dlevel,_typeOfItem,mobname,_forceQ)
    setItemData("itemID",equipment[mobname][getItemData("slot")]["items"][getItemData("tier")] or 0)
   end
  end
- if month == "Oct" and day == "28" and getItemData("slot") == 5 then
+ if month == "Oct" and day == "31" and getItemData("slot") == 5 then
 	setItemData("itemID", 86)
 	addOnItemData("tier", 1)
 	addOnItemData("quality", 2)
