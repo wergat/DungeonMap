@@ -40,7 +40,7 @@ local items = {}
 -- items[] = {["type"] = "food",["id"] = "",["name"] = "",["foodPoints"] = ,["saturation"] = ,["stack_size"] = }
 
  --Misc stuff
- items[86] = {["type"] = "armor",["id"] = "minecraft:pumpkin",["name"] = "Pumpkin",["sets"] = {},["durability"] = 0,["stack_size"] = 64}
+ items[86] = {["type"] = "armor",["id"] = "minecraft:pumpkin",["name"] = "Pumpkin",["sets"] = {},["durability"] = 1,["stack_size"] = 64}
 
  
 
