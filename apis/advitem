@@ -1,51 +1,53 @@
 dcore.requireAPI("items")
 
 local function count(input)
- local int = 0
- for k,v in pairs(input) do
-  int = int+1
- end
- return int
+	local int = 0
+	for k,v in pairs(input) do
+		int = int+1
+	end
+	return int
 end
- 
+
 qualitys = {"usual","unusual","rare","extraordinary","epic","mythical","legendary","forgotten"}
 q_color = {"§f","§b","§3","§1","§5","§d","§6","§4","§2"}
 
-local equipment = {}
+
 
 
 -- Data for the Item generated
 local itemData = {}
 
+-- Equipment for mobs
+local equipment = {}
+equipment["zombie"] = {
+	{["chance"] = 0.8,["items"] = {268,272,283,267,276},["type"] = "Sword"}, -- HAND
+	{["chance"] = 0.3,["items"] = {301,305,317,309,313},["type"] = "Feet"}, -- FEET
+	{["chance"] = 0.3,["items"] = {300,304,316,308,312},["type"] = "Legs"}, -- LEGS
+	{["chance"] = 0.4,["items"] = {299,303,315,307,311},["type"] = "Chest"}, -- CHEST
+	{["chance"] = 0.6,["items"] = {298,302,314,306,310},["type"] = "Head"}, -- HEAD
+}
+equipment["melee_skeleton"] = equipment["zombie"]
+equipment["player"] = equipment["zombie"]
+equipment["ranged_skeleton"] = {
+	{["chance"] = 1,["items"] = {261,261,261,261,261},["type"] = "Bow"}, -- HAND
+	{["chance"] = 0.3,["items"] = {301,305,317,309,313},["type"] = "Feet"}, -- FEET
+	{["chance"] = 0.3,["items"] = {300,304,316,308,312},["type"] = "Legs"}, -- LEGS
+	{["chance"] = 0.4,["items"] = {299,303,315,307,311},["type"] = "Chest"}, -- CHEST
+	{["chance"] = 0.6,["items"] = {298,302,314,306,310},["type"] = "Head"}, -- HEAD
+}
+
+-- No equipment for those mobs (Cannot wear it)
+equipment["spider"] = {nil}
+equipment["caveSpider"] = {nil}
+equipment["blaze"] = {nil}
+equipment["creeper"] = {nil}
+equipment["slime"] = {nil}
+equipment["witch"] = {nil}
+equipment["wolf"] = {nil}
+equipment["enderman"] = {nil}
+equipment["endermite"] = {nil}
  
- equipment["zombie"] = {
-  {["chance"] = 0.8,["items"] = {268,272,283,267,276},["type"] = "Sword"}, -- HAND
-  {["chance"] = 0.3,["items"] = {301,305,317,309,313},["type"] = "Feet"}, -- FEET
-  {["chance"] = 0.3,["items"] = {300,304,316,308,312},["type"] = "Legs"}, -- LEGS
-  {["chance"] = 0.4,["items"] = {299,303,315,307,311},["type"] = "Chest"}, -- CHEST
-  {["chance"] = 0.6,["items"] = {298,302,314,306,310},["type"] = "Head"}, -- HEAD
- }
- equipment["melee_skeleton"] = equipment["zombie"]
- equipment["player"] = equipment["zombie"]
- equipment["ranged_skeleton"] = {
-  {["chance"] = 1,["items"] = {261,261,261,261,261},["type"] = "Bow"}, -- HAND
-  {["chance"] = 0.3,["items"] = {301,305,317,309,313},["type"] = "Feet"}, -- FEET
-  {["chance"] = 0.3,["items"] = {300,304,316,308,312},["type"] = "Legs"}, -- LEGS
-  {["chance"] = 0.4,["items"] = {299,303,315,307,311},["type"] = "Chest"}, -- CHEST
-  {["chance"] = 0.6,["items"] = {298,302,314,306,310},["type"] = "Head"}, -- HEAD
- }
- 
- equipment["spider"] = {nil}
- equipment["caveSpider"] = {nil}
- equipment["blaze"] = {nil}
- equipment["creeper"] = {nil}
- equipment["slime"] = {nil}
- equipment["witch"] = {nil}
- equipment["wolf"] = {nil}
- equipment["enderman"] = {nil}
- equipment["endermite"] = {nil}
- 
- 
+-- Enchantment Data
  local allench = {
   ["Sword"] = {
    {["id"] = 16,["maxlv"] = 5,["chance"] = .2}, -- Sharpness
@@ -284,6 +286,7 @@ end
 -- _dlevel = guideline level of item
 -- _typeOfItem = slot the item is in
 -- _mobname = {zombie,player,ranged_skeleton,...}
+-- _forceQ = forces a quality the item must have
 function getEquipment(_dlevel,_typeOfItem,_mobname,_forceQ)
 	-- CHECK INPUTS
 	if(type(_dlevel)=="number")then
@@ -343,3 +346,18 @@ function getEquipment(_dlevel,_typeOfItem,_mobname,_forceQ)
  return returnTable,additionalInfo
 end
 
+
+function getEquipmentForChest(powerInput)
+	local itemDataTable,moreInfo = advitem.getEquipment((powerInput*2),nil,"player",1)
+	if(moreInfo~=false)then
+		print("Item time")
+		local returnData = {}
+		returnData["powerCost"] = math.floor(moreInfo["value"]*3)
+		returnData["setItemCount"] = 1
+		returnData["item"] = itemDataTable
+		returnData["item"]["Damage"] = math.floor(((math.random(5)-1)/5)*items.getDurability(moreInfo["itemID"]))
+		return returnData
+	else
+		return false
+	end
+end

@@ -5,6 +5,13 @@ local logs_dir = all_dir.."/logs"
 local apis_dir = all_dir.."/apis"
 
 ASYNC_TIMEOUT_MAXIMUM = 20
+USE_STRING_FOR_ITEM_ID = false
+
+if(not _G["cleanG"])then
+	_G["cleanG"] = _G
+else
+	_G = _G["cleanG"]
+end
 
 
 local firstError = true

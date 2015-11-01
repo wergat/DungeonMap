@@ -39,12 +39,20 @@ local items = {}
  items[322] = {["type"] = "food",["id"] = "minecraft:golden_apple",["name"] = "Golden Apple",["foodPoints"] = 9.6,["saturation"] = 13.6,["stack_size"] = 64}
 -- items[] = {["type"] = "food",["id"] = "",["name"] = "",["foodPoints"] = ,["saturation"] = ,["stack_size"] = }
 
- 
-
+-- TODO: once 1.8 approaches, optimize this function for it!
+function useRightItemID(input)
+	local itemId = getIDWithName(input)
+	if(USE_STRING_FOR_ITEM_ID)then
+		return items[itemId]["id"]
+	else
+		return itemId
+	end
+end
 
 function getItem(itemID)
  return items[itemID]
 end
+
 
 function setItem(itemID,data)
  if((tonumber(itemID) or 0) > 0)then
@@ -63,12 +71,16 @@ function getName(itemID)
 end
 
 function getIDWithName(name)
- for k,v in pairs(items) do
-  if(v["name"] == name)then
-   return k
-  end
- end
- return nil
+	if(type(name)=="string")then
+		for k,v in pairs(items) do
+			if(v["name"] == name)then
+				return k
+			end
+		end
+		return nil
+	else
+		return tonumber(name or 0) or 0
+	end
 end
 
 function getDurability(itemID)

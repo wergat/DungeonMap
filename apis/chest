@@ -1,9 +1,8 @@
 os.loadAPI(":dungeon/apis/dcore")
-dcore.requireAPI("items")
 dcore.requireAPI("advitem")
 dcore.requireAPI("potion")
 
--- TODO: Convert the datatag-string to table
+-- 
 
 local chest_types = {" "," Equipment "," Supply "," Food "," Potion "}
 
@@ -106,116 +105,197 @@ end
 function firstToUpper(str) return (str:gsub("^%l", string.upper)) end
 
 function getChestData(_startDifficulty,_chestType)
- local chestRarity = chest.getChestRarity()
- local difficulty = _startDifficulty*(6+3*chestRarity+_chestType)
- local dataTable = {}
- dataTable["Items"] = {}
+	-- Chest rarity, like unusual or rare
+	local chestRarity = chest.getChestRarity()
+	-- Item power level, each item costs a little bit of power
+	local remainingStoragePower = _startDifficulty*(6+3*chestRarity+_chestType)
+	local dataTable = {}
+	dataTable["Items"] = {}
 
- local loot = {}
- local slots = {}
- local items_choosen = 0
- loot["item"] = {}
+	local loot = {}
+	local slots = {}
+	local items_choosen = 0
+	loot["item"] = {}
 
- while difficulty>0 do
-  local itemIndex = math.random(#item_pool[_chestType])
-  while(item_pool[_chestType][itemIndex].value > difficulty)do
-   itemIndex = math.random(#item_pool[_chestType])
-  end
+	local timeout = 0
+	
+	-- As long as there is item power
+	while remainingStoragePower>0 do
+		if(timeout>10)then
+			remainingStoragePower = remainingStoragePower - 5
+			timeout = 0
+		end
+		
+		local itemIndex = math.random(#item_pool[_chestType])
+		local itemPoolData = item_pool[_chestType][itemIndex]
+		
+		-- Just in case something gets wrong and we have to re-run this loop
+		local validItem = true
+		
+		-- Prevent timeouts in this while clock
+		if(type(itemPoolData)~="function")then
+			while(itemPoolData.value > remainingStoragePower)do
+				itemIndex = math.random(#item_pool[_chestType])
+				itemPoolData = item_pool[_chestType][itemIndex]
+				if(type(itemPoolData)=="function")then
+					break
+				end
+				timeout = timeout + 1
+				if(timeout>10)then
+					remainingStoragePower = remainingStoragePower - 5
+					timeout = 0
+					validItem = false
+					break
+				end
+			end
+		end
 
-  local maxitems = (item_pool[_chestType][itemIndex]["max"])
-  local maxcapacity = math.floor(difficulty/item_pool[_chestType][itemIndex]["value"])
-  local maxcount = math.min(maxitems,maxcapacity)
-  local count = 1
-  while (count<maxcount and math.random(20)>2) do
-   count = count + 1
-  end
+		local isFunction = (type(itemPoolData)=="function")
+		local maxCount = 1
+		local itemCount = 1
+		
+		if(not isFunction)then
+			-- Pre-defined maximum amount of items we can spawn at once
+			local maxitems = (itemPoolData["max"] or 1)
+			-- Maximum items we can summon at once with our storage power
+			local maxcapacity = math.floor(remainingStoragePower/itemPoolData["value"])
+			-- Summon as many items as we are allowed to
+			maxCount = math.min(maxitems,maxcapacity)
+			
+			while (itemCount<maxCount and math.random(20)>2) do
+				itemCount = itemCount + 1
+			end
+			
+			-- "Pay" for the item(s)
+			remainingStoragePower = remainingStoragePower - itemPoolData["value"]*itemCount
+			-- Add the item(s) to the chest
+			loot[itemPoolData["id"]] = (loot[itemPoolData["id"]] or 0) + itemCount
+			
+			-- Reset Timeout
+			timeout = 0
+		else
+			print("#3")
+			-- Get data from custom function
+			local customItemData = itemPoolData(remainingStoragePower)
+			
+			-- Approve inputs
+			-- Ignore errors if the function returns false, then it knows there will no item spawn
+			if(customItemData~=false)then
+				if(not customItemData)then print("cutomItemData needs to be table!") validItem = false end
+				if(not type(customItemData)=="table")then print("cutomItemData needs to be table!") validItem = false end
+				if(not customItemData["item"])then print("cutomItemData needs to have a item table with data inside it!") validItem = false end
+			else
+				validItem = false
+			end
+			print("#4")
+			
+			if(validItem)then
+				local powerCost = tonumber(customItemData["powerCost"] or 0) or 0
+				print("#5 ["..customItemData["powerCost"].."]")
+				-- Check if we can afford the item(s) we just generated
+				if(powerCost<=remainingStoragePower)then
+					-- Process output data
+					print("#6 ("..remainingStoragePower..")")
+					-- Item count
+					if(customItemData["setItemCount"])then
+						itemCount = customItemData["setItemCount"]
+						maxCount = customItemData["setItemCount"]
+					elseif(customItemData["maxItemCount"])then
+						-- Pre-defined maximum amount of items we can spawn at once
+						local maxitems = (tonumber(ustomItemData["maxItemCount"] or 1) or 1)
+						-- Maximum items we can summon at once with our storage power
+						local maxcapacity = math.floor(remainingStoragePower/powerCost)
+						-- maxCount as many items as we are allowed to
+						itemCount = math.min(maxitems,maxcapacity)
+					elseif(customItemData["randomItemCount"])then
+						-- Pre-defined maximum amount of items we can spawn at once
+						local maxitems = (tonumber(ustomItemData["maxItemCount"] or 1) or 1)
+						-- Maximum items we can summon at once with our storage power
+						local maxcapacity = math.floor(remainingStoragePower/powerCost)
+						-- maxCount as many items as we are allowed to
+						maxcount = math.min(maxitems,maxcapacity)
+						
+						-- Randomize the item count at the and
+						while (itemCount<maxCount and math.random(20)>2) do
+							itemCount = itemCount + 1
+						end
+					end
+					
+					-- Set item count
+					customItemData["item"]["Count"] = itemCount
+					
+					-- Insert item to chest
+					table.insert(loot["item"],customItemData["item"])
+					
+					-- Reset Timeout
+					timeout = 0
+					
+					remainingStoragePower = remainingStoragePower - (powerCost*itemCount)
+					
+					print("!!! "..(powerCost).."/"..(itemCount))
+				else
+					write("Declined, price too high! "..powerCost..">"..remainingStoragePower.."!")
+					timeout = timeout + 5
+				end
+			else
+				validItem = false
+				timeout = timeout + 1
+			end
+		end
+	end
+	
+	-- Create 27 empty chest slots
+	for s=1,27 do
+		table.insert(slots,(s-1))
+	end
 
-  -- Add Equipment Item
-  if(math.random(14)==1 or (chestRarity>1 and items_choosen==0) or _chestType==2)then
-   local itemDataTable = {}
-   local moreInfo = false
-  
-   if(items_choosen>0)then
-    itemDataTable,moreInfo = advitem.getEquipment((difficulty*2),nil,"player",1)
-   else
-    itemDataTable,moreInfo = advitem.getEquipment((_startDifficulty*2),nil,"player",chestRarity)
-   end
-   items_choosen = items_choosen + 1
-  
-   if(moreInfo~=false)then
-    moreInfo["value"] = moreInfo["value"] * items_choosen
-    difficulty = difficulty - math.floor(moreInfo["value"]*3)
-    itemDataTable["Damage"] = math.floor(((math.random(5)-1)/5)*items.getDurability(moreInfo["itemID"]))
-    itemDataTable["Count"] = 1
-    table.insert(loot["item"],itemDataTable)
-   else
-    -- Add normal item to pool
-    difficulty = difficulty - item_pool[_chestType][itemIndex].value*count
-    loot[item_pool[_chestType][itemIndex].id] = (loot[item_pool[_chestType][itemIndex].id] or 0) + count
-   end
-  else
-   -- Add Potion instead of item
-   if(math.random(10)==1 or _chestType==5)then
-    local lootData = {}
-    local potionData,name,damage = potion.generateDropPotion(difficulty*1.1)
-	lootData["tag"] = {}
-	lootData["tag"]["CustomPotionEffects"] = potionData
-	lootData["id"] = 373
-	lootData["Count"] = 1
-	lootData["Damage"] = damage
-	lootData["tag"]["display"] = {}
-	lootData["tag"]["display"]["Name"] = potion.prefixOrSuffixName(name)
-	lootData["tag"]["display"]["Lore"] = potionData["Lore"]
-	table.insert(loot["item"],lootData)
-    difficulty = difficulty - 30
-   else
-    -- Add normal item to pool
-    difficulty = difficulty - item_pool[_chestType][itemIndex].value*count
-    loot[item_pool[_chestType][itemIndex].id] = (loot[item_pool[_chestType][itemIndex].id] or 0) + count
-   end
-  end
- end
+	-- Check if there is any special loot
+	if(loot["item"][1]==nil)then loot["item"] = nil end
 
- for s=1,27 do
-  table.insert(slots,(s-1))
- end
-
- if(loot["item"][1]==nil)then loot["item"] = nil end
-
- for i=0,26 do 
-  for k,v in pairs(loot) do
-   local slot = math.random(#slots)
-   --
-   if(loot["item"]~=nil)then
-    local data = loot["item"][1]
-    data["Slot"] = slots[slot]
-    table.insert(dataTable["Items"],data)
-    table.remove(loot["item"],1)
-    if(loot["item"][1]==nil)then loot["item"] = nil end
-   else
-    table.insert(dataTable["Items"],{["Slot"] = slots[slot],["id"] = k,["Count"] = math.min(v,64)})
-    if(v>64)then
-     loot[k] = loot[k] - 64
-    else   
-     loot[k] = nil
-    end
-   end
-   table.remove(slots,slot)
-   break
-  end
- end
- dataTable["CustomName"] = (advitem.q_color[chestRarity]).."Â§l"..firstToUpper(advitem.qualitys[chestRarity])..chest_types[_chestType].."ChestÂ§r"
- return dataTable
+	-- Try to add an item for each of the 27 slots 
+	for i=0,26 do 
+		for itemId,itemAmount in pairs(loot) do
+			-- Put the item in a random slot!
+			local slot = math.random(#slots)
+			-- Special items first!
+			if(loot["item"]~=nil)then
+				-- Get the data of the first special item
+				local data = loot["item"][1]
+				-- Put the item in the previously chosen slot
+				data["Slot"] = slots[slot]
+				-- Put it into the chest
+				table.insert(dataTable["Items"],data)
+				-- Remove it from the special loot list
+				table.remove(loot["item"],1)
+				-- Throw the list away if its empty
+				if(loot["item"][1]==nil)then loot["item"] = nil end
+			else
+				table.insert(dataTable["Items"],{["Slot"] = slots[slot],["id"] = itemId,["Count"] = math.min(itemAmount,64)})
+				if(itemAmount>64)then
+					loot[itemId] = loot[itemId] - 64
+				else   
+					loot[itemId] = nil
+				end
+			end
+			table.remove(slots,slot)
+			break
+		end
+	 end
+	 dataTable["CustomName"] = (advitem.q_color[chestRarity]).."§l"..firstToUpper(advitem.qualitys[chestRarity])..chest_types[_chestType].."Chest§r"
+	 return dataTable
 end
 
 
 function addNewItemPool(_table,_name)
- item_pool[#item_pool+1] = _table
- chest_types[#chest_types+1] = _name
+	item_pool[#item_pool+1] = _table
+	chest_types[#chest_types+1] = _name
 end
 
 function addNewItemToPool(_poolID,_itemTable)
- item_pool[_poolID][#item_pool[_poolID]+1] = _itemTable
+	if(item_pool[_poolID]==nil)then
+		item_pool[_poolID] = {}
+	end
+	item_pool[_poolID][#item_pool[_poolID]+1] = _itemTable
 end
 
 function placeChest(...)
@@ -252,6 +332,7 @@ function placeChest(...)
  end
 
  local datatag =  dcore.getNBTStringFromTable(chest.getChestData(startDifficulty,chestType))
+ print(datatag)
  
  a,e = commands.setblock(x,y,z,"minecraft:chest","1","replace",datatag)
  
@@ -261,3 +342,13 @@ function placeChest(...)
  end
 end
 
+-- Add equipment to chests
+
+for i=1,4 do
+	addNewItemToPool(i,advitem.getEquipmentForChest)
+end
+
+-- Add potions to chests
+for i=1,5 do
+	addNewItemToPool(i,potion.getPotionForChest)
+end

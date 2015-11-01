@@ -1,27 +1,52 @@
+dcore.requireAPI("items")
+
 local effects = {}
-effects[1] = {["name"] = "Speed",["potion"] = "Swiftness",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true}
-effects[2] = {["name"] = "Slowness",["potion"] = "Slowness",["corrupt"] = true,["good"] = false,["max"] = -1,["allowDuration"] = true}
+effects[1] = {["name"] = "Speed",["potion"] = "Swiftness",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true,["colorID"] = 2}
+effects[2] = {["name"] = "Slowness",["potion"] = "Slowness",["corrupt"] = true,["good"] = false,["max"] = -1,["allowDuration"] = true,["colorID"] = 10}
 effects[3] = {["name"] = "Haste",["potion"] = "Haste",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true}
 effects[4] = {["name"] = "Mining Fatigue",["potion"] = "Dullness",["corrupt"] = false,["good"] = false,["max"] = -1,["allowDuration"] = true}
-effects[5] = {["name"] = "Strength",["potion"] = "Strength",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true}
-effects[6] = {["name"] = "Instant Health",["potion"] = "Healing",["corrupt"] = false,["good"] = true,["max"] = -1,["allowDuration"] = false}
-effects[7] = {["name"] = "Instant Damage",["potion"] = "Harming",["corrupt"] = false,["good"] = false,["max"] = -1,["allowDuration"] = false}
-effects[8] = {["name"] = "Jump Boost",["potion"] = "Leaping",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true}
+effects[5] = {["name"] = "Strength",["potion"] = "Strength",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true,["colorID"] = 9}
+effects[6] = {["name"] = "Instant Health",["potion"] = "Healing",["corrupt"] = false,["good"] = true,["max"] = -1,["allowDuration"] = false,["colorID"] = 5}
+effects[7] = {["name"] = "Instant Damage",["potion"] = "Harming",["corrupt"] = false,["good"] = false,["max"] = -1,["allowDuration"] = false,["colorID"] = 12}
+effects[8] = {["name"] = "Jump Boost",["potion"] = "Leaping",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true,["colorID"] = 11}
 effects[9] = {["name"] = "Nausea",["potion"] = "Nausea",["corrupt"] = false,["good"] = false,["max"] = 1,["allowDuration"] = true}
-effects[10] = {["name"] = "Regeneration",["potion"] = "Regeneration",["corrupt"] = false,["good"] = true,["max"] = -1,["allowDuration"] = true}
+effects[10] = {["name"] = "Regeneration",["potion"] = "Regeneration",["corrupt"] = false,["good"] = true,["max"] = -1,["allowDuration"] = true,["colorID"] = 1}
 effects[11] = {["name"] = "Resistance",["potion"] = "Resistance",["corrupt"] = true,["good"] = true,["max"] = 4,["allowDuration"] = true}
-effects[12] = {["name"] = "Fire Resistance",["potion"] = "Fire Resistance",["corrupt"] = false,["good"] = true,["max"] = 1,["allowDuration"] = true}
-effects[13] = {["name"] = "Water Breathing",["potion"] = "Water Breathing",["corrupt"] = false,["good"] = true,["max"] = 1,["allowDuration"] = true}
-effects[14] = {["name"] = "Invisibility",["potion"] = "Invisibility",["corrupt"] = false,["good"] = true,["max"] = 1,["allowDuration"] = true}
+effects[12] = {["name"] = "Fire Resistance",["potion"] = "Fire Resistance",["corrupt"] = false,["good"] = true,["max"] = 1,["allowDuration"] = true,["colorID"] = 3}
+effects[13] = {["name"] = "Water Breathing",["potion"] = "Water Breathing",["corrupt"] = false,["good"] = true,["max"] = 1,["allowDuration"] = true,["colorID"] = 13}
+effects[14] = {["name"] = "Invisibility",["potion"] = "Invisibility",["corrupt"] = false,["good"] = true,["max"] = 1,["allowDuration"] = true,["colorID"] = 14}
 effects[15] = {["name"] = "Blindness",["potion"] = "Blindness",["corrupt"] = false,["good"] = false,["max"] = 1,["allowDuration"] = true}
-effects[16] = {["name"] = "Night Vision",["potion"] = "Night Vision",["corrupt"] = false,["good"] = true,["max"] = 1,["allowDuration"] = true}
+effects[16] = {["name"] = "Night Vision",["potion"] = "Night Vision",["corrupt"] = false,["good"] = true,["max"] = 1,["allowDuration"] = true,["colorID"] = 6}
 effects[17] = {["name"] = "Hunger",["potion"] = "Hunger",["corrupt"] = true,["good"] = false,["max"] = -1,["allowDuration"] = true}
-effects[18] = {["name"] = "Weakness",["potion"] = "Weakness",["corrupt"] = true,["good"] = false,["max"] = -1,["allowDuration"] = true}
-effects[19] = {["name"] = "Poison",["potion"] = "Poison",["corrupt"] = false,["good"] = false,["max"] = -1,["allowDuration"] = true}
+effects[18] = {["name"] = "Weakness",["potion"] = "Weakness",["corrupt"] = true,["good"] = false,["max"] = -1,["allowDuration"] = true,["colorID"] = 8}
+effects[19] = {["name"] = "Poison",["potion"] = "Poison",["corrupt"] = false,["good"] = false,["max"] = -1,["allowDuration"] = true,["colorID"] = 4}
 effects[20] = {["name"] = "Wither",["potion"] = "Decay",["corrupt"] = false,["good"] = false,["max"] = -1,["allowDuration"] = true}
 effects[21] = {["name"] = "Health Boost",["potion"] = "Health Boost",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true}
 effects[22] = {["name"] = "Absorption",["potion"] = "Absorption",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true}
 effects[23] = {["name"] = "Saturation",["potion"] = "Saturation",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true}
+
+function getRandomPotionColor()
+	local v = {1,2,3,4,5,6,8,9,10,11,12,13,14}
+	return v[math.random(#v)]
+end
+
+function getPotionDVByPid(potionID,throwable)
+	if(throwable)then
+		return 16384+potionID
+	else
+		return 8192+potionID
+	end
+end
+
+function getPotionDVByEffectID(effectID,throwable)
+	if(effectID>#effects)then error("effectID is out of limits!") end
+	local cid = effects[effectID]["colorID"] or 0
+	if(throwable)then
+		return 16384+cid
+	else
+		return 8192+cid
+	end
+end
 
 --@positive: If the potion effect is good or bad. Good = true, bad = false
 local function findEffect(positive,past)
@@ -40,82 +65,117 @@ end
 
 --Creates a randomized potion name.
 --@units: How many segments to be included in the center at maximum.
-local name1 = {"chel", "pr", "aer", "cat", "lu", "f", "cr", "o", "ali", "exan", "at", "we"}
-local name2 = {"est", "y", "ul", "in", "cr", "am", "im", "rd", "en", "imi", "ene", "rg"}
-local name3 = {"ra", "an", "us", "itus", "um", "es", "son", "o", "is", "s", "fyr", "at"}
 local function potion_name(units,seed)
+	local nameStart = {"chel", "pr", "aer", "cat", "lu", "f", "cr", "o", "ali", "exan", "at", "we","lua"}
+	local nameMiddle = {"est", "y", "ul", "in", "cr", "am", "im", "rd", "en", "imi", "ene", "rg"}
+	local nameEnd = {"ra", "an", "us", "itus", "um", "es", "son", "o", "is", "s", "fyr", "at"}
+	
 	math.randomseed(seed)
-	local name = name1[math.random(#name1)]
+	local name = nameStart[math.random(#nameStart)]
 	for i = 1, units do
-		name = name .. name2[math.random(#name2)]
+		name = name .. nameMiddle[math.random(#nameMiddle)]
 	end
-    return name .. name3[math.random(#name3)]
+    return name .. nameEnd[math.random(#nameEnd)]
 end
 
+-- seed is optional
+local prefixes = {"Potion of", "Bottled", "Brew of", "Fluid", "Liquid", "Liquified", "Bottled ", "Elixir of"}
+local suffixes = {"Elixir", "in a Bottle"}
+function prefixOrSuffixName(n,seed)
+	if(seed)then math.randomseed(seed) end
+
+	local _x = math.random(1,2)
+	if _x == 1 then
+		local _r = math.random(#prefixes)
+		n = prefixes[_r] .. " " .. n
+	else
+		local _r = math.random(#suffixes)
+		n = n .. " " .. suffixes[_r]
+	end
+	return n
+end
 
 -- Creates a randomized table that represents a potion, might have positive and negative effect.
--- Potency/Duration increases with difficulty.
--- @difficulty: Potency of Potion.
+-- Potency/Duration increases with power.
+-- @power: Potency of Potion. Increases the good and the bad. Outcomes might be different.
 -- [@seed:] Seed used to generate the dropped potion
 -- returns:
--- CustomPotionEffects as table
--- custom name suggestion
--- damage value
+-- The item table
+-- The price for the item
 
-function generateDropPotion(_difficulty,seed)
+function generatePotionItem(power,seed)
 	if(seed)then math.randomseed(seed) end
-	local t = {}
+	-- The table we use to generate the nbt at the end
+	local finalPotionTable = {}
 	local choosenEffects = {}
-	local dif = math.floor(_difficulty/5)+math.random(2)
-	local splash = true
+	local generationPoints = math.floor(power/5)+math.random(2)
 	
-	local damage = math.random(16000,17000)
+	local goodness = 0
+	local badness = 0
 	
-	while dif>0 do
+	while generationPoints>0 do
 		local pickedEffect = math.random(#effects)
 		-- Increase chance of good effects by a little bit
 		if(effects[pickedEffect]["good"] == false)then pickedEffect = math.random(#effects) end
-		-- Prevent over-using a effect
+		-- Set up the effect table
+		if(choosenEffects[pickedEffect]==nil)then
+			choosenEffects[pickedEffect] = {["potency"] = 0,["duration"] = 100}
+		end
 		
-		if(choosenEffects[pickedEffect]==nil)then	choosenEffects[pickedEffect] = {["potency"] = 0,["duration"] = 1}	end
-		
+		-- Prevent over-using an effect
 		while(choosenEffects[pickedEffect]["potency"]>=effects[pickedEffect]["max"] and not (effects[pickedEffect]["max"]<0))do
 			pickedEffect = math.random(#effects)
 			if(choosenEffects[pickedEffect]==nil)then
-				choosenEffects[pickedEffect] = {["potency"] = 0,["duration"] = 1}
+				choosenEffects[pickedEffect] = {["potency"] = 0,["duration"] = 100}
 			end
 		end
-		local improve = math.random(5,math.floor(dif/10+6))
-		while(improve>0 and dif>0)do
-			if(((choosenEffects[pickedEffect]["potency"]<(effects[pickedEffect]["max"]-1) or (effects[pickedEffect]["max"]<0)) and math.random(2)==1) or effects[pickedEffect]["allowDuration"]==false)then
-				choosenEffects[pickedEffect]["potency"] = choosenEffects[pickedEffect]["potency"] + 1
-				dif = dif - choosenEffects[pickedEffect]["potency"]
+		
+		-- Set a random amount of improve points. These will either improve the duration or potency of this single effect
+		local improve = math.random(5,math.floor(generationPoints/10+6))
+		while(improve>0 and generationPoints>0)do
+			if(effects[pickedEffect]["good"])then
+				goodness = goodness + 1
 			else
-				choosenEffects[pickedEffect]["duration"] = choosenEffects[pickedEffect]["duration"] + 100 + math.random(2)*100
-				dif = dif - 1
+				badness = badness + 1
 			end
+			-- Choose if the duration if potency should be improved
+			if(((choosenEffects[pickedEffect]["potency"]<(effects[pickedEffect]["max"]-1) or (effects[pickedEffect]["max"]<0)) and math.random(2)==1) or effects[pickedEffect]["allowDuration"]==false)then
+				-- Increase the potency of the effect
+				choosenEffects[pickedEffect]["potency"] = choosenEffects[pickedEffect]["potency"] + 1
+				-- Remove a few generation points
+				generationPoints = generationPoints - choosenEffects[pickedEffect]["potency"]
+			else
+				-- Increase the duration of the effect
+				choosenEffects[pickedEffect]["duration"] = choosenEffects[pickedEffect]["duration"] + 100 + math.random(2)*100
+				-- Remove a few generation points
+				generationPoints = generationPoints - 1
+			end
+			-- remove improve points
 			improve = improve - 1
 		end
 		--choosenEffects[pickedEffect] = effects[pickedEffect]["good"]
 	end
 	
-	-- Fix some opposite things: (4 Speed + 2 Slowness => 2 Speed)
-	function moderateOppositePotionPotency(potionA,potionB)
-		if(choosenEffects[potionA] and choosenEffects[potionB])then
-			while(choosenEffects[potionA]["potency"]>=0 and choosenEffects[potionB]["potency"]>=0)do
-				choosenEffects[potionA]["potency"] = choosenEffects[potionA]["potency"] - 1
-				choosenEffects[potionB]["potency"] = choosenEffects[potionB]["potency"] - 1
-			end	
+	-- Balance some opposite things: (4 Speed + 2 Slowness => 2 Speed)
+	function balanceOpposites()
+		function moderateOppositePotionPotency(potionA,potionB)
+			if(choosenEffects[potionA] and choosenEffects[potionB])then
+				while(choosenEffects[potionA]["potency"]>=0 and choosenEffects[potionB]["potency"]>=0)do
+					choosenEffects[potionA]["potency"] = choosenEffects[potionA]["potency"] - 1
+					choosenEffects[potionB]["potency"] = choosenEffects[potionB]["potency"] - 1
+				end	
+			end
 		end
+		
+		moderateOppositePotionPotency(1,2)		-- Movement-Speed
+		moderateOppositePotionPotency(3,4)		-- Attack-Speed
+		moderateOppositePotionPotency(5,18) 	-- Attack-Damage
+		moderateOppositePotionPotency(6,7)		-- Initial Health
+		moderateOppositePotionPotency(10,19)	-- Health (Poison)
+		moderateOppositePotionPotency(10,20)	-- Health (Wither)
+		moderateOppositePotionPotency(17,23)	--  Hunger
 	end
-	
-	moderateOppositePotionPotency(1,2)		-- Movement-Speed
-	moderateOppositePotionPotency(3,4)		-- Attack-Speed
-	moderateOppositePotionPotency(5,18) 	-- Attack-Damage
-	moderateOppositePotionPotency(6,7)		-- Initial Health
-	moderateOppositePotionPotency(10,19)	-- Health (Poison)
-	moderateOppositePotionPotency(10,20)	-- Health (Wither)
-	moderateOppositePotionPotency(17,23)	--  Hunger
+	balanceOpposites()
 	
 	local highestID = 0
 	local seed = 0
@@ -124,10 +184,15 @@ function generateDropPotion(_difficulty,seed)
 	for k,v in pairs(choosenEffects) do
 		if(v["potency"]>=0)then -- No potion potency? Not gonna put that in!
 			local p = {}
-			cost = cost + round(value+((v["potency"]/4)*3)+math.floor(v["duration"]/200+0.5), 1)*1000
+			cost = cost + math.floor(math.floor(((v["potency"]))*3*(v["duration"]/40))+(math.floor(v["duration"]*(5+math.random(10))+0.5))/1000)
 			p["Id"] = k
 			p["Amplifier"] = v["potency"]
-			p["Duration"] = v["duration"]
+			--Check if duration is allowed, if not change it to 1, just to be safe.
+			if(not effects[k]["allowDuration"])then
+				p["Duration"] = 1
+			else
+				p["Duration"] = v["duration"]
+			end
 			p["Ambient"] = 0
 			p["ShowParticles"] = 0
 			if(choosenEffects[highestID]==nil)then highestID = k end
@@ -135,7 +200,7 @@ function generateDropPotion(_difficulty,seed)
 				highestID = k
 			end
 			seed = seed + 2^k--k*(v["potency"]+v["duration"])
-			table.insert(t,p)
+			table.insert(finalPotionTable,p)
 		end
 	end
 	
@@ -166,12 +231,67 @@ function generateDropPotion(_difficulty,seed)
 	
 	local eName = ""
 	if(highestID>0)then
-		splash = (effects[highestID]["good"] and math.random(1,3) == 1) or (not effects[highestID]["good"] and math.random(1,3) == 1)
+		--splash = (effects[highestID]["good"] and math.random(1,3) == 1) or (not effects[highestID]["good"] and math.random(1,3) == 1)
 		eName = potionNames[highestID][math.random(#potionNames[highestID])]
 	end
-	local pName = firstupper(potion_name(1,seed))
-
+	local potionName = prefixOrSuffixName(firstupper(potion_name(1,seed)))
 	
+	local goodnessLevel = math.floor(goodness/(goodness+badness)*200-100)
+	
+	-- Start building item table
+	local nbtTable = {}
+	-- Item id, should be a potion
+	nbtTable["id"] = items.useRightItemID(373)
+	
+	local isThrowable = (math.random(400)>(200-goodnessLevel))
+	nbtTable["Damage"] = getPotionDVByEffectID(highestID,isThrowable)
+	
+	-- Item tag
+	nbtTable["tag"] = {}
+	nbtTable["tag"]["display"] = {}
+	
+	
+	local potionNameColor = ""
+	if(goodnessLevel>=75)then
+		potionNameColor = "§2"
+	elseif(goodnessLevel<75 and goodnessLevel>25)then
+		potionNameColor = "§a"
+	elseif(goodnessLevel<=25 and goodnessLevel>=-25)then
+		potionNameColor = "§e"
+	elseif(goodnessLevel<-25 and goodnessLevel>-75)then
+		potionNameColor = "§6"
+	elseif(goodnessLevel<=-75)then
+		potionNameColor = "§c"
+	end
+	
+	nbtTable["tag"]["display"]["Name"] = potionNameColor..potionName.."§r"
+	nbtTable["tag"]["display"]["Lore"] = {
+		"It's a "..eName.." potion!",
+		"This potion is worth §6"..tonumber(cost*23).."§5 gold",
+		"The effects of this potion are "..goodnessLevel.."% positive",
+		"Might contain "..potion_name(3,seed+21).."!"
+	}
+	
+	-- The effects
+	nbtTable["tag"]["CustomPotionEffects"] = finalPotionTable
+	
+	--cost = math.floor(cost/114.5)
+	
+	return nbtTable,cost
+end
+
+-- Creates a randomized table that represents a potion, might have positive and negative effect.
+-- Potency/Duration increases with power.
+-- @power: Potency of Potion.
+-- [@seed:] Seed used to generate the dropped potion
+-- returns:
+-- CustomPotionEffects as table
+-- custom name suggestion
+-- damage value
+
+function generateDropPotion(power,seed)
+	local potionData,cost = generatePotionItem(power,seed)
+		
 	name = eName.." Potion of "..pName
 	t["Price"] = cost
 	t["Seed"] = seed
@@ -179,73 +299,13 @@ function generateDropPotion(_difficulty,seed)
 	return t,pName,damage
 end
 
---Creates a randomized table that represents a potion.
---@difficulty: How good/bad the potion is.
---@positive: If the potion effect is good or bad. Good = true, bad = false
---@count: How many potion effects to apply.
-function createpotion(difficulty,positive,count)
-	local r = {}
-	local past = ""
-	for i = 1, count do
-		local potion = findEffect(positive,past)
-		past = past .. potion["id"] .. ":"
-		r[i] = {}
-		r[i]["Id"] = potion["id"]
-		r[i]["Amplifier"] = math.random(1,math.floor((difficulty/5)*1+0.5))
-		r[i]["Duration"] = math.random(20,difficulty*480)
-		r[i]["Ambient"] = 0
-		r[i]["ShowParticles"] = 0
-	end
-	return r
-end
-
-function ctnbt(t,name)
-	local str = "CustomPotionEffects:["
-	for i = 1, #t do
-		local c = t[i]
-		str = str .. "{Id:" .. c["Id"] .. ",Amplifier:" .. c["Amplifier"] .. ",Duration:" .. c["Duration"] .. ",Ambient:" .. c["Ambient"] .. ",ShowParticles:" .. c["ShowParticles"] .. "},"
-	end
-	str = str:sub(1,-2)
-	if name then
-		str = str .. "],display:{Name:\"" .. name .. "\"}"
-	else
-		str = str .. "]"
-	end
-	return str
-end
-
-local prefixes = {"Potion of", "Bottled", "Brew of", "Fluid", "Liquid", "Liquified", "Bottled ", "Elixir of"}
-local suffixes = {"Elixir", "in a Bottle"}
-function prefixOrSuffixName(n)
-	local _x = math.random(1,2)
-	if _x == 1 then
-		local _r = math.random(#prefixes)
-		n = prefixes[_r] .. " " .. n
-	else
-		local _r = math.random(#suffixes)
-		n = n .. " " .. suffixes[_r]
-	end
-	return n
-end
-
---Takes the format from createpotion() and compiles it to a string starting with "tag:{CustomPotionEffects:[".
---@table: A table given by createpotion to compile to NBT.
---@name: A name for your brand new fancy potion. If nil, it is set based off of the first effect.
-function compileToNBT(t,name)
-	local str = "tag:{CustomPotionEffects:["
-	for i = 1, #t do
-		local c = t[i]
-		str = str .. "{Id:" .. c["Id"] .. ",Amplifier:" .. c["Amplifier"] .. ",Duration:" .. c["Duration"] .. ",Ambient:" .. c["Ambient"] .. ",ShowParticles:" .. c["ShowParticles"] .. "},"
-	end
-	str = str:sub(1,-2)
-	if name and t["Lore"] then
-		name = prefixOrSuffixName(name,t["Seed"])
-		str = str .. "],display:{Name:\"" .. name .. "\",Lore:[\"" .. t["Lore"][1] .. "\"]}}"
-	elseif name then
-		name = prefixOrSuffixName(name)
-		str = str .. "],display:{Name:\"" .. name .. "\"}}"
-	else
-		str = str .. "]}"
-	end
-	return str
+function getPotionForChest(powerInput)
+	print("POTION TIME")
+	local itemDataTable,cost = generatePotionItem(math.floor(powerInput/5),math.random(10000))
+	print("Price: "..cost)
+	local returnData = {}
+	returnData["powerCost"] = math.floor(cost)
+	returnData["setItemCount"] = 1
+	returnData["item"] = itemDataTable	
+	return returnData
 end

@@ -63,3 +63,4 @@ function summonBoss(x,y,z,mobType,difficulty)
 		print_log("command","[error] Failed to execute Command: "..cmd.."; Error message:"..answer[1]..(answer[2] or "").."")
 	end
 end
+
