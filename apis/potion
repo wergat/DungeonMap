@@ -40,7 +40,8 @@ end
 
 function getPotionDVByEffectID(effectID,throwable)
 	if(effectID>#effects)then error("effectID is out of limits!") end
-	local cid = effects[effectID]["colorID"] or 0
+	local cid = 0
+	if(effectID>0)then cid = effects[effectID]["colorID"] or 0 end
 	if(throwable)then
 		return 16384+cid
 	else
