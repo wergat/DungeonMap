@@ -54,6 +54,7 @@ function summonBoss(x,y,z,mobType,difficulty)
 	if getMobData("mobType") == "spider_jockey" then
 		data["Riding"] = {["id"] = "Spider"}
 	end
+	data["PersistenceRequired"] = "1b"
 	
 	local dataTag = dcore.getNBTStringFromTable(data)
 	local cmd = "summon "..mob.getEntityName(mob.getMobData("mobType")).." "..mob.getMobData("xCoord").." "..mob.getMobData("yCoord").." "..mob.getMobData("zCoord").." "..dataTag
