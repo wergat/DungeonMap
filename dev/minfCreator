@@ -1,5 +1,5 @@
-term.setBackgroundColor(colors.orange)
-term.setTextColor(colors.lightBlue)
+term.setBackgroundColor(colors.lightBlue)
+term.setTextColor(colors.red)
 term.clear()
 term.setCursorPos(1,1)
 print("-----------------mod.info Creator------------------")
