@@ -1,24 +1,40 @@
-local apis_loaded = {}
-local all_dir = ":dungeon"
-local mods_dir = all_dir.."/mods"
-local logs_dir = all_dir.."/logs"
-local apis_dir = all_dir.."/apis"
+-- Config, you can change this if you want
+config = {
+	-- General folder stuff, recommended to leave as it is
+	DIR_TOTAL = ":dungeon", -- Default: ":dungeon"
+	DIR_MODS = ":dungeon/mods", -- Default: ":dungeon/mods"
+	DIR_LOGS = ":dungeon/logs", -- Default: ":dungeon/logs"
+	DIR_APIS = ":dungeon/apis", -- Default: ":dungeon/apis"
+	
+	-- // Performance Settings	
+	-- The amount of commands the computer runs before sleeping
+	-- Higher values will make the computer run more commands, but might cause it to crash, too.
+	ASYNC_TIMEOUT_MAXIMUM = 20, -- Default: 20
+	
+	-- Experimental custom asnyc, might work better
+	ASYNC_USE_CUSTOM_ASYNC = false, -- Default: false
+	
+	-- 1.8 Compatibility, active if set to true
+	USE_STRING_FOR_ITEM_ID = false, -- Default: false
+		
+	-- Enable developer mode
+	ENABLE_DEVELOPER_MODE = true, -- Default: false
+}
 
-ASYNC_TIMEOUT_MAXIMUM = 20
-USE_STRING_FOR_ITEM_ID = false
-
+-- Use native Globals
 if(not _G["cleanG"])then
 	_G["cleanG"] = _G
 else
 	_G = _G["cleanG"]
 end
 
+local apis_loaded = {}
 
 local firstError = true
 
 local file_used = {}
 function print_log(file,text)
-	local logfile = fs.open(logs_dir.."/"..file, file_used[file] and "a" or "w")
+	local logfile = fs.open(config.DIR_LOGS.."/"..file, file_used[file] and "a" or "w")
 	if(logfile and type(text)=="string")then
 		if(not file_used[file])then file_used[file] = true end
 		logfile.writeLine(text)
@@ -27,31 +43,28 @@ function print_log(file,text)
 end
 
 function requireAPI(...)
- local tArgs = { ... }
- for i=1,#tArgs do
-  if(fs.exists(apis_dir.."/"..tArgs[i]))then
-   if(apis_loaded[tArgs[i]]~=true)then
-    print_log("dcore","[API][MAIN] Loading "..apis_dir.."/"..tArgs[i])
-    local didLoad = os.loadAPI(apis_dir.."/"..tArgs[i])
-   
-    if(didLoad)then
-	 for k,v in pairs(_G[tArgs[i]]) do
-	  print_log("dcore","[API][MAIN]["..tArgs[i].."] Loading "..type(v).." "..k.." --> "..tArgs[i].."."..k.."")
-	 end
-	else
-	 print_log("dcore","[API][MAIN] DID NOT LOAD "..apis_dir.."/"..tArgs[i].."; error occurred out of nowhere, might have been loaded already!")
+	local tArgs = { ... }
+	for i=1,#tArgs do
+		if(fs.exists(config.DIR_APIS.."/"..tArgs[i]))then
+			if(apis_loaded[tArgs[i]]~=true)then
+				print_log("dcore","[API][MAIN] Loading "..config.DIR_APIS.."/"..tArgs[i])
+				local didLoad = os.loadAPI(config.DIR_APIS.."/"..tArgs[i])
+				if(didLoad)then
+					for k,v in pairs(_G[tArgs[i]]) do
+						print_log("dcore","[API][MAIN]["..tArgs[i].."] Loading "..type(v).." "..k.." --> "..tArgs[i].."."..k.."")
+					end
+				else
+					print_log("dcore","[API][MAIN] DID NOT LOAD "..config.DIR_APIS.."/"..tArgs[i].."; error occurred out of nowhere, might have been loaded already!")
+				end
+				apis_loaded[tArgs[i]] = true
+				--Load apis from mods-folders with same name
+				loadSimilarApis(tArgs[i])
+			end
+		else
+			print_log("dcore","[API][MAIN] DID NOT load "..config.DIR_APIS.."/"..tArgs[i].."; not found")
+			loadSimilarApis(tArgs[i])
+		end
 	end
-	
-    apis_loaded[tArgs[i]] = true
-
-	-- Load apis from mods-folders with same name
-	loadSimilarApis(tArgs[i])
-   end
-  else
-   print_log("dcore","[API][MAIN] DID NOT load "..apis_dir.."/"..tArgs[i].."; not found")
-   loadSimilarApis(tArgs[i])
-  end
- end
 end
 
 function Error(text,level)
@@ -63,22 +76,22 @@ function loadSimilarApis(_forceName)
  -- File name
  local file_name = _forceName or "--"
  -- get all mod dirs
- local l = fs.list(mods_dir)
+ local l = fs.list(config.DIR_MODS)
   
  for i=1,#l do
   -- l[i] = Modname
-  if(fs.exists(mods_dir.."/"..l[i].."/"..file_name))then
-   print_log("dcore","[API]["..l[i].."] Loading mod-api "..mods_dir.."/"..l[i].."/"..file_name.."")
+  if(fs.exists(config.DIR_MODS.."/"..l[i].."/"..file_name))then
+   print_log("dcore","[API]["..l[i].."] Loading mod-api "..config.DIR_MODS.."/"..l[i].."/"..file_name.."")
    -- Load functions of mod-api-file
    if(_G[file_name]==nil)then _G[file_name] = {} end
    
    local tEnv = setmetatable(_G[file_name], { __index = _G } )
-   local fnAPI, err = loadfile(mods_dir.."/"..l[i].."/"..file_name)
+   local fnAPI, err = loadfile(config.DIR_MODS.."/"..l[i].."/"..file_name)
    if fnAPI then
     setfenv( fnAPI, tEnv )
     local ok, err = pcall( fnAPI )
     if not ok then
-     print_log("error","[API]["..l[i].."] While loading "..mods_dir.."/"..l[i].."/"..file_name.."; ")
+     print_log("error","[API]["..l[i].."] While loading "..config.DIR_MODS.."/"..l[i].."/"..file_name.."; ")
 	 if(firstError)then
 	  if(term.isColor())then term.setTextColor(colors.red) end
       print("error found while loading api files, check logs/error for more informations"..err)
@@ -87,7 +100,7 @@ function loadSimilarApis(_forceName)
      end
     end
    else
-    print_log("error","[API]["..l[i].."] While loading "..mods_dir.."/"..l[i].."/"..file_name.."; ")
+    print_log("error","[API]["..l[i].."] While loading "..config.DIR_MODS.."/"..l[i].."/"..file_name.."; ")
 	if(firstError)then
 	 if(term.isColor())then term.setTextColor(colors.red) end
      print("error found while loading api files, check logs/error for more informations"..err)
@@ -117,46 +130,40 @@ function version()
  return "0.12b";
 end
 
-function evaluateInputs(...)
- for k,v in pairs(arg) do
-  write(tostring(v).." ("..type(v)..");")
- end
- write("\n")
-end
+
+
 local function tableToNBT(t)
- local nbt = ""
- for k,v in pairs(t) do
-  if(type(v)~="table")then 
-   if(t[1]==nil)then
-    if(type(v)~="string")then
-     nbt = nbt..k..":"..v..","
-	else
-	 nbt = nbt..k..":\""..v.."\","
+	local nbt = ""
+	-- None-Table inputs first for easier debugging
+	for k,v in pairs(t) do
+		if(type(v)~="table")then
+			if(t[1]==nil)then
+				if(type(v)~="string" or v=="1b" or v=="0b")then
+					nbt = nbt..k..":"..v..","
+				else
+					nbt = nbt..k..":\""..v.."\","
+				end
+			else
+				nbt = nbt..v..","
+			end
+		end
+	end	
+	
+	for k,v in pairs(t) do
+		if(type(v)=="table")then
+			if(v[1]~=nil)then
+				nbt = nbt..k..":["..string.sub(tableToNBT(v),1,-2).."],"
+			else
+				if(type(k)~="number")then
+					nbt = nbt..k..":{"..string.sub(tableToNBT(v),1,-2).."},"
+				else
+					nbt = nbt.."{"..string.sub(tableToNBT(v),1,-2).."},"
+				end
+			end
+		end
 	end
-   else
-    if(type(v)~="string")then
-     nbt = nbt..v..","
-	else
-	 nbt = nbt..v..","
-	 --nbt = nbt.."\""..v.."\","
-	end
-   end
-  end
- end
- for k,v in pairs(t) do
-  if(type(v)=="table")then 
-   if(v[1]~=nil)then
-    nbt = nbt..k..":["..string.sub(tableToNBT(v),1,-2).."],"
-   else
-    if(type(k)~="number")then
-     nbt = nbt..k..":{"..string.sub(tableToNBT(v),1,-2).."},"
-	else
-	 nbt = nbt.."{"..string.sub(tableToNBT(v),1,-2).."},"
-	end
-   end
-  end
- end
- return nbt 
+	
+	return nbt 
 end
 function getNBTStringFromTable(t)
 	if(type(t)=="table")then
@@ -166,74 +173,80 @@ function getNBTStringFromTable(t)
 	end
 end
 
+-- Custom type definitions for various stuff
 
-function scanG()
- local i = 0
- local text = ""
- for k,v in pairs(_G) do
-  text = text ..k..","
-  i = i + 1
- end
- print(i)
- write(text.."\n")
+local customTypeRegister = {}
+local nativeType = type
+
+function getTypeOf(data)
+	if(nativeType(data)=="table")then
+		local meta = getmetatable(data)
+		if(meta)then
+			if(meta["type"])then
+				for k,v in pairs(customTypeRegister) do
+					if(v(data))then
+						return k
+					end
+				end
+			end
+		end
+	end
+	return nativeType(data)
 end
+_G["type"] = getTypeOf
 
-
-_G["scan"] = scanG
+function registerCustomType(typeName,typeFunction)
+	customTypeRegister[typeName] = typeFunction
+end
 
 -- ASYNC Grabbing to prevent timeout's
-
-
-
-
 local nativeExecAsync = commands.execAsync
 local nativeAsyncCommands = {}
-
 local nativeSleep = sleep
 
-
 local asyncCounter = 0
-
 _G["sleep"] = function(...)
 	asyncCounter = 0
-	
 	return nativeSleep(unpack(arg))
 end
-
-
 function checkForAsyncTimeout()
 	asyncCounter = asyncCounter + 1
-	if(asyncCounter>=ASYNC_TIMEOUT_MAXIMUM)then
+	if(asyncCounter>=config.ASYNC_TIMEOUT_MAXIMUM)then
 		sleep(0.05)
 	end
 end
-
 _G["commands"]["execAsync"] = function(...)
 	checkForAsyncTimeout()
 	return nativeExecAsync(unpack(arg))
 end
-
 for k,v in pairs(_G["commands"]["async"]) do
 	nativeAsyncCommands[k] = v
 	_G["commands"]["async"][k] = function(...)
 		checkForAsyncTimeout()
-		return nativeAsyncCommands[k](arg)
+		return nativeAsyncCommands[k](unpack(arg))
 	end
 end
 
+local nativWrite = write
 
-
-
-
-
-
-
-
-
-
-
-
-
+-- DEVELOPER MODE ACTIVATED
+if(config.ENABLE_DEVELOPER_MODE)then
+	-- Custom Error output to ingame chat with fuse to be sure the computer does not go crazy on us
+	local fuse = true
+	local nativeError = error
+	local customError = function(...)
+		if(fuse)then
+			commands.execAsync("/say An error happened! \""..(tostring(arg[1]) or "").."\"")
+		
+			_G["error"] = nativeError			
+			local nativeWrite = write
+		
+			fuse = false
+		end
+		return nativeError(unpack(arg))
+	end
+	_G["error"] = customError
+end
 
 
 -- maybe grab commands executed, and but them in table to print when system shuts down unexpected

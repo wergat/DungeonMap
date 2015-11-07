@@ -1,6 +1,7 @@
 function getPlayerByName(_playerName)
 	local playerObject = {}
 	playerObject.name = _playerName
+	playerObject.position = {}
 	
 	-- Returns the player name
 	playerObject.getName = function(self)
@@ -64,9 +65,20 @@ function getPlayerByName(_playerName)
 			local x = tonumber(string.match(s,"(%d+).(%d*)$").."."..string.match(s,"(%d*)$"))
 			local y = tonumber(tostring(string.match(data,"([^,]+),([^,]+)$")))
 			local z = tonumber(tostring(string.match(data,"([^,]+)$")))
+			self.position = {["x"] = x,["z"] = y,["y"] = z}
 			return x,y,z
 		end
 	end
 	
+	-- Set semi-important Metadata for player object
+	local metaTable = {}
+	-- Set type of this object
+	metaTable["type"] = "PlayerObject" 
+	
+	
+	playerObject = setmetatable(playerObject,metaTable)
 	return playerObject
 end
+
+-- Register the type "PlayerObject" we just used
+dcore.registerCustomType("PlayerObject",function(t) if((getmetatable(t)["type"] or "") == "PlayerObject")then return true end end)

@@ -1,6 +1,7 @@
 os.loadAPI(":dungeon/apis/dcore")
 dcore.requireAPI("chest")
 dcore.requireAPI("npc")
+dcore.requireAPI("cmd")
 
 term.clear()
 term.setCursorPos(1,1)
