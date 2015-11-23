@@ -196,7 +196,11 @@ end
 _G["type"] = getTypeOf
 
 function registerCustomType(typeName,typeFunction)
-	customTypeRegister[typeName] = typeFunction
+	if(typeFunction)then
+		customTypeRegister[typeName] = typeFunction
+	else
+		customTypeRegister[typeName] = function(t) if((getmetatable(t)["type"] or "") == typeName)then return true end end
+	end
 end
 
 -- ASYNC Grabbing to prevent timeout's
