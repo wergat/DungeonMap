@@ -205,3 +205,45 @@ function summon_music(x,y,z)
 	commands.exec(cmd)
 	return true, cmd
 end
+
+local function getprice(id)
+	if id < 302 and id > 297 then
+		return 1
+	elseif id < 318 and id > 313 then
+		return 1
+	elseif id < 310 and id > 301 then
+		return 2
+	elseif id == 268 or id == 272 or id == 283 then
+		return 1
+	elseif id == 261 or id == 267 then
+		return 2
+	else
+		return 3
+	end
+end
+
+local weapons = {261, 267, 268, 272, 276, 283}
+function summon_sell(x, y, z)
+	local id = 298
+	local trades = {}
+	repeat
+		local ct = "{buy:{id:" .. id .. ",Count:1},maxUses:999999,sell:{id:264,Count:" .. getprice(id) .. "},rewardExp:false}"
+		trades[#trades+1] = ct
+		id = id + 1
+	until id == 318
+	
+	local key = 1
+	repeat
+		local ct = "{buy:{id:" .. weapons[key] .. ",Count:1},maxUses:999999,sell:{id:264,Count:" .. getprice(weapons[key]) .. "},rewardExp:false}"
+		trades[#trades+1] = ct
+		key = key + 1
+	until key == #weapons+1
+	
+	local tstr = ""
+	for i = 1, #trades do
+		tstr = tstr .. trades[i] .. ", "
+	end
+	tstr = tstr:sub(1,-2)
+	local cmd = "/summon Villager " .. x .. " " .. y .. " " .. z .. " {Profession:5,CustomName:\"Item Seller\",CustomNameVisible:0,Offers:{Recipes:[" .. tstr .. "]}}"
+	commands.exec(cmd)
+end
