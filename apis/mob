@@ -159,7 +159,7 @@ function initializeMob(x,y,z,mobName,difficulty)
 	 end
  end
 
- if(getMobData("mobType") == "melee_skeleton" or getMobData("mobType") == "ranged_skeleton")then
+ if(getMobData("mobType") == "melee_skeleton" or getMobData("mobType") == "ranged_skeleton" or getMobData("mobType") == "spider_jockey")then
   if(math.random(10)==1)then
    local t = getMobData("dataTable")
    t["SkeletonType"] = 1
