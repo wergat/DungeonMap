@@ -4,7 +4,7 @@ config = {
 	DIR_TOTAL = ":dungeon", -- Default: ":dungeon"
 	DIR_MODS = ":dungeon/mods", -- Default: ":dungeon/mods"
 	DIR_LOGS = ":dungeon/logs", -- Default: ":dungeon/logs"
-	DIR_APIS = ":dungeon/apis", -- Default: ":dungeon/apis"
+	DIR_APIS = ":dungeon/dcore/apis", -- Default: ":dungeon/apis"
 	
 	-- // Performance Settings	
 	-- The amount of commands the computer runs before sleeping
@@ -19,13 +19,19 @@ config = {
 		
 	-- Enable developer mode
 	ENABLE_DEVELOPER_MODE = true, -- Default: false
+	
+	-- Enable shut-down triggering files in each mod
+	-- Might cause some problems, but its a worthy feature!
+	ENABLE_SHUTDOWN_TRIGGERS = true;
 }
 
 -- Use native Globals
 if(not _G["cleanG"])then
 	_G["cleanG"] = _G
 else
-	_G = _G["cleanG"]
+	local clean = _G["cleanG"]
+	_G = clean
+	_G["cleanG"] = clean
 end
 
 local apis_loaded = {}
@@ -45,8 +51,11 @@ end
 function requireAPI(...)
 	local tArgs = { ... }
 	for i=1,#tArgs do
+		-- Check if api is existent
 		if(fs.exists(config.DIR_APIS.."/"..tArgs[i]))then
 			if(apis_loaded[tArgs[i]]~=true)then
+				-- Prevent double threading this
+				apis_loaded[tArgs[i]] = false
 				print_log("dcore","[API][MAIN] Loading "..config.DIR_APIS.."/"..tArgs[i])
 				local didLoad = os.loadAPI(config.DIR_APIS.."/"..tArgs[i])
 				if(didLoad)then
@@ -68,66 +77,107 @@ function requireAPI(...)
 end
 
 function Error(text,level)
- print_log("error",text)
- error(text,3)
+	print_log("error",text)
+	error(text,3)
 end
 
 function loadSimilarApis(_forceName)
- -- File name
- local file_name = _forceName or "--"
- -- get all mod dirs
- local l = fs.list(config.DIR_MODS)
-  
- for i=1,#l do
-  -- l[i] = Modname
-  if(fs.exists(config.DIR_MODS.."/"..l[i].."/"..file_name))then
-   print_log("dcore","[API]["..l[i].."] Loading mod-api "..config.DIR_MODS.."/"..l[i].."/"..file_name.."")
-   -- Load functions of mod-api-file
-   if(_G[file_name]==nil)then _G[file_name] = {} end
-   
-   local tEnv = setmetatable(_G[file_name], { __index = _G } )
-   local fnAPI, err = loadfile(config.DIR_MODS.."/"..l[i].."/"..file_name)
-   if fnAPI then
-    setfenv( fnAPI, tEnv )
-    local ok, err = pcall( fnAPI )
-    if not ok then
-     print_log("error","[API]["..l[i].."] While loading "..config.DIR_MODS.."/"..l[i].."/"..file_name.."; ")
-	 if(firstError)then
-	  if(term.isColor())then term.setTextColor(colors.red) end
-      print("error found while loading api files, check logs/error for more informations"..err)
-	  term.setTextColor(colors.white)
-	  firstError = false
-     end
-    end
-   else
-    print_log("error","[API]["..l[i].."] While loading "..config.DIR_MODS.."/"..l[i].."/"..file_name.."; ")
-	if(firstError)then
-	 if(term.isColor())then term.setTextColor(colors.red) end
-     print("error found while loading api files, check logs/error for more informations"..err)
-	 term.setTextColor(colors.white)
-	 firstError = false
-    end
-   end
-   
-   for k,v in pairs(tEnv) do
-    print_log("dcore","[API]["..l[i].."]["..file_name.."] Loading "..type(v).." "..k.." --> "..file_name.."."..k.."")
-	_G[file_name][k] = v
-   end   
-  end
- end
+	-- File name
+	local file_name = tostring(_forceName) or "--"
+	-- get all mod dirs
+	local l = fs.list(config.DIR_MODS)
+	
+	for i=1,#l do
+		-- l[i] = Modname
+		local pathToAPIFile = config.DIR_MODS.."/"..l[i].."/apis/"..file_name
+		if(fs.exists(pathToAPIFile))then
+			print_log("dcore","[API]["..l[i].."] Loading mod-api "..pathToAPIFile.."")
+			-- Load functions of Mod API's files
+			if(_G[file_name]==nil)then _G[file_name] = {} end
+			local fenv = _G[file_name]
+			fenv["config"] = config		
+			
+			local tEnv = setmetatable(fenv, { __index = _G } )
+			local fnAPI, err = loadfile(pathToAPIFile)
+			if fnAPI then
+				setfenv( fnAPI, tEnv )
+				local ok, err = pcall( fnAPI )
+				if not ok then
+					print_log("error","[API]["..l[i].."] While loading "..pathToAPIFile.."; ")
+					if(firstError)then
+						if(term.isColor())then term.setTextColor(colors.red) end
+						print("error found while loading api files, check logs/error for more informations! "..err)
+						term.setTextColor(colors.white)
+						firstError = false
+					end
+				end
+			else
+				print_log("error","[API]["..l[i].."] While loading "..pathToAPIFile.."; ")
+				if(firstError)then
+					if(term.isColor())then term.setTextColor(colors.red) end
+					print("error found while loading api files, check logs/error for more informations! "..err)
+					term.setTextColor(colors.white)
+					firstError = false
+				end
+			end
+			for k,v in pairs(tEnv) do
+				print_log("dcore","[API]["..l[i].."]["..file_name.."] Loading "..type(v).." "..k.." --> "..file_name.."."..k.."")
+				_G[file_name][k] = v
+			end   
+		end
+	end
+end
+function runFileInAllMods(_fileName)
+	-- File name
+	local file_name = tostring(_fileName) or "--"
+	
+	print_log("dcore","[EVENT] STARTED EVENT "..file_name.." !")
+	-- get all mod dirs
+	local l = fs.list(config.DIR_MODS)
+	for i=1,#l do
+		-- l[i] = Modname
+		local pathToAPIFile = config.DIR_MODS.."/"..l[i].."/event/"..file_name
+		if(fs.exists(pathToAPIFile))then
+			print_log("dcore","[EVENT]["..file_name.."]["..l[i].."] Starting "..pathToAPIFile.."")
+			local tEnv = setmetatable({}, { __index = _G } )
+			local fnAPI, err = loadfile(pathToAPIFile)
+			if fnAPI then
+				setfenv( fnAPI, tEnv )
+				local ok, err = pcall( fnAPI )
+				if not ok then
+					print_log("error","[EVENT]["..file_name.."]["..l[i].."] While loading "..pathToAPIFile.."; ")
+					if(firstError)then
+						if(term.isColor())then term.setTextColor(colors.red) end
+						print("error found while loading api files, check logs/error for more informations! "..err)
+						term.setTextColor(colors.white)
+						firstError = false
+					end
+				end
+			else
+				print_log("error","[EVENT]["..file_name.."]["..l[i].."] While loading "..pathToAPIFile.."; ")
+				if(firstError)then
+					if(term.isColor())then term.setTextColor(colors.red) end
+					print("error found while loading api files, check logs/error for more informations! "..err)
+					term.setTextColor(colors.white)
+					firstError = false
+				end
+			end
+		end
+	end
 end
 
+
 -- 1.20
-function getAPIBuild()
- return 120
+function getEngineVersion()
+	return 120
 end
 function getBuild()
- return 1
+	return 1
 end
 
 -- 0 = pre-alpha, 1 = alpha, 2 = beta, 3 = realese
 function version()
- return "0.12b";
+	return "0.12b";
 end
 
 
@@ -172,6 +222,13 @@ function getNBTStringFromTable(t)
 		error("GIFF MEAH TABLE YO FOOL!",2)
 	end
 end
+
+
+
+-- Grabbing system function and changing them for our use
+
+
+
 
 -- Custom type definitions for various stuff
 
@@ -231,7 +288,19 @@ for k,v in pairs(_G["commands"]["async"]) do
 	end
 end
 
-local nativWrite = write
+if(config.ENABLE_SHUTDOWN_TRIGGERS)then
+	local nativeShutdown = os.shutdown
+	_G["os"]["shutdown"] = function()
+		runFileInAllMods("shutdown")
+		nativeShutdown()
+	end
+
+	local nativeReboot = os.reboot
+	_G["os"]["reboot"] = function()
+		runFileInAllMods("shutdown")
+		nativeReboot()
+	end
+end
 
 -- DEVELOPER MODE ACTIVATED
 if(config.ENABLE_DEVELOPER_MODE)then
@@ -239,8 +308,15 @@ if(config.ENABLE_DEVELOPER_MODE)then
 	local fuse = true
 	local nativeError = error
 	local customError = function(...)
+		local text = ""
 		if(fuse)then
-			commands.execAsync("/say An error happened! \""..(tostring(arg[1]) or "").."\"")
+			for i=1,#arg-2 do
+				text = text.."\""..(tostring(arg[i]) or "").."\","
+			end
+			if(arg[#arg-1])then
+				text = text.."\""..(tostring(arg[#arg-1]) or "").."\""
+			end
+			commands.execAsync("/say An error happened! "..text.."")
 		
 			_G["error"] = nativeError			
 			local nativeWrite = write
@@ -260,3 +336,6 @@ print_log("dcore","[API][DCORE] Loaded dcore ?")
 print_log("error","This is where the Errors can be found")
 print_log("command","This is where the executed Commands can be found")
 
+if(not dcore)then
+	runFileInAllMods("boot")
+end
