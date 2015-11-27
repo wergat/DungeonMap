@@ -4,7 +4,7 @@ config = {
 	DIR_TOTAL = ":dungeon", -- Default: ":dungeon"
 	DIR_MODS = ":dungeon/mods", -- Default: ":dungeon/mods"
 	DIR_LOGS = ":dungeon/logs", -- Default: ":dungeon/logs"
-	DIR_APIS = ":dungeon/dcore/apis", -- Default: ":dungeon/apis"
+	DIR_APIS = ":dungeon/apis", -- Default: ":dungeon/apis"
 	
 	-- // Performance Settings	
 	-- The amount of commands the computer runs before sleeping
