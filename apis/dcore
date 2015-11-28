@@ -1,3 +1,3 @@
 -- DELETE THIS FILE IN LIKE A WEEK OR SO!
-print("MAYBE YOU NEED TO UPDATE THE FILE PATH! \n \n   IT IS:\n             DUNGEON/DCORE/APIS/DCORE \n \nINSTEAD OF :DUNGEON/APIS/DCORE !!!\n !!!")
+print("MAYBE YOU NEED TO UPDATE THE FILE PATH! \n \n   IT IS:\n              DUNGEON/DCORE/APIS/DCORE \n \nINSTEAD OF :DUNGEON/APIS/DCORE !!!\n !!!")
 error("Wrong path for dcore api",4) -- Tell the person again that something is wrong
