@@ -1,29 +1,31 @@
+os.loadAPI(":dungeon/dcore/apis/dcore")
 local built_in = {["BossesAndBards"] = true, ["RuinsAndRituals"] = true, ["SetsAndSettlers"] = true,["DrugsAndDealers"] = true}
-local mods = fs.list("/dungeon/mods")
+local mods = fs.list(dcore.config.DIR_MODS)
 local cbi = false
 for _, v in pairs(mods) do
-	local mod = v
-	write(mod .. ": ")
-	if built_in[mod] and not fs.exists("/dungeon/mods/" .. mod .. "/mod.info") then
-		write("BUILT-IN, BY WERGAT")
-	elseif built_in[mod] then
+	local modName = v
+	write(modName .. ": ")
+	if built_in[modName] and not fs.exists("/dungeon/mods/" .. modName .. "/mod.info") then
+		write("BUILT-IN, BY WERGAT, and wergat failed to incluse mod.info")
+	elseif built_in[modName] then
 		write("BUILT-IN, ")
 	end
-	if not fs.exists("/dungeon/mods/" .. mod .. "/mod.info") and not built_in[mod] then
-		write("INVALID!")
-	elseif fs.exists("/dungeon/mods/" .. mod .. "/mod.info") then
-		local open = fs.open("/dungeon/mods/" .. mod .. "/mod.info", "r")
+
+	if fs.exists("/dungeon/mods/" .. modName .. "/mod.info") then
+		local open = fs.open(dcore.config.DIR_MODS.."/" .. modName .. "/mod.info", "r")
 		local all = open.readAll()
 		open.close()
 		local all = textutils.unserialize(all)
 		if all["newestVersion"] then
 			write("VERSION " .. all["newestVersion"])
 		else
-			write("INVALID!")
+			write("no information about newest version found!")
 		end
 		if all["author"] then
 			write(", BY " .. all["author"]:upper())
 		end
+	else
+		write("NO MOD INFO FOUND")
 	end
 	write("\n")
 end

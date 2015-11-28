@@ -1,0 +1,16 @@
+-- Searches for auspicious behaviour.
+
+-- deactivates all non-temporary calls
+local debugMode = false
+
+-- Deactivates the checking, faster booting ofc.
+-- KEEP ON FOR SECURE SHIT
+local ACTIVATEOVERWATCH = true
+
+
+
+
+
+
+
+

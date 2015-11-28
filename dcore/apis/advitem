@@ -1,11 +1,4 @@
 dcore.requireAPI("items")
-if http.get("http://www.timeapi.org/utc/now?%25b") then
-	month = http.get("http://www.timeapi.org/utc/now?%25b").readAll()
-	day = http.get("http://www.timeapi.org/utc/now?%25d").readAll()
-else
-	month = ""
-	day = ""
-end
 
 local function count(input)
 	local int = 0
@@ -16,7 +9,7 @@ local function count(input)
 end
 
 qualitys = {"usual","unusual","rare","extraordinary","epic","mythical","legendary","forgotten"}
-q_color = {"ยงf","ยงb","ยง3","ยง1","ยง5","ยงd","ยง6","ยง4","ยง2"}
+q_color = {"งf","งb","ง3","ง1","ง5","งd","ง6","ง4","ง2"}
 
 
 
@@ -176,7 +169,7 @@ function getLoreOfItem(_colorValue)
  local shopprice = advitem.getPriceOfItem(_colorValue)
  local enchArr = getItemData("loreTable")
  
- table.insert(enchArr,"\"Rarity is "..q_color[getItemData("quality")].."ยงo"..qualitys[getItemData("quality")].."ยง5ยงo\"")
+ table.insert(enchArr,"\"Rarity is "..q_color[getItemData("quality")].."งo"..qualitys[getItemData("quality")].."ง5งo\"")
  table.insert(enchArr,"\"Price is about "..shopprice.." gold\"")
  setItemData("loreTable",enchArr)
 end
@@ -219,14 +212,6 @@ function initializeItem(_dlevel,_typeOfItem,mobname,_forceQ)
   if(#equipment[mobname]>0)then
    setItemData("itemID",equipment[mobname][getItemData("slot")]["items"][getItemData("tier")] or 0)
   end
- end
- if month == "Oct" and day == "31" and getItemData("slot") == 5 then
-	setItemData("itemID", 86)
-	addOnItemData("tier", 1)
-	addOnItemData("quality", 2)
-	if getItemData("quality") > 8 then
-		setItemData("quality", 8)
-	end
  end
 end
 function getMobName(_mobname)

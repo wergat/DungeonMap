@@ -1,0 +1,16 @@
+-- Block API
+-- Not sure why, but it might be useful one day for someone
+
+-- newBlock(blockID[,x,y,z])
+-- returns block Object
+function newBlock(_blockID,_x,_y,_z)
+	local blockObject = {}
+	blockObject.id = _blockID
+	blockObject.x = _x
+	blockObject.y = _y
+	blockObject.z = _z
+	
+	blockObject.getPlaceBlockData = function(self)
+		return self.x,self.y,self.z,self.id
+	end
+end

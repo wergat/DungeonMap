@@ -1,4 +1,4 @@
-os.loadAPI(":dungeon/apis/dcore")
+os.loadAPI(":dungeon/dcore/apis/dcore")
 dcore.requireAPI("gendata")
 
 local settings = {}

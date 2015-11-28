@@ -1,0 +1,3 @@
+os.loadAPI(":dungeon/dcore/apis/dcore")
+dcore.requireAPI("chest")
+chest.placeChest(unpack{...})

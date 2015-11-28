@@ -1,0 +1,28 @@
+-- Easy to use debugging tool if you are not sure about your inputs
+function printThis(...)
+	for k,v in pairs(arg) do
+		write(tostring(v).." ("..type(v)..")")
+		if(type(v)=="number" or type(v)=="string" or type(v)=="boolean")then
+			write(": \""..tostring(v).."\"")
+		end
+	end
+	write("\n")
+end
+_G["printThis"] = printThis
+
+--t = setmetatable({}, {["type"] = "NewMeta"})
+--dcore.registerCustomType("NewMeta",function(t) if((getmetatable(t)["type"] or "") == "NewMeta")then return true end end)
+
+
+-- Scans _G and prints it for you
+function scanG()
+ local i = 0
+ local text = ""
+ for k,v in pairs(_G) do
+  text = text ..k..","
+  i = i + 1
+ end
+ print(i)
+ write(text.."\n")
+end
+_G["scan"] = scanG

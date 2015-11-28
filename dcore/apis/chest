@@ -1,4 +1,4 @@
-os.loadAPI(":dungeon/apis/dcore")
+--os.loadAPI(":dungeon/apis/dcore")
 dcore.requireAPI("advitem")
 dcore.requireAPI("potion")
 
@@ -281,7 +281,7 @@ function getChestData(_startDifficulty,_chestType)
 			break
 		end
 	 end
-	 dataTable["CustomName"] = (advitem.q_color[chestRarity]).."Â§l"..firstToUpper(advitem.qualitys[chestRarity])..chest_types[_chestType].."ChestÂ§r"
+	 dataTable["CustomName"] = (advitem.q_color[chestRarity]).."§l"..firstToUpper(advitem.qualitys[chestRarity])..chest_types[_chestType].."Chest§r"
 	 return dataTable
 end
 
@@ -332,7 +332,7 @@ function placeChest(...)
  end
 
  local datatag =  dcore.getNBTStringFromTable(chest.getChestData(startDifficulty,chestType))
- --print(datatag)
+ print(datatag)
  
  a,e = commands.setblock(x,y,z,"minecraft:chest","1","replace",datatag)
  

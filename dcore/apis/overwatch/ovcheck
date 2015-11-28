@@ -1,0 +1,38 @@
+-- Spy Yo functions
+-- debug reasons
+
+local used = {}
+local natives = {}
+
+function startNewRecoring()
+
+end
+
+function addToUsed(_functionName)
+ used[_functionName] = (used[_functionName] or 0) + 1
+end
+
+function getRecording()
+ return used
+end
+
+
+function init()
+ local function addToUsed(_function,...) 
+  for k,v in pairs(_function) do
+   if(type(v) == "table" and _function[k]~=_function)then
+    addToUsed(_function[k],k) 
+   elseif(type(k) == "function")then
+    _G
+	v = function(...) addToUsed(path..k) return v(...) end
+   else
+   
+   end
+  end
+ end
+ addToUsed(_G)
+end
+
+init()
+write("hi ")
+print(used["write"] or ":(")

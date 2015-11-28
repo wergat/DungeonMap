@@ -1,9 +1,319 @@
+if(not dcore)then os.loadAPI(":dungeon/apis/dcore") end
 dcore.requireAPI("tick")
+dcore.requireAPI("player")
 
 local npcs = {}
 local dialogdata = {}
-local openDialogId = {}
+
 local chat_colors = {"dark_aqua","gold","gray","blue","green","aqua","red","light_purple","yellow"}
+
+local openDialogIds = {} -- All dialogs currently waiting for an answer by player.
+local allDialogArray = {}
+
+
+-- ""
+
+
+function getListOfActiveDialogs()
+	--return this^
+end
+
+-- Event Trigger Functions
+
+local triggerTypeEnvironmentFunctions = {}
+function getTriggerTypeEnvironmentFunctions()
+	return triggerTypeEnvironmentFunctions
+end
+function addTriggerEnvFunc(f)
+	table.insert(triggerTypes,f)
+	return #triggerTypes
+end
+
+-- parent = dialog
+-- parent.parent = npc
+
+local triggerTypes = {}
+-- TypeName is the name of the trigger type
+-- f is a function which returns the trigger object.
+-- f will receive data as arg 
+function registerTriggerType(typeName,f)
+	triggerTypes[typeName] = f
+end
+
+
+registerTriggerType("r",function(data) data["targetSelector"] = {var = "@a",args = {["r"] = (data.range or 3)}} return data end)
+registerTriggerType("rm",function(data) data["targetSelector"] = {var = "@p",args = {["rm"] = (data.range or 3)}} return data end)
+
+--
+
+
+
+
+-- Trigger for Dialogs
+
+-- TODO: if parent is not set, do not load anything, only if applied to a dialog
+
+function newTrigger(parent,data)
+	if(data == nil or #data == 0)then
+		data = parent
+		parent = nil
+	end
+	
+	local triggerObject = {}
+	triggerObject.type = data.type
+	triggerObject.isTypeSet = false
+	triggerObject.parent = parent
+	
+	
+	-- Possible types:
+	-- r (Like in mc, all players in distance)
+	-- rm (Like in mc, all players NOT in distance)
+	if(triggerTypes[triggerObject.type])then
+		local functionEnvironment = setmetatable(getTriggerTypeEnvironmentFunctions(), { __index = _G } )
+		functionEnvironment["parent"] = parent
+		local baseF = triggerTypes[triggerObject.type]
+		setfenv(baseF,functionEnvironment)
+		triggerObject = baseF(data)
+		if(not triggerObject.type)then -- In case the maker of this trigger type is lazy
+			triggerObject.type = data.type
+		end
+		triggerObject.isTypeSet = true
+	else
+		triggerObject.type = nil
+	end
+	
+	if(triggerObject.type)then
+		local metaTable = {}
+		-- Set type of this object
+		metaTable["type"] = "TriggerObject" 
+	
+		triggerObject = setmetatable(triggerObject,metaTable)
+		return triggerObject
+	else
+		print("#ERROR_NPC_TRIGGER_INVALIDTYPE")
+	end
+end
+
+-- Dialogs for players
+function newDialog(parent,data)
+	if(data == nil or #data == 0)then
+		data = parent
+		parent = nil
+	end
+
+	local dialogObject = {}
+	dialogObject.text = {}
+	-- Change/set the text
+	dialogObject.setText = function(self,text)
+		self.text = text
+	end
+	
+	-- If the dialog was shown to the player
+	dialogObject.active = false
+	-- If the player should answer to this quiestion
+	dialogObject.requiresAnswer = false
+	-- If the player did answer to the question
+	dialogObject.didAnswer = false
+	
+	
+	-- Answers to the previos text
+	dialogObject.answer = {}
+	dialogObject.addAnswer = function(self,text,reactionFunction)
+		-- Error if dialog is already answered
+		if(dialogObject.didAnswer or dialogObject.active)then error("This dialog is already triggered or answered - cannot add more answers to it!",2) end
+		self.requiresAnswer = true
+		table.insert(self.answer,{["text"] = text,["function"] = reactionFunction})
+	end
+	
+	dialogObject.triggers = {}
+	
+	dialogObject.addTrigger = function(self,data)
+		print(type(data))
+		if(type(data)=="TriggerObject")then
+			data["parent"] = self
+			table.insert(self.triggers,data)
+			return #self.triggers
+		else
+			local trigger = newTrigger(data)
+			if(trigger)then
+				trigger["parent"] = self
+				table.insert(self.triggers,trigger)
+				return #self.triggers
+			end
+		end
+	end
+	
+	dialogObject.removeTrigger = function(self,input)
+		if(type(input)=="number")then -- remove trigger by number
+			table.remove(self.triggers,input)
+		else -- remove trigger by number
+			for i=1,#self.triggers do
+				if(self.triggers[i] == input)then
+					table.remove(self.triggers,i)
+				end
+			end
+		end
+	end
+	
+	dialogObject.getTrigger = function(self,input)
+		if(type(input)=="number")then
+			return self.triggers[input]
+		else -- If not given a specific number, return nil
+			return self.triggers[1]
+		end
+	end
+	
+	
+	-- Triggers the dialog right now
+	dialogObject.trigger = function(self)
+		self.active = true
+	end
+
+	-- Set semi-important Metadata for player object
+	local metaTable = {}
+	-- Set type of this object
+	metaTable["type"] = "DialogObject" 
+	
+	dialogObject = setmetatable(dialogObject,metaTable)
+	return dialogObject
+end
+
+function newNPC(arg)
+	local npcObject = {}
+	
+	-- NPC Name
+	npcObject.name = nil
+	npcObject.setName = function(self,name)
+		self.name = name
+	end
+	npcObject.getName = function(self)
+		return self.name
+	end
+	
+	npcObject.nameColor = "blue" -- Let's set it to blue for now
+	npcObject.setNameColor = function(self,color)
+		self.nameColor = color
+	end
+	
+	-- Visualisation of this npc
+	-- Basicly everything you can touch
+	npcObject.vis = {}
+	
+	-- Adds an physical object you cann see/touch to the npc
+	npcObject.addObject = function(self,typeOfObj)
+		local newObject = {}
+		-- Set the objects ID
+		newObject.id = #self.vis+1
+		-- A good way to get the object id
+		newObject.getID = function (self)
+			return self.id
+		end
+		
+		-- Types: (ItemPlate|Model)
+		-- 
+		newObject.type = tostring(typeOfObj or "") or ""
+		
+		if(newObject.type == "ItemPlate")then
+			newObject.itemData = {}
+			newObject.hasItemOntop = false
+		
+			-- Sets the position of the plate
+			newObject.setPosition = function(self,x,y,z)
+				
+			end
+			
+			-- Returns the item table of the current item on the plate
+			newObject.setItem = function(self,itemTable)
+			
+			end
+			
+			-- Returns the item table of the current item on the plate
+			newObject.getItem = function(self)
+			
+			end
+			
+			--newObject ????
+		elseif(newObject.type == "Model")then
+
+		end
+		table.insert(npcObject.vis,{})
+	end
+	
+	
+	npcObject.dialogTable = {}
+	npcObject.addDialog = function(self,data)
+		print(type(data))
+		if(type(data)=="DialogObject")then
+			data["parent"] = self
+			table.insert(self.dialogTable,data)
+			-- update the parent data of triggers
+			print(data["triggers"])
+			for i=1,#data["triggers"] do
+				write(".")
+				data["triggers"][i]["parent"]["parent"] = self
+			end
+			return #self.dialogTable
+		else
+			local dialog = newDialog(data)
+			dialog["parent"] = self
+			table.insert(self.dialogTable,dialog)
+			return #self.dialogTable
+		end
+	end
+	
+	npcObject.removeDialog = function(self,input)
+		if(type(input)=="number")then -- remove trigger by number
+			table.remove(self.triggers,input)
+		else -- remove trigger by number
+			for i=1,#self.triggers do
+				if(self.triggers[i] == input)then
+					table.remove(self.triggers,i)
+				end
+			end
+		end
+	end
+	
+	npcObject.getDialog = function(self,input)
+		if(type(input)=="number")then
+			return self.dialogTable[input]
+		else -- If not given a specific number, return nil
+			return self.dialogTable[1]
+		end
+	end
+	
+	
+	-- Arg's evaluation
+	
+	local metaTable = {}
+	-- Set type of this object
+	metaTable["type"] = "NPCObject" 
+	
+	npcObject = setmetatable(npcObject,metaTable)
+	return npcObject
+end
+
+dcore.registerCustomType("NPCObject")
+dcore.registerCustomType("DialogObject")
+dcore.registerCustomType("TriggerObject")
+
+function checkForActivatedAnswers()
+	for i=1,#openDialogIds do
+		local dialogID = openDialogIds[i]
+		local playerData = player.getPlayer(dialogID)
+		local answerChoosen = playerData:getScoreboardValue("dc_dialog") or 0
+		if(answerChoosen>0)then
+			-- Process the answer
+			print("[Answer] Dialog: "..dialogID.."| Answer: "..answerChoosen)
+		end
+	end
+end
+
+function checkForTriggers()
+	for i=1,#openDialogIds do
+		local dialogID = openDialogIds[i]
+		local dialogObject = allDialogArray[dialogID]
+	end
+end
 
 -- Currently disabled
 function print_log(file,...)
