@@ -50,10 +50,21 @@ function summonBoss(x,y,z,mobType,difficulty)
 	mob.initializeMob(x,y,z,mobType,difficulty)
 	mob.setEquipmentOfMob()
 	local data = mob.getMobDataForSummon()
-	data["CustomName"] = boss_name(math.random(10)) .. ", " .. ranks[math.random(#ranks)] .. " of the " .. pluralname(mob.getMobData("mobType"))
+	if data["SkeletonType"] == 1 then
+		data["CustomName"] = boss_name(math.random(10)) .. ", " .. ranks[math.random(#ranks)] .. " of the Wither " .. pluralname(mob.getMobData("mobType"))
+	else
+		data["CustomName"] = boss_name(math.random(10)) .. ", " .. ranks[math.random(#ranks)] .. " of the " .. pluralname(mob.getMobData("mobType"))
+	end
 	if getMobData("mobType") == "spider_jockey" then
 		data["Riding"] = {["id"] = "Spider"}
 	end
+<<<<<<< HEAD:mods/BossesAndBards/apis/mob
+=======
+	for i = 1, 5 do
+		data["DropChances"][i] = "1.0f"
+	end
+	data["PersistenceRequired"] = "1b"
+>>>>>>> origin/master:mods/BossesAndBards/mob
 	
 	local dataTag = dcore.getNBTStringFromTable(data)
 	local cmd = "summon "..mob.getEntityName(mob.getMobData("mobType")).." "..mob.getMobData("xCoord").." "..mob.getMobData("yCoord").." "..mob.getMobData("zCoord").." "..dataTag
