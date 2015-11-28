@@ -58,14 +58,12 @@ function summonBoss(x,y,z,mobType,difficulty)
 	if getMobData("mobType") == "spider_jockey" then
 		data["Riding"] = {["id"] = "Spider"}
 	end
-<<<<<<< HEAD:mods/BossesAndBards/apis/mob
-=======
+
 	for i = 1, 5 do
 		data["DropChances"][i] = "1.0f"
 	end
 	data["PersistenceRequired"] = "1b"
->>>>>>> origin/master:mods/BossesAndBards/mob
-	
+
 	local dataTag = dcore.getNBTStringFromTable(data)
 	local cmd = "summon "..mob.getEntityName(mob.getMobData("mobType")).." "..mob.getMobData("xCoord").." "..mob.getMobData("yCoord").." "..mob.getMobData("zCoord").." "..dataTag
 	local success,answer = commands.exec(cmd)

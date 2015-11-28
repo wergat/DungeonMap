@@ -1,3 +1,8 @@
+-- WTF IS THIS FILE DOING _HERE_ ???
+-- Not removed in case it might be required
+--[[
+
+
 local function overrideTable(_a,_b)
  local c = _a
  for k,v in pairs(_b) do
@@ -63,4 +68,4 @@ function summonBoss(x,y,z,mobType,difficulty)
 		print_log("command","[error] Failed to execute Command: "..cmd.."; Error message:"..answer[1]..(answer[2] or "").."")
 	end
 end
-
+]]
