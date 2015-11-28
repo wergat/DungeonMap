@@ -254,29 +254,35 @@ function generatePotionItem(power,seed)
 	
 	local potionNameColor = ""
 	if(goodnessLevel>=75)then
-		potionNameColor = "ง2"
+		potionNameColor = "ยง2"
 	elseif(goodnessLevel<75 and goodnessLevel>25)then
-		potionNameColor = "งa"
+		potionNameColor = "ยงa"
 	elseif(goodnessLevel<=25 and goodnessLevel>=-25)then
-		potionNameColor = "งe"
+		potionNameColor = "ยงe"
 	elseif(goodnessLevel<-25 and goodnessLevel>-75)then
-		potionNameColor = "ง6"
+		potionNameColor = "ยง6"
 	elseif(goodnessLevel<=-75)then
-		potionNameColor = "งc"
+		potionNameColor = "ยงc"
 	end
 	
 	local positiveText = ""
 	
-	if(goodnessLevel>=0)then
-		positiveText = "The effects of this potion are "..goodnessLevel.."% positive"
-	else
-		positiveText = "The effects of this potion are "..-goodnessLevel.."% negative"
+	local total = #finalPotionTable
+	local goodc = 0
+	for k, v in pairs(finalPotionTable) do
+		local id = v["Id"]
+		if effects[id]["good"] then
+			goodc = goodc + 1
+		end
 	end
+	local visualGoodnessLevel = (goodc/total)*100
 	
-	nbtTable["tag"]["display"]["Name"] = potionNameColor..potionName.."งr"
+	positiveText = "The effects of this potion are "..visualGoodnessLevel.."% positive"
+	
+	nbtTable["tag"]["display"]["Name"] = potionNameColor..potionName.."ยงr"
 	nbtTable["tag"]["display"]["Lore"] = {
 		"It's a "..eName.." potion!",
-		"This potion is worth ง6"..tonumber(cost*23).."ง5 gold",
+		"This potion is worth ยง6"..tonumber(cost*23).."ยง5 gold",
 		positiveText,
 		"Might contain "..potion_name(3,seed+21).."!"
 	}
