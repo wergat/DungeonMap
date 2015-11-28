@@ -26,10 +26,11 @@ config = {
 	
 	-- Disable certain logs, might prevent some issues with limited storage space on computer
 	-- Set to true if you want a log to be disabled
-	DISABLED_LOGS = {}
-	DISABLED_LOGS["dcore"] = false
-	DISABLED_LOGS["command"] = true
-	DISABLED_LOGS["error"] = false
+	DISABLED_LOGS = {
+		["dcore"] = false,
+		["command"] = true,
+		["error"] = false,
+	},
 }
 
 -- Use native Globals

@@ -140,7 +140,7 @@ function generatePotionItem(power,seed)
 				badness = badness + 1
 			end
 			-- Choose if the duration if potency should be improved
-			if(((choosenEffects[pickedEffect]["potency"]<(effects[pickedEffect]["max"]-1) or (effects[pickedEffect]["max"]<0)) and math.random(2)==1) or effects[pickedEffect]["allowDuration"]==false)then
+			if(((choosenEffects[pickedEffect]["potency"]<(effects[pickedEffect]["max"]-1) or (effects[pickedEffect]["max"]<0)) and math.random(3)==1) or effects[pickedEffect]["allowDuration"]==false)then
 				-- Increase the potency of the effect
 				choosenEffects[pickedEffect]["potency"] = choosenEffects[pickedEffect]["potency"] + 1
 				-- Remove a few generation points
@@ -265,11 +265,19 @@ function generatePotionItem(power,seed)
 		potionNameColor = "§c"
 	end
 	
+	local positiveText = ""
+	
+	if(goodnessLevel>=0)then
+		positiveText = "The effects of this potion are "..goodnessLevel.."% positive"
+	else
+		positiveText = "The effects of this potion are "..-goodnessLevel.."% negative"
+	end
+	
 	nbtTable["tag"]["display"]["Name"] = potionNameColor..potionName.."§r"
 	nbtTable["tag"]["display"]["Lore"] = {
 		"It's a "..eName.." potion!",
 		"This potion is worth §6"..tonumber(cost*23).."§5 gold",
-		"The effects of this potion are "..goodnessLevel.."% positive",
+		positiveText,
 		"Might contain "..potion_name(3,seed+21).."!"
 	}
 	

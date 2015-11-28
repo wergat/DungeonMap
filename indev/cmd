@@ -1,4 +1,4 @@
-os.loadAPI(":dungeon/apis/dcore")
+os.loadAPI(":dungeon/dcore/apis/dcore")
 dcore.requireAPI("mob")
 
 local tArgs = {...}
@@ -7,7 +7,7 @@ local mobName = tArgs[2]-- 1 to ?
 
 print("Summoning d:"..difficulty.." t:"..(mobName or "?").."")
 
-local x,y,z = -178,66,223
+local x,y,z = 0,15,25
 
 for i=1,20 do
  mob.summonMob(x,y,z,mobName,difficulty)
