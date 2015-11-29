@@ -16,6 +16,16 @@ local formatting_colors = {
  {"§e","Yellow","yellow",colors.yellow},
  {"§f","White","white",colors.white}
 }
+
+local formatting_codes = {
+ {"§k","Obfuscated"},
+ {"§l","Bold"},
+ {"§m","Strikethrough"},
+ {"§n","Underline"},
+ {"§o","Italic"},
+ {"§r","Reset"}
+}
+
 local wool_colors = {
  {"0","White"},
  {"1","Orange"},

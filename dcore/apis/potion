@@ -134,11 +134,6 @@ function generatePotionItem(power,seed)
 		-- Set a random amount of improve points. These will either improve the duration or potency of this single effect
 		local improve = math.random(5,math.floor(generationPoints/10+6))
 		while(improve>0 and generationPoints>0)do
-			if(effects[pickedEffect]["good"])then
-				goodness = goodness + 1
-			else
-				badness = badness + 1
-			end
 			-- Choose if the duration if potency should be improved
 			if(((choosenEffects[pickedEffect]["potency"]<(effects[pickedEffect]["max"]-1) or (effects[pickedEffect]["max"]<0)) and math.random(3)==1) or effects[pickedEffect]["allowDuration"]==false)then
 				-- Increase the potency of the effect
@@ -181,6 +176,7 @@ function generatePotionItem(power,seed)
 	local highestID = 0
 	local seed = 0
 	local cost = 0
+	local goodc = 0
 	
 	for k,v in pairs(choosenEffects) do
 		if(v["potency"]>=0)then -- No potion potency? Not gonna put that in!
@@ -188,6 +184,14 @@ function generatePotionItem(power,seed)
 			cost = cost + math.floor(math.floor(((v["potency"]))*3*(v["duration"]/40))+(math.floor(v["duration"]*(5+math.random(10))+0.5))/1000)
 			p["Id"] = k
 			p["Amplifier"] = v["potency"]
+			
+			if(effects[k]["good"])then
+				goodness = goodness + 1
+				goodc = goodc + 1
+			else
+				badness = badness + 1
+			end
+			
 			--Check if duration is allowed, if not change it to 1, just to be safe.
 			if(not effects[k]["allowDuration"])then
 				p["Duration"] = 1
@@ -251,38 +255,28 @@ function generatePotionItem(power,seed)
 	nbtTable["tag"] = {}
 	nbtTable["tag"]["display"] = {}
 	
-	
 	local potionNameColor = ""
 	if(goodnessLevel>=75)then
-		potionNameColor = "§2"
+		potionNameColor = "�2"
 	elseif(goodnessLevel<75 and goodnessLevel>25)then
-		potionNameColor = "§a"
+		potionNameColor = "�a"
 	elseif(goodnessLevel<=25 and goodnessLevel>=-25)then
-		potionNameColor = "§e"
+		potionNameColor = "�e"
 	elseif(goodnessLevel<-25 and goodnessLevel>-75)then
-		potionNameColor = "§6"
+		potionNameColor = "�6"
 	elseif(goodnessLevel<=-75)then
-		potionNameColor = "§c"
+		potionNameColor = "�c"
 	end
 	
 	local positiveText = ""
-	
-	local total = #finalPotionTable
-	local goodc = 0
-	for k, v in pairs(finalPotionTable) do
-		local id = v["Id"]
-		if effects[id]["good"] then
-			goodc = goodc + 1
-		end
-	end
-	local visualGoodnessLevel = (goodc/total)*100
+	local visualGoodnessLevel = (goodc/#finalPotionTable)*100
 	
 	positiveText = "The effects of this potion are "..visualGoodnessLevel.."% positive"
 	
-	nbtTable["tag"]["display"]["Name"] = potionNameColor..potionName.."§r"
+	nbtTable["tag"]["display"]["Name"] = potionNameColor..potionName.."�r"
 	nbtTable["tag"]["display"]["Lore"] = {
 		"It's a "..eName.." potion!",
-		"This potion is worth §6"..tonumber(cost*23).."§5 gold",
+		"This potion is worth �6"..tonumber(cost*23).."�5 gold",
 		positiveText,
 		"Might contain "..potion_name(3,seed+21).."!"
 	}
