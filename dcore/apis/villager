@@ -210,22 +210,6 @@ local function getprice(id)
 	if id < 302 and id > 297 then
 		return 1, 265
 	elseif id < 318 and id > 313 then
-		return 2, 265
-	elseif id < 310 and id > 301 then
-		return 1, 264
-	elseif id == 268 or id == 272 or id == 283 then
-		return 1, 265
-	elseif id == 261 or id == 267 then
-		return 1, 264
-	else
-		return 2, 264
-	end
-end
-
-local function getprice(id)
-	if id < 302 and id > 297 then
-		return 1, 265
-	elseif id < 318 and id > 313 then
 		return 1, 265
 	elseif id < 310 and id > 301 then
 		return 1, 265
