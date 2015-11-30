@@ -26,10 +26,10 @@ config = {
 	
 	-- Disable certain logs, might prevent some issues with limited storage space on computer
 	-- Set to true if you want a log to be disabled
-	DISABLED_LOGS = {
-		["dcore"] = false,
+	ENABLED_LOGS = {
+		["dcore"] = true,
 		["command"] = true,
-		["error"] = false,
+		["error"] = true,
 	},
 }
 
@@ -48,7 +48,7 @@ local firstError = true
 
 local file_used = {}
 function print_log(file,text)
-	if(config.DISABLED_LOGS[file] == true)then
+	if(config.ENABLED_LOGS[file])then
 		local logfile = fs.open(config.DIR_LOGS.."/"..file, file_used[file] and "a" or "w")
 		if(logfile and type(text)=="string")then
 			if(not file_used[file])then file_used[file] = true end
@@ -57,8 +57,8 @@ function print_log(file,text)
 		end
 	else
 		if(not file_used[file])then
-			file_used[file] = true
 			local logfile = fs.open(config.DIR_LOGS.."/"..file, file_used[file] and "a" or "w")
+			file_used[file] = true
 			if(logfile)then
 				logfile.writeLine("This file was disabled in the dcore configurations!")
 				logfile.close()
@@ -238,7 +238,7 @@ function getNBTStringFromTable(t)
 	if(type(t)=="table")then
 		return "{"..string.sub(tableToNBT(t),1,-2).."}"
 	else
-		error("GIFF MEAH TABLE YO FOOL!",2)
+		return ""
 	end
 end
 

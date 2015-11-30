@@ -39,15 +39,24 @@ local items = {}
  items[322] = {["type"] = "food",["id"] = "minecraft:golden_apple",["name"] = "Golden Apple",["foodPoints"] = 9.6,["saturation"] = 13.6,["stack_size"] = 64}
 -- items[] = {["type"] = "food",["id"] = "",["name"] = "",["foodPoints"] = ,["saturation"] = ,["stack_size"] = }
 
--- TODO: once 1.8 approaches, optimize this function for it!
-function useRightItemID(input)
-	local itemId = getIDWithName(input)
-	if(USE_STRING_FOR_ITEM_ID)then
-		return items[itemId]["id"]
-	else
-		return itemId
-	end
-end
+
+
+
+-- QUICKFIX FIX LATER
+items[406] = {["id"] = "minecraft:quartz"}
+items[370] = {["id"] = "minecraft:ghast_tear"}
+items[265] = {["id"] = "minecraft:iron_ingot"}
+items[371] = {["id"] = "minecraft:gold_nugget"}
+items[266] = {["id"] = "minecraft:gold_ingot"}
+items[264] = {["id"] = "minecraft:diamond"}
+items[388] = {["id"] = "minecraft:emerald"}
+items[399] = {["id"] = "minecraft:nether_star"}
+
+
+
+
+
+
 
 function getItem(itemID)
  return items[itemID]
@@ -83,6 +92,20 @@ function getIDWithName(name)
 	end
 end
 
+function getIDWithID(name)
+	if(type(name)=="string")then
+		for k,v in pairs(items) do
+			if(v["id"] == name)then
+				return k
+			end
+		end
+		return nil
+	else
+		return tonumber(name or 0) or 0
+	end
+end
+
+
 function getDurability(itemID)
  if(items[itemID]==nil)then
   dcore.Error("Item ID "..tostring(itemID).." could not be found",2)
@@ -93,4 +116,20 @@ function getDurability(itemID)
    dcore.Error("Durability for Item ID "..tostring(itemID).." could not be found",2)
   end
  end
+end
+
+-- TODO: once 1.8 approaches, optimize this function for it!
+function useRightItemID(input)
+	local itemId = getIDWithID(input)
+	if(USE_STRING_FOR_ITEM_ID)then
+		return items[itemId]["id"]
+	else
+		return itemId
+	end
+end
+
+function useRightItemIDForVillager(input)
+	local itemId = getIDWithID(input)
+	if(not itemId)then error("Item id "..input.." not found!") end
+	return itemId
 end

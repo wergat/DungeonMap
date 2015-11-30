@@ -158,7 +158,7 @@ end
 function getRarityLevelOfItem(_forceQ)
  -- change back to "_forceQ or 1", when releasing!!!
  local q = _forceQ or 1
- local chance = {0.25,0.3,0.35,0.4,0.4,0.4,0.4,0.4} --{0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75}
+ local chance = {0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75} --{0.25,0.3,0.35,0.4,0.4,0.4,0.4,0.4}
  while((math.random(20)/20)<=chance[q] and q<#qualitys)do q = q + 1 end
  return q
 end
@@ -341,7 +341,7 @@ function getEquipment(_dlevel,_typeOfItem,_mobname,_forceQ)
   --	!price       // price for buy/selling item
   returnTable = overrideTable(dataTable,getItemData("dataTable"))
   -- I might add more to this, just tell me what :)
-  additionalInfo = {["itemID"] = getItemData("itemID"),["value"] = getItemData("value")}
+  additionalInfo = {["itemID"] = getItemData("itemID"),["value"] = getItemData("value"),["price"] = advitem.getPriceOfItem(colorValue)}
  end
  return returnTable,additionalInfo
 end

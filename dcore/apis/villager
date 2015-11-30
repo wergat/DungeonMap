@@ -1,56 +1,56 @@
 --os.loadAPI(":dungeon/apis/dcore")
 dcore.requireAPI("advitem")
+dcore.requireAPI("items")
 
-local function getShopPrice(price)
- local i = 0
- local found = price
- local lowest_factor = 1.5
- 
- while i<(string.len(tostring(price))-1) do
-  i = i + 1
-  local upper = (tonumber(string.sub(price,1,-(i+1))..string.sub(string.rep("9",20),-i,-1)))
-  local lower = (tonumber(string.sub((price-(10^i)),1,-(i+1))..string.sub(string.rep("9",20),-i,-1)))
- 
- 
- 
-  local lower_factor = (price/lower)
-  local upper_factor = (1/(price/upper))
- 
-  --print(i..":"..(math.floor((lower_factor-1)*10000)/100).."("..lower..")/"..(math.floor((upper_factor-1)*10000)/100).."("..upper..")    T:"..math.floor((i/2)+3).."%     ")
- 
-  if(lower_factor<upper_factor)then
-   if(price*(1-(math.floor((i/2)+3)/100))<lower and lower_factor<(lowest_factor*((i+1)/2)))then
-    found = lower
-    lowest_factor = lower_factor
-    --write("lower:"..lower_factor)
-   end
-  end
- 
-  if(upper_factor<lower_factor)then
-   if(price*(1+(math.floor((i/2)+3)/100))>upper and upper_factor<(lowest_factor*((i+1)/2)))then
-    found = upper
-    lowest_factor = upper_factor
-    --write("upper:"..upper_factor)
-   end
-  end
-  --print(".")
- end
- return found+1
-end
- 
-local function dis(num)
- local a = (math.floor((num*100000))/1000-100)
- if(a>0)then return "+"..a else return a end
+
+-- Calculate real-shop like prices (99.99$ instead of 98.76$) (+1 for easier handling)
+-- Now global, in case anyone wants to use this
+function getShopPrice(price)
+	local i = 0
+	local found = price
+	local lowest_factor = 1.5
+	 
+	while i<(string.len(tostring(price))-1) do
+		i = i + 1
+		local upper = (tonumber(string.sub(price,1,-(i+1))..string.sub(string.rep("9",16),-i,-1)))
+		local lower = (tonumber(string.sub((price-(10^i)),1,-(i+1))..string.sub(string.rep("9",16),-i,-1)))
+		local lower_factor = (price/lower)
+		local upper_factor = (1/(price/upper))
+
+		if(lower_factor<upper_factor)then
+			if(price*(1-(math.floor((i/2)+3)/100))<lower and lower_factor<(lowest_factor*((i+1)/2)))then
+				found = lower
+				lowest_factor = lower_factor
+			end
+		end
+			 
+		if(upper_factor<lower_factor)then
+			if(price*(1+(math.floor((i/2)+3)/100))>upper and upper_factor<(lowest_factor*((i+1)/2)))then
+				found = upper
+				lowest_factor = upper_factor
+			end
+		end
+	end
+	return found
 end
 
-local function get_seed()
-	--if http.get("http://www.random.org/integers/?num=1&min=1000000&max=1000000000&col=1&base=10&format=plain&rnd=new") then
-		--return http.get("http://www.random.org/integers/?num=1&min=1000000&max=1000000000&col=1&base=10&format=plain&rnd=new").readAll()
-	--else
-	return os.time()
-	--end
+
+
+-- Tell atenefyr to switch to the newer use of things
+function summon_food(...)
+	print("USE villager.summon(\"food\",...) instead of villager.summon_food(...) !!!")
+	return summon("food",arg)
+end
+function summon_currency(...)
+	print("USE villager.summon(\"currency\",...) instead of villager.summon_currency(...) !!!")
+	return summon("currency",arg)
+end
+function summon_music(...)
+	print("USE villager.summon(\"music\",...) instead of villager.summon_music(...) !!!")
+	return summon("music",arg)
 end
 
+-- Atenefyr's special difficulty distribution
 local function generateDifficulty()
 	local stage = math.random(1,170)
 	if stage <= 50 then --Lowest stage. Pretty rare. 1-50
@@ -66,6 +66,139 @@ local function generateDifficulty()
 	end
 	return difficulty
 end
+
+-- Adds comma value to the given number
+-- Copied with no shame from http://lua-users.org/wiki/FormattingNumbers
+local function comma_value(amount)
+	local formatted = amount
+	while true do  
+		formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", "%1'%2")
+		if (k==0) then
+			break
+		end
+	end
+	return formatted
+end
+
+
+
+-- Returns [tradeSlots] amount of tables for currency you can use in villagers
+-- The NBT converter likes those tables
+-- Requires price and amounts of slots to fill (1 or 2, depends on the amount of buy/sell slots)
+-- Will round up if in doubt
+function getCurrencyTradeTablesByPrice(price,tradeSlots)
+	print(price..":"..tradeSlots)
+	-- MUST be sorted by value!
+	-- TODO: make sure that is the case?
+	local cur = {
+		{["name"] = "Quaz",["value"] = 1,["itemID"] = "minecraft:quartz"},
+		{["name"] = "Iron nugget",["value"] = 10,["itemID"] = "minecraft:ghast_tear"},
+		{["name"] = "Iron Ingot",["value"] = 50,["itemID"] = "minecraft:iron_ingot"},
+		{["name"] = "Gold Nugget",["value"] = 250,["itemID"] = "minecraft:gold_nugget"},
+		{["name"] = "Gold Ingot",["value"] = 2500,["itemID"] = "minecraft:gold_ingot"},
+		{["name"] = "Diamond",["value"] = 25000,["itemID"] = "minecraft:diamond"},
+		{["name"] = "Emerald",["value"] = 250000,["itemID"] = "minecraft:emerald"},
+		{["name"] = "Nether Star",["value"] = 1250000,["itemID"] = "minecraft:nether_star"}
+	}
+	local rawPrice = {}
+	local maxRaw
+	for i=#cur,1,-1 do
+		write(".")
+		while(price>=cur[i]["value"])do
+			write("!")
+			price = price - cur[i]["value"]
+			rawPrice[i] = (rawPrice[i] or 0) + 1
+			if(not maxRaw)then maxRaw = i end
+		end
+	end
+
+	
+	local tradeIndex = 1
+	local resourceIndex = maxRaw
+	local trade = {}
+	
+	while(tradeIndex<=tradeSlots and resourceIndex>1)do
+		while(not rawPrice[resourceIndex] and resourceIndex>1)do resourceIndex = resourceIndex - 1 end
+		if(resourceIndex>=1)then
+			local id = items.useRightItemIDForVillager(cur[resourceIndex]["itemID"])
+			if(not id)then error("ITEM ID ERROR; PLEASE ADD THE ITEM \""..cur[#rawPrice]["itemID"].."\" TO THE ITEMS DATA!") end
+			local amount = math.min(rawPrice[resourceIndex],64) -- Keep it in the limits!
+			
+			local tag = {}
+			tag["display"] = {
+				["Name"] = cur[resourceIndex]["name"],
+				["Lore"] = {"This item is part of the currency","It is worth exactly "..comma_value(cur[resourceIndex]["value"]).." Quaz!"}
+			}
+			
+			trade[tradeIndex] = {["id"] = id,["Count"] = amount,["tag"] = tag}
+			rawPrice[resourceIndex] = rawPrice[resourceIndex] - 64
+			if(rawPrice[resourceIndex]<=0)then rawPrice[resourceIndex] = nil end
+		end
+		tradeIndex = tradeIndex + 1
+	end
+	
+	-- Round up of the price (Deal with it!)
+	if((rawPrice[#rawPrice] or 0)>0)then
+		trade[#trade]["Count"] = math.min(trade[#trade]["Count"] + 1,64) -- Keep it in the limits!
+	end
+	print(#trade)
+	
+	return unpack(trade)
+end
+
+function summon(...)
+	local tArgs = arg
+	if(type(tArgs[1]) == "number")then
+		print("WARNING: Summon now uses the type of villager as the first parameter, change something somewhere!")
+		table.insert(tArgs,1,nil)
+	end
+	local villagerType = tArgs[1] or "equipment"
+	local xPos = tArgs[2] or 0
+	local yPos = tArgs[3] or 23
+	local zPos = tArgs[4] or 0
+	local difficulty = tArgs[5] or generateDifficulty()+500
+	local amountOfTrades = tArgs[6] or 1
+	local coat = tArgs[7] or 1
+	
+	-- Trades of the villager
+	local trades = {}
+	print(tArgs[6] or "???")
+	print(villagerType)
+	if(villagerType == "equipment")then
+		print("!")
+		for i = 1,amountOfTrades do
+			print("!")
+			math.randomseed(i+yPos*difficulty+amountOfTrades)
+			local itemTable,info = advitem.getEquipment(difficulty,nil,"player",1)
+			if(info)then -- If we got an item
+				local trade = {}				
+				local itemPrice = getShopPrice(tonumber(info["price"]))
+				print(itemPrice.."/"..info["price"])
+				local buy,buyB = getCurrencyTradeTablesByPrice(itemPrice,2)
+				trade["buy"] = buy
+				print(buy)
+				if(buyB)then trade["buyB"] = buyB end
+				trade["maxUses"] = 9999999
+				trade["rewardExp"] = "false"
+				trade["sell"] = itemTable
+				table.insert(trades,trade)
+			end
+		end
+	end		
+	
+	local villagerTable = {}
+	villagerTable["Profession"] = coat
+	villagerTable["CustomName"] = 'Level '..math.floor(difficulty+0.5)..' Trader'
+	villagerTable["CustomNameVisible"] = 1
+	villagerTable["Offers"] = {}
+	villagerTable["Offers"]["Recipes"] = trades
+	
+	local cmd = "/summon Villager " .. xPos .. " " .. yPos .. " " .. zPos .. " "..dcore.getNBTStringFromTable(villagerTable)
+	local _r = commands.exec(cmd)
+	return _r, cmd
+end
+
+--[[
 
 function summon(xc,yc,zc,difficulty,trades,coat)
 	sleep(1)
@@ -133,7 +266,6 @@ function summon(xc,yc,zc,difficulty,trades,coat)
 	local _r = commands.exec(cmd)
 	return _r, cmd
 end
-
 function summon_currency(x,y,z)
 	local cmd = '/summon Villager ' .. x .. " " .. y .. " " .. z .. ' {Profession:1,CustomName:"Currency Trader",CustomNameVisible:0,CanPickUpLoot:0,Offers:{Recipes:[{buy:{id:41,Count:1},maxUses:9999999,sell:{id:388,Count:1},rewardExp:false},{buy:{id:264,Count:5},maxUses:9999999,sell:{id:388,Count:1},rewardExp:false},{buy:{id:388,Count:1},maxUses:9999999,sell:{id:264,Count:5},rewardExp:false},{buy:{id:264,Count:1},maxUses:9999999,sell:{id:265,Count:20},rewardExp:false},{buy:{id:265,Count:20},maxUses:9999999,sell:{id:264,Count:1},rewardExp:false},{buy:{id:388,Count:1},maxUses:9999999,sell:{id:41,Count:1},rewardExp:false}]}}'
 	commands.exec(cmd)
@@ -249,3 +381,10 @@ function summon_sell(x, y, z)
 	local cmd = "/summon Villager " .. x .. " " .. y .. " " .. z .. " {Profession:5,CustomName:\"Item Seller\",CustomNameVisible:0,Offers:{Recipes:[" .. tstr .. "]}}"
 	commands.exec(cmd)
 end
+
+
+
+]]
+
+
+
