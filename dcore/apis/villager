@@ -103,9 +103,7 @@ function getCurrencyTradeTablesByPrice(price,tradeSlots)
 	local rawPrice = {}
 	local maxRaw
 	for i=#cur,1,-1 do
-		write(".")
 		while(price>=cur[i]["value"])do
-			write("!")
 			price = price - cur[i]["value"]
 			rawPrice[i] = (rawPrice[i] or 0) + 1
 			if(not maxRaw)then maxRaw = i end
@@ -141,8 +139,6 @@ function getCurrencyTradeTablesByPrice(price,tradeSlots)
 	if((rawPrice[#rawPrice] or 0)>0)then
 		trade[#trade]["Count"] = math.min(trade[#trade]["Count"] + 1,64) -- Keep it in the limits!
 	end
-	print(#trade)
-	
 	return unpack(trade)
 end
 
@@ -156,39 +152,40 @@ function summon(...)
 	local xPos = tArgs[2] or 0
 	local yPos = tArgs[3] or 23
 	local zPos = tArgs[4] or 0
-	local difficulty = tArgs[5] or generateDifficulty()+500
+	local difficulty = tArgs[5] or 1 or generateDifficulty()+500
 	local amountOfTrades = tArgs[6] or 1
 	local coat = tArgs[7] or 1
 	
+	local tradeLevel = 0
+	
 	-- Trades of the villager
 	local trades = {}
-	print(tArgs[6] or "???")
-	print(villagerType)
 	if(villagerType == "equipment")then
-		print("!")
 		for i = 1,amountOfTrades do
-			print("!")
 			math.randomseed(i+yPos*difficulty+amountOfTrades)
+			repeat
 			local itemTable,info = advitem.getEquipment(difficulty,nil,"player",1)
-			if(info)then -- If we got an item
-				local trade = {}				
-				local itemPrice = getShopPrice(tonumber(info["price"]))
-				print(itemPrice.."/"..info["price"])
-				local buy,buyB = getCurrencyTradeTablesByPrice(itemPrice,2)
-				trade["buy"] = buy
-				print(buy)
-				if(buyB)then trade["buyB"] = buyB end
-				trade["maxUses"] = 9999999
-				trade["rewardExp"] = "false"
-				trade["sell"] = itemTable
-				table.insert(trades,trade)
-			end
+				if(info)then -- If we got an item
+					local trade = {}				
+					local itemPrice = getShopPrice(tonumber(info["price"]))
+					tradeLevel = tradeLevel + info["value"]		
+					local buy,buyB = getCurrencyTradeTablesByPrice(itemPrice,2)
+					trade["buy"] = buy
+					if(buyB)then trade["buyB"] = buyB end
+					trade["maxUses"] = 9999999
+					trade["rewardExp"] = "false"
+					trade["sell"] = itemTable
+					table.insert(trades,trade)
+				else
+					difficulty = difficulty + 1
+				end
+			until (info)
 		end
 	end		
 	
 	local villagerTable = {}
 	villagerTable["Profession"] = coat
-	villagerTable["CustomName"] = 'Level '..math.floor(difficulty+0.5)..' Trader'
+	villagerTable["CustomName"] = 'Level '..math.floor((tradeLevel/amountOfTrades)+0.5)..' Trader'
 	villagerTable["CustomNameVisible"] = 1
 	villagerTable["Offers"] = {}
 	villagerTable["Offers"]["Recipes"] = trades
@@ -336,6 +333,22 @@ function summon_music(x,y,z)
 	local cmd = '/summon Villager ' .. x .. " " .. y .. " " .. z .. ' {Profession:5,CustomName:"Music Trader",CustomNameVisible:0,CanPickUpLoot:0,Offers:{Recipes:[{buy:{id:264,Count:3},maxUses:9999999,sell:{id:2265,Count:1},rewardExp:false},{buy:{id:264,Count:2},maxUses:9999999,sell:{id:2258,Count:1},rewardExp:false},{buy:{id:264,Count:2},maxUses:9999999,sell:{id:2259,Count:1},rewardExp:false}]}}'
 	commands.exec(cmd)
 	return true, cmd
+end
+
+local function getprice(id)
+	if id < 302 and id > 297 then
+		return 1, 265
+	elseif id < 318 and id > 313 then
+		return 2, 265
+	elseif id < 310 and id > 301 then
+		return 1, 264
+	elseif id == 268 or id == 272 or id == 283 then
+		return 1, 265
+	elseif id == 261 or id == 267 then
+		return 1, 264
+	else
+		return 2, 264
+	end
 end
 
 local function getprice(id)
