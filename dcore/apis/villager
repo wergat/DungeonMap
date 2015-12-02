@@ -82,17 +82,7 @@ local function comma_value(amount)
 	return formatted
 end
 
-
-
--- Returns [tradeSlots] amount of tables for currency you can use in villagers
--- The NBT converter likes those tables
--- Requires price and amounts of slots to fill (1 or 2, depends on the amount of buy/sell slots)
--- Will round up if in doubt
-function getCurrencyTradeTablesByPrice(price,tradeSlots)
-	if(price<=0)then price = 1 end
-
-	-- MUST be sorted by value!
-	-- TODO: make sure that is the case?
+function getCurrencyTable()
 	local cur = {
 		{["name"] = "Quaz",["value"] = 1,["itemID"] = "minecraft:quartz"},
 		{["name"] = "Iron nugget",["value"] = 10,["itemID"] = "minecraft:ghast_tear"},
@@ -103,6 +93,19 @@ function getCurrencyTradeTablesByPrice(price,tradeSlots)
 		{["name"] = "Emerald",["value"] = 250000,["itemID"] = "minecraft:emerald"},
 		{["name"] = "Nether Star",["value"] = 1250000,["itemID"] = "minecraft:nether_star"}
 	}
+	return cur
+end
+
+-- Returns [tradeSlots] amount of tables for currency you can use in villagers
+-- The NBT converter likes those tables
+-- Requires price and amounts of slots to fill (1 or 2, depends on the amount of buy/sell slots)
+-- Will round up if in doubt
+function getCurrencyTradeTablesByPrice(price,tradeSlots)
+	if(price<=0)then price = 1 end
+	
+	-- MUST be sorted by value!
+	-- TODO: make sure that is the case?
+	local cur = getCurrencyTable()
 	local rawPrice = {}
 	local maxRaw
 	for i=#cur,1,-1 do
@@ -192,8 +195,39 @@ function summon(...)
 	elseif(villagerType == "currency")then
 		villagerName = 'Exchange'
 		coat = 1
+		local cur = getCurrencyTable()
+		for i=1,#cur-1 do
+			local trade = {}
+			local buy = getCurrencyTradeTablesByPrice(cur[i]["value"],1)
+			local sell = getCurrencyTradeTablesByPrice(cur[i+1]["value"],1)
+			trade["buy"] = buy
+			trade["buy"]["Count"] = math.floor(cur[i+1]["value"]/cur[i]["value"])
+			trade["sell"] = sell
+					
+			trade["maxUses"] = 999999
+			trade["rewardExp"] = "false"		
+			
+			table.insert(trades,trade)
+		end
+		for i=#cur,2,-1 do
+			local trade = {}
+			local buy = getCurrencyTradeTablesByPrice(cur[i]["value"],1)
+			local sell = getCurrencyTradeTablesByPrice(cur[i-1]["value"],1)
+			trade["buy"] = buy
+			trade["sell"] = sell
+			trade["sell"]["Count"] = math.floor(cur[i]["value"]/cur[i-1]["value"])
+			
+			trade["maxUses"] = 999999
+			trade["rewardExp"] = "false"
+			
+			table.insert(trades,trade)
+		end
 	elseif(villagerType == "music")then
 		coat = 5
+		table.insert(trades,{["buy"] = getCurrencyTradeTablesByPrice(25000,2),["maxUses"] = 9999999,["sell"] = {["id"] = 2265,["Count"] = 1},["rewardExp"] = false})
+		table.insert(trades,{["buy"] = getCurrencyTradeTablesByPrice(12000,2),["maxUses"] = 9999999,["sell"] = {["id"] = 2258,["Count"] = 1},["rewardExp"] = false})
+		table.insert(trades,{["buy"] = getCurrencyTradeTablesByPrice(37213,2),["maxUses"] = 9999999,["sell"] = {["id"] = 2259,["Count"] = 1},["rewardExp"] = false})
+		villagerName = "Music Trader"
 	elseif(villagerType == "trash")then
 		
 	elseif(villagerType == "food")then
@@ -219,14 +253,15 @@ function summon(...)
 			trade["rewardExp"] = "false"
 			trade["sell"] = {["id"] = items.useRightItemIDForVillager(item["id"]),["Count"] = sellAmount}
 			
-			villagerName = "Food merchant"
-			
 			table.insert(trades,trade)
 			i = i + 1
 		end
 		coat = 0
+		villagerName = "Food merchant"
 	end
 	
+	-- Prevent Trading
+	table.insert(trades,{["maxUses"] = 99999,["rewardExp"] = "false",["buy"] = {["id"] = 160,["Damage"] = 8,["Count"] = 1,["tag"] = {["display"] = {["Name"] = " "}}},["sell"] = {["id"] = 160,["Damage"] = 8,["Count"] = 1,["tag"] = {["display"] = {["Name"] = " "}}}})
 	
 	villagerTable["Profession"] = coat
 	villagerTable["CustomName"] = villagerName

@@ -208,7 +208,11 @@ local function tableToNBT(t)
 		if(type(v)~="table")then
 			if(t[1]==nil)then
 				if(type(v)~="string" or v=="1b" or v=="0b")then
-					nbt = nbt..k..":"..v..","
+					if(type(v) == "boolean")then
+						nbt = nbt..k..":"..tostring(v)..","
+					else
+						nbt = nbt..k..":"..v..","
+					end
 				else
 					nbt = nbt..k..":\""..v.."\","
 				end
