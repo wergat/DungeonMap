@@ -48,6 +48,7 @@ while true do
 		sleep(1)
 		lives = lives + n
 		commands.exec('/tellraw @a ["",{"text":"You now have ","color":"green"},{"text":"' .. lives .. '","color":"gold","bold":true},{"text":" lives.","color":"green","bold":false}]')
+		print("")
 		print("Added " .. n .. " lives, now at " .. lives .. " lives")
 		set_vv("lives", lives)
 	end
@@ -56,12 +57,14 @@ while true do
 	if succ then
 		lives = lives - 1
 		commands.exec('/tellraw @a ["",{"text":"You now have ","color":"dark_green"},{"text":"' .. lives .. '","color":"gold","bold":true},{"text":" lives.","color":"dark_green","bold":false}]')
+		print("")
 		print("Deducted 1 life, now at " .. lives .. " lives")
 		commands.exec("/tp @a 45 28 14")
 		set_vv("lives", lives)
 	end
 	
 	if lives == 0 then
+		print("")
 		print("Game over!")
 		sleep(0.2)
 		commands.exec('/tellraw @a ["",{"text":"Game over!","color":"gold","bold":true}]')
@@ -73,6 +76,6 @@ while true do
 		sleep(0.1)
 		os.shutdown()
 	end
-	print("loop")
+	write(".")
 	sleep(0.3) --t = t + 0.3
 end
