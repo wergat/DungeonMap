@@ -172,7 +172,7 @@ if not get_v("stage") then
 			end
 		end
 	end
-	commands.exec('/give Atenefyr 4100 1 1 {display:{Name:"Options"},computerID:2,upgrade:1}')
+	commands.exec('/give @a 4100 1 1 {display:{Name:"Options"},computerID:2,upgrade:1}')
 end
 write(".")
 function killVillagers()
