@@ -1,0 +1,48 @@
+local trades = {"{buy:{id:276,Count:1},buyB:{id:264,Count:20},maxUses:999999,sell:{id:276,Count:1,Damage:0,tag:{ench:[{id:17,lvl:10}],display:{Name:\"Diamond sword coated with Undead-B-Gone\",Lore:[\"It's not as good, but it lasts forever.\"]}}},rewardExp:false}", "{buy:{id:264,Count:4},maxUses:999999,sell:{id:373,Count:1,Damage:16452,tag:{CustomPotionEffects:[{Id:20,Amplifier:30,Duration:2400}],display:{Name:\"Cyanide Bottle\",Lore:[\"A cheap alternative to Living-B-Gone.\"]}}},rewardExp:false}", "{buy:{id:264,Count:4},maxUses:999999,sell:{id:373,Count:1,Damage:16421,tag:{CustomPotionEffects:[{Id:6,Amplifier:5,Duration:2400}],display:{Name:\"Medical Marijuana\",Lore:[\"A cheap alternative to Undead-B-Gone.\"]}}},rewardExp:false}", "{buy:{id:264,Count:2},maxUses:999999,sell:{id:373,Count:1,Damage:16457,tag:{CustomPotionEffects:[{Id:9,Amplifier:5,Duration:2400}],display:{Name:\"Liquid Marijuana\",Lore:[\"To annoy, but not kill.\"]}}},rewardExp:false}", "{buy:{id:264,Count:20},maxUses:999999,sell:{id:373,Count:1,Damage:16462,tag:{CustomPotionEffects:[{Id:6,Amplifier:20,Duration:600}],display:{Name:\"Undead-B-Gone\",Lore:[\"For killing undead, but heals the living aswell.\"]}}},rewardExp:false}", "{buy:{id:264,Count:20},maxUses:999999,sell:{id:373,Count:1,Damage:16450,tag:{CustomPotionEffects:[{Id:7,Amplifier:20,Duration:600}],display:{Name:\"Living-B-Gone\",Lore:[\"For killing the living, but heals the undead aswell.\"]}}},rewardExp:false}", "{buy:{id:264,Count:25},maxUses:999999,sell:{id:373,Count:1,Damage:16454,tag:{CustomPotionEffects:[{Id:18,Amplifier:127,Duration:1200}, {Id:4,Amplifier:127,Duration:1200}, {Id:9,Amplifier:20,Duration:1300}, {Id:7,Amplifier:1,Duration:1}],display:{Name:\"Neutron Star Potion\",Lore:[\"1 gallon of pure neutron star.\", \"Collected from dead galaxies afar.\", \"Your hand might move slowly or\", \"not at all after drinking.\"]}}},rewardExp:false}"}
+function summon_drug(x,y,z,difficulty,seed,lives)
+	if seed then math.randomseed(seed) else math.randomseed(os.clock()*100) end
+	local tstr = ""
+	if not difficulty then
+		difficulty = math.random(1,200)
+	end
+	for i = 1, 3 do --Randomized potion trades
+		if seed then
+			seed = seed+((i-1)*5)
+		else
+			seed = os.clock()*100
+		end
+		local parts, price = potion.generatePotionItem(difficulty,seed)
+		local damage = parts["Damage"]
+		local id = 264
+		local price = tonumber(price)*23
+		local count = math.floor(price/1000+0.5)
+		if count > 64 and count/5 < 64 then
+			id = 388
+			count = math.floor(count/5+0.5)
+		elseif count > 64 and count/9 < 64 then
+			id = 264
+			count = math.floor(count/9+0.5)
+		elseif count > 64 and count/45 < 64 then
+			id = 133
+			count = math.floor(count/45+0.5)
+		elseif count > 64 then
+			id = 133
+			count = 64
+		end
+		local _r = "{buy:{id:" .. id .. ",Count:" .. count .. "},maxUses:999999,sell:" .. dcore.getNBTStringFromTable(parts) .. ",rewardExp:false}"
+		tstr = tstr .. _r .. ","
+		sleep(0.2)
+	end
+	for i = 1, #trades do
+		tstr = tstr .. trades[i] .. ","
+	end
+	if lives then
+		tstr = tstr .. "{buy:{id:264,Count:10},maxUses:999999,sell:{id:40,Count:1,Damage:0,tag:{display:{Name:\"1-Up\",Lore:[\"Adds one extra life.\"]}}},rewardExp:false}" .. ","
+	end
+	--Block new trades
+	tstr = tstr .. "{buy:{id:7,Count:1},maxUses:0,sell:{id:7,Count:1}}"
+	r = nil
+	local cmd = '/summon Villager ' .. x .. " " .. y .. " " .. z .. ' {Profession:2,CustomName:"Drug Dealer",CustomNameVisible:0,CanPickUpLoot:0,Offers:{Recipes:[' .. tstr .. ']}}'
+	suc, res = commands.exec(cmd)
+	return suc, cmd
+end
