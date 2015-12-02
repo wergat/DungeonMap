@@ -7,6 +7,11 @@ if fs.exists(":dungeon/hashes") then
 	all = textutils.unserialize(all)
 end
 
+if not http then
+	printError("No HTTP! The updater requires connection to the internet to update the files! Please provide an internet connection or enable the HTTP API for ComputerCraft in the mod config!")
+	error()
+end
+
 if not fs.exists(":dungeon/dcore/apis/JSON.lua") then
 	local x = http.get("https://raw.githubusercontent.com/wergat/DungeonMap/master/dcore/apis/JSON.lua").readAll()
 	local open = fs.open(":dungeon/dcore/apis/JSON.lua", "w")
@@ -15,12 +20,11 @@ if not fs.exists(":dungeon/dcore/apis/JSON.lua") then
 end
 
 JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
-if not http then
-	printError("No HTTP!")
-	error()
-end
+
 
 local files_updated = 0
+local files_not_updated = 0
+
 local function downloadFromDir(url)
 	local x = http.get(url)
 	if x then
@@ -42,7 +46,7 @@ local function downloadFromDir(url)
 		local f = x[i]
 		local path = f["path"]
 		if f["sha"] == all[path] then
-			print("Found file that doesn't need to be updated.")
+			files_not_updated = files_not_updated + 1
 		elseif f["type"] == "dir" then
 			print("Downloading directory " .. f["sha"])
 			all[path] = f["sha"]
@@ -61,6 +65,7 @@ end
 
 downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/")
 print("Finished updating! " .. files_updated .. " files have been updated.")
+print("Found "..files_not_updated.." file(s) that doesn't need to be updated, because they were up-to-date!")
 local open = fs.open(":dungeon/hashes", "w")
 open.write(textutils.serialize(all))
 open.close()
