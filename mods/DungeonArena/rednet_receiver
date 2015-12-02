@@ -1,0 +1,37 @@
+print("Begin rednet receiver program!")
+rednet.open("top")
+_G.coml = {
+["reset"] = "res",
+["commands"] = "cmds",
+["test"] = "ts",
+}
+_G.res = function()
+	fs.delete(".config") 
+	os.reboot()
+end
+
+_G.cmds = function()
+	return coml
+end
+
+_G.ts = function()
+	return "Hello, world!"
+end
+
+while true do
+	local id, message, protocol = rednet.receive("controls")
+	if id == 2 then
+		if type(coml[message]) == "string" then
+			print("#2 requests for " .. message)
+			local res = loadstring("return " .. coml[message] .. "()")()
+			if not res then
+				res = true
+			end
+			rednet.send(2, res, "controls")
+			print("Sent " .. tostring(res) .. " back to #2!")
+		else
+			print("Invalid command, sent true back to #2")
+			rednet.send(2, true, "controls")
+		end
+	end
+end
