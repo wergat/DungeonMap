@@ -125,8 +125,8 @@ set("Do you want a limited amount of lives, with extra lives being purchaseable?
 write(".")
 --Check and set settings
 local w = 0
-multishell.launch({}, "live")
-multishell.launch({}, "rednet_receiver")
+multishell.launch({}, "/dungeon/mods/DungeonArena/live")
+multishell.launch({}, "/dungeon/mods/DungeonArena/rednet_receiver")
 if get_v("wave") then
 	wave = tonumber(get_v("wave"))
 	level = 1
