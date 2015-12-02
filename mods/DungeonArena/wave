@@ -1,0 +1,17 @@
+local tArgs = {...}
+local difficulty = (tonumber(tArgs[1]) or 10)*2
+shell.run("spawn_mobs", difficulty)
+--[[
+for i = 1, 5 do
+	local s,e = commands.exec("/summon ThrownPotion 64 17 -12 {Potion:{id:373,Damage:16421,Count:1}}")
+	if(not s) then print(e[1]) end
+end
+]]
+print("Loading guardians")
+commands.exec('/summon Zombie 63 17 -12 {CustomName:"Gate Guardian",Equipment:[{},{},{},{id:311,Count:1,Damage:0},{id:310,Count:1,Damage:0}],Attributes:[{Name:"generic.movementSpeed",Base:0.0},{Name:"generic.knockbackResistance",Base:1.0}],DropChances:[0.0f,0.0f,0.0f,0.0f,0.0f]}')
+commands.exec('/summon Zombie 64 17 -12 {CustomName:"Gate Guardian",Equipment:[{},{},{},{id:311,Count:1,Damage:0},{id:310,Count:1,Damage:0}],Attributes:[{Name:"generic.movementSpeed",Base:0.0},{Name:"generic.knockbackResistance",Base:1.0}],DropChances:[0.0f,0.0f,0.0f,0.0f,0.0f]}')
+commands.exec('/summon Zombie 65 17 -12 {CustomName:"Gate Guardian",Equipment:[{},{},{},{id:311,Count:1,Damage:0},{id:310,Count:1,Damage:0}],Attributes:[{Name:"generic.movementSpeed",Base:0.0},{Name:"generic.knockbackResistance",Base:1.0}],DropChances:[0.0f,0.0f,0.0f,0.0f,0.0f]}')
+
+commands.exec("/setblock 64 20 -13 iron_bars")
+commands.exec("/setblock 64 21 -13 iron_bars")
+--commands.exec("/gamemode 0 @a")
