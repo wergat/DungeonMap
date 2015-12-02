@@ -1,4 +1,7 @@
+JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
+
 print("Updating the Dungeon core files!")
+
 local all = {}
 if fs.exists(":dungeon/hashes") then
 	local open = fs.open(":dungeon/hashes", "r")
@@ -6,12 +9,10 @@ if fs.exists(":dungeon/hashes") then
 	open.close()
 	all = textutils.unserialize(all)
 end
-
 if not http then
 	printError("No HTTP! The updater requires connection to the internet to update the files! Please provide an internet connection or enable the HTTP API for ComputerCraft in the mod config!")
 	error()
 end
-
 if not fs.exists(":dungeon/dcore/apis/JSON.lua") then
 	local x = http.get("https://raw.githubusercontent.com/wergat/DungeonMap/master/dcore/apis/JSON.lua").readAll()
 	local open = fs.open(":dungeon/dcore/apis/JSON.lua", "w")
@@ -19,38 +20,60 @@ if not fs.exists(":dungeon/dcore/apis/JSON.lua") then
 	open.close()
 end
 
-JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
+-- Blacklist for files not to be downloaded from github
+local BLACKLIST = {".gitattributes",".gitignore","README.md"}
+
+
+local logfile = fs.open(":dungeon/logs/updater","a")
+local githubRateTable = JSON:decode(http.get("https://api.github.com/rate_limit").readAll())
+logfile.writeLine("Log file for the updater!")
+logfile.writeLine("API Calls remaining: "..githubRateTable["resources"]["core"]["remaining"])
+
 
 
 local files_updated = 0
 local files_not_updated = 0
 
+local function getCurrentTimeAsUNIXTimespamp()
+	return http.get("http://currentmillis.com/api/v2/seconds-since-unix-epoch.php").readAll()
+end
+
+local cancle
+
 local function downloadFromDir(url)
+	if(cancle)then return end
 	local x = http.get(url)
 	if x then
 		x = x.readAll()
 	else
-		local now = http.get("http://www.timeapi.org/utc/now").readAll()
-		now = now:sub(15,16)
-		now = tonumber(now)
-		local minutes = 60 - now
-		local pstr = "minutes"
-		if minutes == 1 then pstr = "minute" end
-		printError("Oops! It looks like you've installed the DungeonMap files too much recently. Try again in about " .. minutes .. " " .. pstr .. "!")
-		error()
+		local currentTime = getCurrentTimeAsUNIXTimespamp()
+		local githubRateTable = JSON:decode(http.get("https://api.github.com/rate_limit").readAll())
+		local githubRateLimit = githubRateTable["resources"]["core"]["reset"]
+		local waitTime = githubRateLimit - currentTime
+		local mins = math.floor(waitTime/60)
+		local secs = waitTime%60
+		printError(" > Oops! It looks like you've installed the DungeonMap files too much recently. Try again in about " .. mins .. "m:" .. secs .. "s!")
+		print("")
+		logfile.writeLine("Oops! It looks like you've installed the DungeonMap files too much recently. Try again in about " .. mins .. "m:" .. secs .. "s!")
+		cancle = true
+		return
 	end
 	x = JSON:decode(x)
 	for i = 1, #x do
 		local f = x[i]
 		local path = f["path"]
-		if f["sha"] == all[path] then
+		if (f["sha"] == all[path] and not f["type"] == "dir") then
 			files_not_updated = files_not_updated + 1
+			logfile.writeLine("Not updated: "..path)
 		elseif f["type"] == "dir" then
-			print("Downloading directory: " .. path)
+			print("Scanning directory: " .. path)
+			logfile.writeLine("Downloading directory: " .. path)
 			all[path] = f["sha"]
 			downloadFromDir(f["url"])
 		else
+			for k,v in pairs(BLACKLIST) do if(v==path)then return end end
 			print("Downloading file: " .. path)
+			logfile.writeLine("Downloading file: " .. path)
 			local xt = http.get(f["download_url"]).readAll()
 			local open = fs.open("dungeon/" .. path, "w")
 			open.write(xt)
@@ -62,10 +85,16 @@ local function downloadFromDir(url)
 end
 
 downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/")
-print("Finished updating!")
-print("" .. files_updated .. " files have been updated.")
-print("Found "..files_not_updated.." file(s) not to be worthy for updating!")
+
+if(cancle)then
+	print("Finished updating!")
+	print("" .. files_updated .. " files have been updated.")
+	print("Found "..files_not_updated.." file(s) not to be worthy for updating!")
+else
+	print("Updating cancelled due to API limitations!")
+end
 print("")
 local open = fs.open(":dungeon/hashes", "w")
 open.write(textutils.serialize(all))
 open.close()
+logfile.close()
