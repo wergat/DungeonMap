@@ -35,9 +35,7 @@ local function downloadFromDir(url)
 		now = tonumber(now)
 		local minutes = 60 - now
 		local pstr = "minutes"
-		if minutes == 1 then
-			pstr = "minute"
-		end
+		if minutes == 1 then pstr = "minute" end
 		printError("Oops! It looks like you've installed the DungeonMap files too much recently. Try again in about " .. minutes .. " " .. pstr .. "!")
 		error()
 	end
@@ -48,11 +46,11 @@ local function downloadFromDir(url)
 		if f["sha"] == all[path] then
 			files_not_updated = files_not_updated + 1
 		elseif f["type"] == "dir" then
-			print("Downloading directory " .. f["sha"])
+			print("Downloading directory: " .. path)
 			all[path] = f["sha"]
 			downloadFromDir(f["url"])
 		else
-			print("Downloading file " .. f["sha"])
+			print("Downloading file: " .. path)
 			local xt = http.get(f["download_url"]).readAll()
 			local open = fs.open("dungeon/" .. path, "w")
 			open.write(xt)
@@ -64,8 +62,10 @@ local function downloadFromDir(url)
 end
 
 downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/")
-print("Finished updating! " .. files_updated .. " files have been updated.")
-print("Found "..files_not_updated.." file(s) that doesn't need to be updated, because they were up-to-date!")
+print("Finished updating!")
+print("" .. files_updated .. " files have been updated.")
+print("Found "..files_not_updated.." file(s) not to be worthy for updating!")
+print("")
 local open = fs.open(":dungeon/hashes", "w")
 open.write(textutils.serialize(all))
 open.close()
