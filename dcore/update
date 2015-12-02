@@ -6,13 +6,15 @@ if fs.exists(":dungeon/hashes") then
 	open.close()
 	all = textutils.unserialize(all)
 end
-if not fs.exists(":dungeon/apis/JSON.lua") then
-	local x = http.get("https://raw.githubusercontent.com/wergat/DungeonMap/master/apis/JSON.lua").readAll()
-	local open = fs.open(":dungeon/apis/JSON.lua", "w")
+
+if not fs.exists(":dungeon/dcore/apis/JSON.lua") then
+	local x = http.get("https://raw.githubusercontent.com/wergat/DungeonMap/master/dcore/apis/JSON.lua").readAll()
+	local open = fs.open(":dungeon/dcore/apis/JSON.lua", "w")
 	open.write(x)
 	open.close()
 end
-JSON = assert(loadfile ":dungeon/apis/JSON.lua")()
+
+JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
 if not http then
 	printError("No HTTP!")
 	error()
