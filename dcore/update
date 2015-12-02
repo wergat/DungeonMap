@@ -24,7 +24,7 @@ end
 local BLACKLIST = {".gitattributes",".gitignore","README.md"}
 
 
-local logfile = fs.open(":dungeon/logs/updater","a")
+local logfile = fs.open(":dungeon/logs/updater","w")
 local githubRateTable = JSON:decode(http.get("https://api.github.com/rate_limit").readAll())
 logfile.writeLine("Log file for the updater!")
 logfile.writeLine("API Calls remaining: "..githubRateTable["resources"]["core"]["remaining"])
@@ -72,7 +72,7 @@ local function downloadFromDir(url)
 			downloadFromDir(f["url"])
 		else
 			for k,v in pairs(BLACKLIST) do if(v==path)then return end end
-			print("Downloading file: " .. path)
+			print(" Downloading file: " .. path)
 			logfile.writeLine("Downloading file: " .. path)
 			local xt = http.get(f["download_url"]).readAll()
 			local open = fs.open("dungeon/" .. path, "w")
