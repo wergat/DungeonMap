@@ -1,0 +1,38 @@
+dcore.requireAPI("mob")
+os.loadAPI("room")
+--commands.exec('/tellraw @a "Spawning mobs"')
+
+local tArgs = {...}
+local difficulty = (tonumber(tArgs[1]) or 20)
+
+local rooms = room.rooms
+local roomsToSpawnIn = room.getRooms(10)
+
+write("Loading normal mobs")
+
+-- Summon random mobs that run around the arena
+for i=1,10 do
+	write(".")
+	for j=1,math.random(5,8) do
+		mob.summonMob(roomsToSpawnIn[i][1],roomsToSpawnIn[i][2]+0.5,roomsToSpawnIn[i][3],nil,difficulty+math.random(4))
+	end
+end
+--[[
+for i = 1, 3 do
+	for j=1,math.random(5,8) do
+		mob.summonMob(roomsToSpawnIn[i][1],roomsToSpawnIn[i][2]+0.5,roomsToSpawnIn[i][3],nil,(difficulty/4)*3)
+	end
+end
+]]
+print("done!")
+
+print("Loading Boss")
+
+-- Summon Boss and stuff
+mob.summonBoss(60,18,-1,nil,difficulty+20)
+-- Summon boss peasants
+for j=1,math.random(14,20) do
+	mob.summonMob(64+math.random(-5,-5),19,-5+math.random(-5,-5),nil,difficulty)
+end
+
+--commands.exec('/tellraw @a "^ done!"')
