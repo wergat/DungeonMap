@@ -50,6 +50,8 @@ function summon_music(...)
 	return summon("music",arg)
 end
 
+
+
 -- Atenefyr's special difficulty distribution
 local function generateDifficulty()
 	local stage = math.random(1,170)
@@ -87,7 +89,8 @@ end
 -- Requires price and amounts of slots to fill (1 or 2, depends on the amount of buy/sell slots)
 -- Will round up if in doubt
 function getCurrencyTradeTablesByPrice(price,tradeSlots)
-	print(price..":"..tradeSlots)
+	if(price<=0)then price = 1 end
+
 	-- MUST be sorted by value!
 	-- TODO: make sure that is the case?
 	local cur = {
@@ -109,15 +112,14 @@ function getCurrencyTradeTablesByPrice(price,tradeSlots)
 			if(not maxRaw)then maxRaw = i end
 		end
 	end
-
 	
 	local tradeIndex = 1
 	local resourceIndex = maxRaw
 	local trade = {}
 	
-	while(tradeIndex<=tradeSlots and resourceIndex>1)do
+	while(tradeIndex<=tradeSlots and resourceIndex>=1)do
 		while(not rawPrice[resourceIndex] and resourceIndex>1)do resourceIndex = resourceIndex - 1 end
-		if(resourceIndex>=1)then
+		if(resourceIndex>=1 and rawPrice[resourceIndex])then
 			local id = items.useRightItemIDForVillager(cur[resourceIndex]["itemID"])
 			if(not id)then error("ITEM ID ERROR; PLEASE ADD THE ITEM \""..cur[#rawPrice]["itemID"].."\" TO THE ITEMS DATA!") end
 			local amount = math.min(rawPrice[resourceIndex],64) -- Keep it in the limits!
@@ -134,7 +136,6 @@ function getCurrencyTradeTablesByPrice(price,tradeSlots)
 		end
 		tradeIndex = tradeIndex + 1
 	end
-	
 	-- Round up of the price (Deal with it!)
 	if((rawPrice[#rawPrice] or 0)>0)then
 		trade[#trade]["Count"] = math.min(trade[#trade]["Count"] + 1,64) -- Keep it in the limits!
@@ -148,19 +149,25 @@ function summon(...)
 		print("WARNING: Summon now uses the type of villager as the first parameter, change something somewhere!")
 		table.insert(tArgs,1,nil)
 	end
+	
+	-- ///////////////////
+	local villagerTable = {}
+	local trades = {}
+	-- ///////////////////
+	
+	-- ///////////////////
 	local villagerType = tArgs[1] or "equipment"
 	local xPos = tArgs[2] or 0
 	local yPos = tArgs[3] or 23
 	local zPos = tArgs[4] or 0
-	local difficulty = tArgs[5] or 1 or generateDifficulty()+500
-	local amountOfTrades = tArgs[6] or 1
+	local difficulty = tArgs[5] or generateDifficulty()
+	local amountOfTrades = tArgs[6] or 10
 	local coat = tArgs[7] or 1
-	
-	local tradeLevel = 0
-	
-	-- Trades of the villager
-	local trades = {}
+	local villagerName = ""
+	-- ///////////////////
+
 	if(villagerType == "equipment")then
+		local tradeLevel = 0
 		for i = 1,amountOfTrades do
 			math.randomseed(i+yPos*difficulty+amountOfTrades)
 			repeat
@@ -181,11 +188,48 @@ function summon(...)
 				end
 			until (info)
 		end
-	end		
+		villagerName = 'Level '..math.floor((tradeLevel/amountOfTrades)+0.5)..' Trader'
+	elseif(villagerType == "currency")then
+		villagerName = 'Exchange'
+		coat = 1
+	elseif(villagerType == "music")then
+		coat = 5
+	elseif(villagerType == "trash")then
+		
+	elseif(villagerType == "food")then
+		math.randomseed(yPos*difficulty+amountOfTrades)
+		local foodItems = items.getAllItemsOfType("food")
+		
+		local foodPriceMulti = 0.5
+		
+		local i = 1
+		while (i<=amountOfTrades and #foodItems>0) do
+			local trade = {}
+			local item = items.getItem(foodItems[math.random(#foodItems)])
+			local priceEach = math.floor((item["foodPoints"] + item["saturation"] + (math.random(10)/5))*foodPriceMulti)
+			
+			local sellAmount = math.floor(math.random(10)/2 + 1)
+			
+			
+			local buy,buyB = getCurrencyTradeTablesByPrice(priceEach*sellAmount,2)
+			trade["buy"] = buy
+			if(buyB)then trade["buyB"] = buyB end
+			
+			trade["maxUses"] = math.random(15,55)
+			trade["rewardExp"] = "false"
+			trade["sell"] = {["id"] = items.useRightItemIDForVillager(item["id"]),["Count"] = sellAmount}
+			
+			villagerName = "Food merchant"
+			
+			table.insert(trades,trade)
+			i = i + 1
+		end
+		coat = 0
+	end
 	
-	local villagerTable = {}
+	
 	villagerTable["Profession"] = coat
-	villagerTable["CustomName"] = 'Level '..math.floor((tradeLevel/amountOfTrades)+0.5)..' Trader'
+	villagerTable["CustomName"] = villagerName
 	villagerTable["CustomNameVisible"] = 1
 	villagerTable["Offers"] = {}
 	villagerTable["Offers"]["Recipes"] = trades

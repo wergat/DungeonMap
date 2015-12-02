@@ -55,7 +55,15 @@ items[399] = {["id"] = "minecraft:nether_star"}
 
 
 
-
+function getAllItemsOfType(searchType)
+	local t = {}
+	for k,v in pairs(items) do
+		if(v["type"] == searchType)then
+			table.insert(t,k)
+		end
+	end
+	return t
+end
 
 
 function getItem(itemID)
