@@ -1,6 +1,6 @@
 local tArgs = {...}
 local difficulty = (tonumber(tArgs[1]) or 10)*2
-shell.run("spawn_mobs", difficulty)
+shell.run("/dungeon/mods/DungeonArena/spawn_mobs", difficulty)
 --[[
 for i = 1, 5 do
 	local s,e = commands.exec("/summon ThrownPotion 64 17 -12 {Potion:{id:373,Damage:16421,Count:1}}")
