@@ -144,7 +144,7 @@ if get_v("cm") and get_v("wave") == nil then
 end
 --TP in Arena
 if not get_v("stage") then
-	commands.exec("/tp @a 45 28 14")
+	--commands.exec("/tp @a 45 28 14")
 	commands.exec("/spawnpoint @a -7 4 8")
 	commands.exec("/gamerule keepInventory true")
 	--Give starter equipment
@@ -217,14 +217,14 @@ function summonVillagers()
 	villager.summon_currency(77,26,38)
 	villager.summon_currency(80,26,38)
 	villager.summon_food(77,26,31)
-	villager.summon_sell(67,26,28)
+	--villager.summon_sell(67,26,28)
 	for i = 1, #villager_areas do
-		villager.summon(villager_areas[i][1], villager_areas[i][2], villager_areas[i][3], level+5, 1, 0, true)
+		villager.summon("equipment",villager_areas[i][1], villager_areas[i][2], villager_areas[i][3], level+5, 1, 0, true)
 		sleep(0.2)
 	end
 	print("Summoning more villagers")
 	for i = 1, #high_level_villager_areas do
-		villager.summon(high_level_villager_areas[i][1], high_level_villager_areas[i][2], high_level_villager_areas[i][3], (level+5)*2, 1, 0, true)
+		villager.summon("equipment",high_level_villager_areas[i][1], high_level_villager_areas[i][2], high_level_villager_areas[i][3], (level*1.4)+10, 1, 0, true)
 		sleep(0.2)
 	end
 	--commands.exec('/tellraw @a "Done Villagers"')

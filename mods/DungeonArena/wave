@@ -9,12 +9,13 @@ end
 ]]
 print("Loading guardians")
 
-local guardianData = '{PersistenceRequired:1b,CustomName:"Gate Guardian",Equipment:[{},{},{},{id:311,Count:1,Damage:0},{id:310,Count:1,Damage:0}],Attributes:[{Name:"generic.movementSpeed",Base:0.0},{Name:"generic.knockbackResistance",Base:1.0}],DropChances:[0.0f,0.0f,0.0f,0.0f,0.0f]}'
+local guardianData = '{ActiveEffects:[{Id:8,Amplifier:-10,Duration:2147483647}],PersistenceRequired:1b,CustomName:"Gate Guardian",Equipment:[{},{id:313,Count:1,Damage:0,tag:{ench:[{id:2,lvl:4}]}},{},{id:311,Count:1,Damage:0},{id:310,Count:1,Damage:0}],Attributes:[{Name:"generic.movementSpeed",Base:0.0},{Name:"generic.knockbackResistance",Base:1.0}],DropChances:[0.0f,0.0f,0.0f,0.0f,0.0f]}'
 
-commands.exec('/summon Zombie 70 17 -5 '..guardianData)
-commands.exec('/summon Zombie 64 17 -1 '..guardianData)
-commands.exec('/summon Zombie 58 17 -5 '..guardianData)
-commands.exec('/summon Zombie 64 17 -11 '..guardianData)
+commands.exec('/summon Zombie 70 16 -5 '..guardianData)
+commands.exec('/summon Zombie 64 16 1 '..guardianData)
+commands.exec('/summon Zombie 58 16 -5 '..guardianData)
+commands.exec('/summon Zombie 64 16 -11 '..guardianData)
 
+--/summon Zombie 70 16 -5 {ActiveEffects:[{Id:8,Amplifier:128,Duration:2147483647}],PersistenceRequired:1b,CustomName:"Gate Guardian",Equipment:[{},{id:313,Count:1,Damage:0,tag:{ench:[{id:2,lvl:4}]}},{},{id:311,Count:1,Damage:0},{id:310,Count:1,Damage:0}],Attributes:[{Name:"generic.movementSpeed",Base:0.0},{Name:"generic.knockbackResistance",Base:1.0}],DropChances:[0.0f,0.0f,0.0f,0.0f,0.0f]}
 
 --commands.exec("/gamemode 0 @a")
