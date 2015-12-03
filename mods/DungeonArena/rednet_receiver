@@ -17,7 +17,11 @@ local function get_vv(id)
 	end
 end
 local getAmountOfLivesStillRemaining = function()
-	return get_vv("lives") or "unknown"
+	if get_vv("lv") then
+		return get_vv("lives") or "unknown"
+	else
+		return "Infinity"
+	end
 end
 local ts = function()
 	return "Hello, world!"
