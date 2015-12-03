@@ -1,5 +1,5 @@
 dcore.requireAPI("mob")
-os.loadAPI("room")
+os.loadAPI("/dungeon/mods/DungeonArena/room")
 --commands.exec('/tellraw @a "Spawning mobs"')
 
 local tArgs = {...}
