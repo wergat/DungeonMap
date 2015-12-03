@@ -1,36 +1,63 @@
 print("Begin rednet receiver program!")
 rednet.open("top")
-_G.coml = {
-["reset"] = "res",
-["commands"] = "cmds",
-["test"] = "ts",
-}
-_G.res = function()
+
+local res = function()
 	fs.delete(".config") 
 	os.reboot()
 end
-
-_G.cmds = function()
-	return coml
+local function get_vv(id)
+	local open = fs.open(".config", "r")
+	local all = open.readAll()
+	open.close()
+	all = textutils.unserialize(all)
+	if all[id] then
+		return all[id]
+	else
+		return false
+	end
 end
-
-_G.ts = function()
+local getAmountOfLivesStillRemaining = function()
+	return get_vv("lives") or "unknown"
+end
+local ts = function()
 	return "Hello, world!"
 end
+commandList = {
+	["Reset"] = res,
+--	["commands"] = cmds, Why is this not wrking? Does it have to??!?
+	["Test"] = ts,
+	["Lives"] = getAmountOfLivesStillRemaining,
+}
 
 while true do
 	local id, message, protocol = rednet.receive("controls")
 	if id == 2 then
-		if type(coml[message]) == "string" then
-			print("#2 requests for " .. message)
-			local res = loadstring("return " .. coml[message] .. "()")()
-			if not res then
-				res = true
+		print(message)
+		if (type(commandList[message]) == "function") then		
+			print("#2 requests for \"" .. message.."\"")
+			local result = commandList[message]()
+			if not result then
+				result = true
 			end
-			rednet.send(2, res, "controls")
+			rednet.send(2, result, "controls")
 			print("Sent " .. tostring(res) .. " back to #2!")
+		elseif(string.sub(message,1,4) == "name")then
+			local name = string.sub(message,6,-1)
+			print("New player ("..name..") registered!")
+			rednet.send(2,tostring(commands.exec("/testfor @a[name="..name.."]")), "controls")
+		elseif(message == "commands")then
+			write("Client request for commands! ")
+			local t = {}
+			for k, v in pairs(commandList) do t[#t+1] = k end
+			print(#t.." found!")
+			rednet.send(2,t, "controls")
+		elseif(message == "reboot")then
+			os.reboot()
+		elseif(message == "reset")then
+			fs.delete(".config") 
+			os.reboot()
 		else
-			print("Invalid command, sent true back to #2")
+			print("Invalid command ("..message.."), sent true back to #2")
 			rednet.send(2, true, "controls")
 		end
 	end
