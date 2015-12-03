@@ -39,15 +39,15 @@ end
 -- Tell atenefyr to switch to the newer use of things
 function summon_food(...)
 	print("USE villager.summon(\"food\",...) instead of villager.summon_food(...) !!!")
-	return summon("food",arg)
+	return summon("food",unpack(arg))
 end
 function summon_currency(...)
 	print("USE villager.summon(\"currency\",...) instead of villager.summon_currency(...) !!!")
-	return summon("currency",arg)
+	return summon("currency",unpack(arg))
 end
 function summon_music(...)
 	print("USE villager.summon(\"music\",...) instead of villager.summon_music(...) !!!")
-	return summon("music",arg)
+	return summon("music",unpack(arg))
 end
 
 
@@ -163,7 +163,7 @@ function summon(...)
 	local xPos = tArgs[2] or 0
 	local yPos = tArgs[3] or 23
 	local zPos = tArgs[4] or 0
-	local difficulty = tArgs[5] or generateDifficulty()
+	local difficulty = tArgs[5] or generateDifficulty()+4000
 	local amountOfTrades = tArgs[6] or 10
 	local coat = tArgs[7] or 1
 	local villagerName = ""
@@ -265,7 +265,8 @@ function summon(...)
 	
 	villagerTable["Profession"] = coat
 	villagerTable["CustomName"] = villagerName
-	villagerTable["CustomNameVisible"] = 1
+	villagerTable["CustomNameVisible"] = 0
+	villagerTable["PersistenceRequired"] = "1b"
 	villagerTable["Offers"] = {}
 	villagerTable["Offers"]["Recipes"] = trades
 	

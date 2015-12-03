@@ -8,10 +8,13 @@ for i = 1, 5 do
 end
 ]]
 print("Loading guardians")
-commands.exec('/summon Zombie 63 17 -12 {CustomName:"Gate Guardian",Equipment:[{},{},{},{id:311,Count:1,Damage:0},{id:310,Count:1,Damage:0}],Attributes:[{Name:"generic.movementSpeed",Base:0.0},{Name:"generic.knockbackResistance",Base:1.0}],DropChances:[0.0f,0.0f,0.0f,0.0f,0.0f]}')
-commands.exec('/summon Zombie 64 17 -12 {CustomName:"Gate Guardian",Equipment:[{},{},{},{id:311,Count:1,Damage:0},{id:310,Count:1,Damage:0}],Attributes:[{Name:"generic.movementSpeed",Base:0.0},{Name:"generic.knockbackResistance",Base:1.0}],DropChances:[0.0f,0.0f,0.0f,0.0f,0.0f]}')
-commands.exec('/summon Zombie 65 17 -12 {CustomName:"Gate Guardian",Equipment:[{},{},{},{id:311,Count:1,Damage:0},{id:310,Count:1,Damage:0}],Attributes:[{Name:"generic.movementSpeed",Base:0.0},{Name:"generic.knockbackResistance",Base:1.0}],DropChances:[0.0f,0.0f,0.0f,0.0f,0.0f]}')
 
-commands.exec("/setblock 64 20 -13 iron_bars")
-commands.exec("/setblock 64 21 -13 iron_bars")
+local guardianData = '{PersistenceRequired:1b,CustomName:"Gate Guardian",Equipment:[{},{},{},{id:311,Count:1,Damage:0},{id:310,Count:1,Damage:0}],Attributes:[{Name:"generic.movementSpeed",Base:0.0},{Name:"generic.knockbackResistance",Base:1.0}],DropChances:[0.0f,0.0f,0.0f,0.0f,0.0f]}'
+
+commands.exec('/summon Zombie 70 17 -5 '..guardianData)
+commands.exec('/summon Zombie 64 17 -1 '..guardianData)
+commands.exec('/summon Zombie 58 17 -5 '..guardianData)
+commands.exec('/summon Zombie 64 17 -11 '..guardianData)
+
+
 --commands.exec("/gamemode 0 @a")
