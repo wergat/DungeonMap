@@ -62,7 +62,7 @@ local function downloadFromDir(url)
 	for i = 1, #x do
 		local f = x[i]
 		local path = f["path"]
-		if (f["sha"] == all[path] and not f["type"] == "dir") then
+		if (f["sha"] == all[path] and f["type"] ~= "dir") then
 			files_not_updated = files_not_updated + 1
 			logfile.writeLine("Not updated: "..path)
 		elseif f["type"] == "dir" then
@@ -86,7 +86,7 @@ end
 
 downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/")
 
-if(cancle)then
+if(not cancle)then
 	print("Finished updating!")
 	print("" .. files_updated .. " files have been updated.")
 	print("Found "..files_not_updated.." file(s) not to be worthy for updating!")
@@ -97,4 +97,7 @@ print("")
 local open = fs.open(":dungeon/hashes", "w")
 open.write(textutils.serialize(all))
 open.close()
+
+local githubRateTable = JSON:decode(http.get("https://api.github.com/rate_limit").readAll())
+logfile.writeLine("API Calls remaining: "..githubRateTable["resources"]["core"]["remaining"])
 logfile.close()
