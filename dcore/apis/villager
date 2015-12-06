@@ -222,14 +222,44 @@ function summon(...)
 			
 			table.insert(trades,trade)
 		end
+	elseif(villagerType == "trash")then
+		villagerName = "Item Buyer"
+		local function getprice(id)
+			if id < 302 and id > 297 then
+				return 50
+			elseif id < 318 and id > 313 then
+				return 100
+			elseif id < 310 and id > 301 then
+				return 1000
+			elseif id == 268 or id == 272 or id == 283 then
+				return 50
+			elseif id == 261 or id == 267 then
+				return 1000
+			else
+				return 2000
+			end
+		end
+		local weapons = {261, 267, 268, 272, 276, 283}
+		local id = 298
+		repeat
+			local quaz = getprice(id)
+			table.insert(trades,{["buy"] = {["id"] = id,["Count"] = 1},["maxUses"] = 9999999,["sell"] = getCurrencyTradeTablesByPrice(quaz,1),["rewardExp"] = false})
+			id = id + 1
+		until id == 318
+		local i = 0
+		repeat
+			i = i + 1
+			local id = weapons[i]
+			local quaz = getprice(id)
+			table.insert(trades,{["buy"] = {["id"] = id,["Count"] = 1},["maxUses"] = 9999999,["sell"] = getCurrencyTradeTablesByPrice(quaz,2),["rewardExp"] = false})
+			id = id + 1
+		until i == #weapons
 	elseif(villagerType == "music")then
 		coat = 5
 		table.insert(trades,{["buy"] = getCurrencyTradeTablesByPrice(25000,2),["maxUses"] = 9999999,["sell"] = {["id"] = 2265,["Count"] = 1},["rewardExp"] = false})
 		table.insert(trades,{["buy"] = getCurrencyTradeTablesByPrice(12000,2),["maxUses"] = 9999999,["sell"] = {["id"] = 2258,["Count"] = 1},["rewardExp"] = false})
 		table.insert(trades,{["buy"] = getCurrencyTradeTablesByPrice(37213,2),["maxUses"] = 9999999,["sell"] = {["id"] = 2259,["Count"] = 1},["rewardExp"] = false})
 		villagerName = "Music Trader"
-	elseif(villagerType == "trash")then
-		
 	elseif(villagerType == "food")then
 		math.randomseed(yPos*difficulty+amountOfTrades)
 		local foodItems = items.getAllItemsOfType("food")
@@ -257,10 +287,10 @@ function summon(...)
 			i = i + 1
 		end
 		coat = 0
-		villagerName = "Food merchant"
+		villagerName = "Food Merchant"
 	end
 	
-	-- Prevent Trading
+	-- Prevent New Trades
 	table.insert(trades,{["maxUses"] = 99999,["rewardExp"] = "false",["buy"] = {["id"] = 160,["Damage"] = 8,["Count"] = 1,["tag"] = {["display"] = {["Name"] = " "}}},["sell"] = {["id"] = 160,["Damage"] = 8,["Count"] = 1,["tag"] = {["display"] = {["Name"] = " "}}}})
 	
 	villagerTable["Profession"] = coat
@@ -478,6 +508,5 @@ end
 
 
 ]]
-
 
 
