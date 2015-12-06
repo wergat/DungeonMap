@@ -1,0 +1,53 @@
+--Github keys have only one permission: public_repo
+keys = {"7ee5a46c4d66d5530d18d35614ced769fec9dc67", "6c0cfbcc2d28e6fe789817e5e07245d54e0fe409", "1eeeb959db364ad86efd61d64074a84041f091c0", "cbfbabac5f53bae58ded41af6334da8ac3dc0be8"}
+JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
+
+function testKeys(t)
+	local rate_url = "https://api.github.com/rate_limit"
+	local res = {}
+	for i = 1, #t do
+		local key = t[i]
+		local x = http.get(rate_url,{["Authorization"] = "token " .. key,}).readAll()
+		local grt = JSON:decode(x)
+		local left = grt["resources"]["core"]["remaining"]
+		res[key] = left
+	end
+	return res --table
+end
+
+function pickWorkingKey(t)
+	local r = testKeys(t)
+	local x = 0
+	local ab = true
+	for i = 1, #t do
+		if r[t[i]] > 59 then
+			ab = false
+		end
+	end
+	if ab then
+		return t[math.random(#t)] --pick any key, all are below threshold
+	end
+	repeat
+		key = t[math.random(#t)]
+	until r[key] > 59
+	return key
+end
+
+function get(url, header, key)
+	if not key then
+		return http.get(url, header)
+	end
+	header = header or {}
+	header["Authorization"] = "token " .. key
+	return http.get(url, header)
+end
+
+function getRequestAsTable(url, header, key)
+	local x = get(url, header, key) --wraps github.get
+	if x then
+		x = x.readAll()
+	else
+		return false, "GITHUB_NO_RESPONSE"
+	end
+	return JSON:decode(x) --parses JSON
+end
