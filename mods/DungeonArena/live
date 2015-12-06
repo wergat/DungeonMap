@@ -58,7 +58,7 @@ while true do
 		lives = lives - 1
 		commands.exec('/tellraw @a ["",{"text":"You now have ","color":"dark_green"},{"text":"' .. lives .. '","color":"gold","bold":true},{"text":" lives.","color":"dark_green","bold":false}]')
 		print("Deducted 1 life, now at " .. lives .. " lives")
-		commands.exec("/tp @a 45 28 14")
+		commands.exec("/tp @p 45 28 14")
 		set_vv("lives", lives)
 	end
 	
@@ -74,6 +74,6 @@ while true do
 		sleep(0.1)
 		os.shutdown()
 	end
-	print("loop")
+	write(".")
 	sleep(0.3) --t = t + 0.3
 end
