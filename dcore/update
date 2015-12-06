@@ -1,27 +1,64 @@
 JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
+print("Welcome to the Dungeon Map updater!")
 
-print("Updating the Dungeon core files!")
-
-local all = {}
-if fs.exists(":dungeon/hashes") then
-	local open = fs.open(":dungeon/hashes", "r")
-	all = open.readAll()
-	open.close()
-	all = textutils.unserialize(all)
-end
+-- /// Engine Check
+-- Check if HTTP API is enabled
 if not http then
 	printError("No HTTP! The updater requires connection to the internet to update the files! Please provide an internet connection or enable the HTTP API for ComputerCraft in the mod config!")
 	error()
 end
-if not fs.exists(":dungeon/dcore/apis/JSON.lua") then
-	local x = http.get("https://raw.githubusercontent.com/wergat/DungeonMap/master/dcore/apis/JSON.lua").readAll()
-	local open = fs.open(":dungeon/dcore/apis/JSON.lua", "w")
-	open.write(x)
-	open.close()
+-- Check if there is an internet connection and if github is whitlisted
+if not http.get("https://api.github.com/") then
+	if not http.get("http://pastebin.com/") then
+		printError("We need an internet connection to update our files!")
+	else
+		printError("If you have internet, please check your Computercraft mod config and allow api.github.com to be used, so we are allowed to download out files!")
+	end
+	error()
 end
 
--- Blacklist for files not to be downloaded from github
-local BLACKLIST = {".gitattributes",".gitignore","README.md"}
+local SHACodes = {}
+if fs.exists(":dungeon/hashes") then
+	local open = fs.open(":dungeon/hashes", "r")
+	SHACodes = open.readAll()
+	open.close()
+	SHACodes = textutils.unserialize(SHACodes)
+end
+
+print("It looks like your system is good to go!")
+print("What would you like to update?")
+print("[1] System Files")
+print("[2] The Updater")
+print("[3] Dev Tools")
+print("[4] Everything")
+
+local a
+repeat
+	a = read()
+until type(tonumber(a)) == "number"
+
+if(a==1)then
+	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/dcore")
+elseif(a==2)then
+	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/dcore")
+elseif(a==3)
+	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/dev")
+	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/indev")
+	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/old")
+elseif(a==4)
+	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/")
+end
+
+
+
+
+
+
+
+
+
+
+
 
 
 local logfile = fs.open(":dungeon/logs/updater","w")
@@ -62,13 +99,13 @@ local function downloadFromDir(url)
 	for i = 1, #x do
 		local f = x[i]
 		local path = f["path"]
-		if (f["sha"] == all[path] and f["type"] ~= "dir") then
+		if (f["sha"] == SHACodes[path] and f["type"] ~= "dir") then
 			files_not_updated = files_not_updated + 1
 			logfile.writeLine("Not updated: "..path)
 		elseif f["type"] == "dir" then
 			print("Scanning directory: " .. path)
 			logfile.writeLine("Downloading directory: " .. path)
-			all[path] = f["sha"]
+			SHACodes[path] = f["sha"]
 			downloadFromDir(f["url"])
 		else
 			for k,v in pairs(BLACKLIST) do if(v==path)then return end end
@@ -78,13 +115,13 @@ local function downloadFromDir(url)
 			local open = fs.open("dungeon/" .. path, "w")
 			open.write(xt)
 			open.close()
-			all[path] = f["sha"]
+			SHACodes[path] = f["sha"]
 			files_updated = files_updated + 1
 		end
 	end
 end
 
-downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/")
+--downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/")
 
 if(not cancle)then
 	print("Finished updating!")
@@ -95,7 +132,7 @@ else
 end
 print("")
 local open = fs.open(":dungeon/hashes", "w")
-open.write(textutils.serialize(all))
+open.write(textutils.serialize(SHACodes))
 open.close()
 
 local githubRateTable = JSON:decode(http.get("https://api.github.com/rate_limit").readAll())

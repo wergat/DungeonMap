@@ -174,7 +174,6 @@ function getChestData(_startDifficulty,_chestType)
 			-- Reset Timeout
 			timeout = 0
 		else
-			print("#3")
 			-- Get data from custom function
 			local customItemData = itemPoolData(remainingStoragePower)
 			
@@ -187,15 +186,12 @@ function getChestData(_startDifficulty,_chestType)
 			else
 				validItem = false
 			end
-			print("#4")
 			
 			if(validItem)then
 				local powerCost = tonumber(customItemData["powerCost"] or 0) or 0
-				print("#5 ["..customItemData["powerCost"].."]")
 				-- Check if we can afford the item(s) we just generated
 				if(powerCost<=remainingStoragePower)then
 					-- Process output data
-					print("#6 ("..remainingStoragePower..")")
 					-- Item count
 					if(customItemData["setItemCount"])then
 						itemCount = customItemData["setItemCount"]
@@ -231,10 +227,7 @@ function getChestData(_startDifficulty,_chestType)
 					timeout = 0
 					
 					remainingStoragePower = remainingStoragePower - (powerCost*itemCount)
-					
-					print("!!! "..(powerCost).."/"..(itemCount))
 				else
-					write("Declined, price too high! "..powerCost..">"..remainingStoragePower.."!")
 					timeout = timeout + 5
 				end
 			else
@@ -281,7 +274,7 @@ function getChestData(_startDifficulty,_chestType)
 			break
 		end
 	 end
-	 dataTable["CustomName"] = (advitem.q_color[chestRarity]).."Â§l"..firstToUpper(advitem.qualitys[chestRarity])..chest_types[_chestType].."ChestÂ§r"
+	 dataTable["CustomName"] = (advitem.q_color[chestRarity]).."§l"..firstToUpper(advitem.qualitys[chestRarity])..chest_types[_chestType].."Chest§r"
 	 return dataTable
 end
 
@@ -332,7 +325,6 @@ function placeChest(...)
  end
 
  local datatag =  dcore.getNBTStringFromTable(chest.getChestData(startDifficulty,chestType))
- --print(datatag)
  
  a,e = commands.setblock(x,y,z,"minecraft:chest","1","replace",datatag)
  
@@ -350,5 +342,7 @@ end
 
 -- Add potions to chests
 for i=1,5 do
-	addNewItemToPool(i,potion.getPotionForChest)
+	if(i~=2)then
+		addNewItemToPool(i,potion.getPotionForChest)
+	end
 end

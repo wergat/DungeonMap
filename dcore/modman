@@ -1,0 +1,164 @@
+local tArgs = {...}
+-- /////    list
+if(tArgs[1] == "list")then
+	print("Mods currently installed:")
+	local mods = fs.list(":dungeon/mods")
+	for k,v in pairs(mods) do
+		local modinfo = {}
+		if(fs.exists(":dungeon/mods/"..v.."/mod.info"))then
+			local open = fs.open(":dungeon/mods/"..v.."/mod.info", "r")
+			if(open)then
+				modinfo = textutils.unserialize(open.readAll())
+			end
+			open.close()
+		end
+		if(modinfo["active"])then
+			term.setTextColor(colors.green)
+		else
+			term.setTextColor(colors.red)
+		end
+		print(" "..v)
+		term.setTextColor(colors.white)
+	end
+end
+-- /////    disable
+if(tArgs[1] == "disable")then
+	local modName = tArgs[2]
+	if(not modName)then print("Usage: modman disable [ModName]") return end
+	if(not fs.exists(":dungeon/mods/"..modName))then print("Could not find mod \""..modName.."\"!\nUsage: modman disable [ModName]") return end
+	local modinfo = {}
+	-- Open file and read data
+	local file = fs.open(":dungeon/mods/"..modName.."/mod.info", "r")
+	if(file)then
+		modinfo = textutils.unserialize(file.readAll())
+		modinfo["active"] = false
+	end
+	file.close()
+	-- Open file again and write data
+	file = fs.open(":dungeon/mods/"..modName.."/mod.info", "w")
+	if(file)then
+		file.write(textutils.serialize(modinfo))
+	end
+	file.close()
+end
+-- /////    enable
+if(tArgs[1] == "enable")then
+	local modName = tArgs[2]
+	if(not modName)then print("Usage: modman enable [ModName]") return end
+	if(not fs.exists(":dungeon/mods/"..modName))then print("Could not find mod \""..modName.."\"!\nUsage: modman enable [ModName]") return end
+	local modinfo = {}
+	-- Open file and read data
+	local file = fs.open(":dungeon/mods/"..modName.."/mod.info", "r")
+	if(file)then
+		modinfo = textutils.unserialize(file.readAll())
+		modinfo["active"] = true
+		file.close()
+	end
+	-- Open file again and write data
+	file = fs.open(":dungeon/mods/"..modName.."/mod.info", "w")
+	if(file)then
+		file.write(textutils.serialize(modinfo))
+		file.close()
+	end
+end
+-- /////    status
+if(tArgs[1] == "status")then
+	local modName = tArgs[2]
+	if(not modName)then print("Usage: modman status [ModName]") return end
+	if(not fs.exists(":dungeon/mods/"..modName))then print("Could not find mod \""..modName.."\"!\nUsage: modman status [ModName]") return end
+	local status = false
+	local file = fs.open(":dungeon/mods/"..modName.."/mod.info", "r")
+	if(file)then
+		modinfo = textutils.unserialize(file.readAll())
+		status = (modinfo["active"] or false)
+		file.close()
+	end
+	print("The mod \""..modName.."\" is "..(status and "active" or "not active"))
+end
+-- /////    info
+if(tArgs[1] == "info")then
+	local modName = tArgs[2]
+	if(not modName)then print("Usage: modman info [ModName]") return end
+	if(not fs.exists(":dungeon/mods/"..modName))then print("Could not find mod \""..modName.."\"!\nUsage: modman info [ModName]") return end
+	local file = fs.open(":dungeon/mods/"..modName.."/mod.info", "r")
+	if(file)then
+		local modinfo = textutils.unserialize(file.readAll())
+		print("--------- Basic Informations ---------")
+		if(modinfo["name"])then
+			term.setTextColor(colors.white)
+			write("Mod name:   ")
+			term.setTextColor(colors.orange)
+			print(modinfo["name"])
+			modinfo["name"] = nil
+			term.setTextColor(colors.white)
+		end
+		if(modinfo["author"])then
+			term.setTextColor(colors.white)
+			write("Mod author: ")
+			term.setTextColor(colors.orange)
+			print(modinfo["author"])
+			modinfo["author"] = nil
+			term.setTextColor(colors.white)
+		end
+		if(modinfo["active"]~=nil)then
+			term.setTextColor(colors.white)
+			write("Mod status: ")
+			if(modinfo["active"])then
+				term.setTextColor(colors.green)
+				print("enabled")
+			else
+				term.setTextColor(colors.red)
+				print("disabled")			
+			end
+			term.setTextColor(colors.white)
+			modinfo["active"] = nil
+		end
+		print("--------- More Informations  ---------")
+		for k,v in pairs(modinfo) do
+			term.setTextColor(colors.orange)
+			write(k)
+			term.setTextColor(colors.white)
+			print(": "..tostring(v))
+		end
+		file.close()
+	end
+end
+
+
+--local parameters = { ["you "] = { ["please "] = { ["listen"] = {}, ["look "] = { ["up"] = {}, ["down"] = {} },["eat"] = {} }, ["give "] = { ["up"] = {}, ["blood"] = {}, }, ["kindly"] = {} } }
+local parameters = {["list"] = {}}
+local function tabCompletionFunction(shell, parNumber, curText, lastText)
+	-- Check that the parameters entered so far are valid:
+	local curParam = parameters
+	local mods = fs.list(":dungeon/mods")
+	local newParas = {"enable ","disable ","status ","info "}
+	for i=1,#newParas do
+		curParam[newParas[i]] = {}
+		for _,m in pairs(mods) do
+			curParam[newParas[i]][m] = {}
+		end
+	end
+	
+	for i = 2, #lastText do
+		if curParam[lastText[i] .. " "] then
+			curParam = curParam[lastText[i] .. " "]
+		else
+			return {}
+		end
+	end
+
+	-- Check for suitable words for the current parameter:
+	local results = {}
+	for word, _ in pairs(curParam) do
+		if word:sub(1, #curText) == curText then
+			results[#results + 1] = word:sub(#curText + 1)
+		end
+	end
+	return results
+end
+shell.setCompletionFunction("dungeon/dcore/modman", tabCompletionFunction)
+
+
+
+
+

@@ -1,7 +1,8 @@
 {
-  author = "Atenefyr & Wergat",
   description = "DungeonArena's changes in a compact modification.",
-  newestVersion = 1,
+  author = "Atenefyr & Wergat",
   name = "Dungeon Arena",
+  newestVersion = 1,
+  active = false,
   install_file = "",
 }

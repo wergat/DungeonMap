@@ -350,7 +350,6 @@ end
 function getEquipmentForChest(powerInput)
 	local itemDataTable,moreInfo = advitem.getEquipment((powerInput*2),nil,"player",1)
 	if(moreInfo~=false)then
-		print("Item time")
 		local returnData = {}
 		returnData["powerCost"] = math.floor(moreInfo["value"]*3)
 		returnData["setItemCount"] = 1

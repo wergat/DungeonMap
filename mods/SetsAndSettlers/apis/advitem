@@ -1,4 +1,5 @@
 dcore.requireAPI("items")
+dcore.requireAPI("farben")
 
 local function isSetItem(q)
  return (q>6 and math.random(5)>1)
@@ -13,7 +14,7 @@ function getLoreOfItem(_colorValue)
  
  local shopprice = advitem.getPriceOfItem(_colorValue)
  local loreArr = getItemData("loreTable")
- table.insert(loreArr,"\"Rarity is "..advitem.q_color[getItemData("quality")].."§o"..advitem.qualitys[getItemData("quality")].."§5§o\"")
+ table.insert(loreArr,"\"Rarity is "..advitem.q_color[getItemData("quality")]..SS("o")..advitem.qualitys[getItemData("quality")]..SS(5)..SS("o").."\"")
  table.insert(loreArr,"\"Price is exactly "..shopprice.." quaz\"")
  table.insert(loreArr,"\"Tier "..getItemData("tier").."\"")
 
@@ -28,7 +29,7 @@ function getLoreOfItem(_colorValue)
   if(setID~=nil)then
    local setTable = items.getSetByID(setID)
    table.insert(loreArr,"\"This item is part of the set\"")
-   table.insert(loreArr,"\"   §r\\\"§2"..setTable["name"].."§r\\\" \"")
+   table.insert(loreArr,"\"   "..SS("r").."\\\""..SS(2)..setTable["name"]..SS("r").."\\\" \"")
    table.insert(loreArr,"\"  Other set items are \"")
    table.insert(loreArr,"\"  \"")
    for s=1,(#setTable["items"]) do

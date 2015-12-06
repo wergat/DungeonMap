@@ -1,4 +1,5 @@
 dcore.requireAPI("items")
+dcore.requireAPI("farben")
 
 local effects = {}
 effects[1] = {["name"] = "Speed",["potion"] = "Swiftness",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true,["colorID"] = 2}
@@ -257,15 +258,15 @@ function generatePotionItem(power,seed)
 	
 	local potionNameColor = ""
 	if(goodnessLevel>=75)then
-		potionNameColor = "�2"
+		potionNameColor = SS(2)
 	elseif(goodnessLevel<75 and goodnessLevel>25)then
-		potionNameColor = "�a"
+		potionNameColor = SS("a")
 	elseif(goodnessLevel<=25 and goodnessLevel>=-25)then
-		potionNameColor = "�e"
+		potionNameColor = SS("e")
 	elseif(goodnessLevel<-25 and goodnessLevel>-75)then
-		potionNameColor = "�6"
+		potionNameColor = SS(6)
 	elseif(goodnessLevel<=-75)then
-		potionNameColor = "�c"
+		potionNameColor = SS("c")
 	end
 	
 	local positiveText = ""
@@ -273,10 +274,10 @@ function generatePotionItem(power,seed)
 	
 	positiveText = "The effects of this potion are "..visualGoodnessLevel.."% positive"
 	
-	nbtTable["tag"]["display"]["Name"] = potionNameColor..potionName.."�r"
+	nbtTable["tag"]["display"]["Name"] = potionNameColor..potionName..SS("r")
 	nbtTable["tag"]["display"]["Lore"] = {
 		"It's a "..eName.." potion!",
-		"This potion is worth �6"..tonumber(cost*23).."�5 gold",
+		"This potion is worth "..SS(6)..tonumber(cost*23)..SS(5).." gold",
 		positiveText,
 		"Might contain "..potion_name(3,seed+21).."!"
 	}
@@ -309,9 +310,7 @@ function generateDropPotion(power,seed)
 end
 
 function getPotionForChest(powerInput)
-	print("POTION TIME")
 	local itemDataTable,cost = generatePotionItem(math.floor(powerInput/5),math.random(10000))
-	print("Price: "..cost)
 	local returnData = {}
 	returnData["powerCost"] = math.floor(cost)
 	returnData["setItemCount"] = 1

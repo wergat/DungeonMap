@@ -95,6 +95,20 @@ function requireAPI(...)
 	end
 end
 
+function isModEnabled(modName)
+	if(fs.exists(":dungeon/mods/"..modName))then
+		local status = false
+		local file = fs.open(":dungeon/mods/"..modName.."/mod.info", "r")
+		if(file)then
+			modinfo = textutils.unserialize(file.readAll())
+			status = (modinfo["active"] or false)
+			file.close()
+		end
+		return status
+	end
+	return
+end
+
 function Error(text,level)
 	print_log("error",text)
 	error(text,3)
@@ -107,21 +121,31 @@ function loadSimilarApis(_forceName)
 	local l = fs.list(config.DIR_MODS)
 	
 	for i=1,#l do
-		-- l[i] = Modname
-		local pathToAPIFile = config.DIR_MODS.."/"..l[i].."/apis/"..file_name
-		if(fs.exists(pathToAPIFile))then
-			print_log("dcore","[API]["..l[i].."] Loading mod-api "..pathToAPIFile.."")
-			-- Load functions of Mod API's files
-			if(_G[file_name]==nil)then _G[file_name] = {} end
-			local fenv = _G[file_name]
-			fenv["config"] = config		
-			
-			local tEnv = setmetatable(fenv, { __index = _G } )
-			local fnAPI, err = loadfile(pathToAPIFile)
-			if fnAPI then
-				setfenv( fnAPI, tEnv )
-				local ok, err = pcall( fnAPI )
-				if not ok then
+		if(isModEnabled(l[i]))then
+			-- l[i] = Modname
+			local pathToAPIFile = config.DIR_MODS.."/"..l[i].."/apis/"..file_name
+			if(fs.exists(pathToAPIFile))then
+				print_log("dcore","[API]["..l[i].."] Loading mod-api "..pathToAPIFile.."")
+				-- Load functions of Mod API's files
+				if(_G[file_name]==nil)then _G[file_name] = {} end
+				local fenv = _G[file_name]
+				fenv["config"] = config		
+				
+				local tEnv = setmetatable(fenv, { __index = _G } )
+				local fnAPI, err = loadfile(pathToAPIFile)
+				if fnAPI then
+					setfenv( fnAPI, tEnv )
+					local ok, err = pcall( fnAPI )
+					if not ok then
+						print_log("error","[API]["..l[i].."] While loading "..pathToAPIFile.."; ")
+						if(firstError)then
+							if(term.isColor())then term.setTextColor(colors.red) end
+							print("error found while loading api files, check logs/error for more informations! "..err)
+							term.setTextColor(colors.white)
+							firstError = false
+						end
+					end
+				else
 					print_log("error","[API]["..l[i].."] While loading "..pathToAPIFile.."; ")
 					if(firstError)then
 						if(term.isColor())then term.setTextColor(colors.red) end
@@ -130,19 +154,13 @@ function loadSimilarApis(_forceName)
 						firstError = false
 					end
 				end
-			else
-				print_log("error","[API]["..l[i].."] While loading "..pathToAPIFile.."; ")
-				if(firstError)then
-					if(term.isColor())then term.setTextColor(colors.red) end
-					print("error found while loading api files, check logs/error for more informations! "..err)
-					term.setTextColor(colors.white)
-					firstError = false
-				end
+				for k,v in pairs(tEnv) do
+					print_log("dcore","[API]["..l[i].."]["..file_name.."] Loading "..type(v).." "..k.." --> "..file_name.."."..k.."")
+					_G[file_name][k] = v
+				end   
 			end
-			for k,v in pairs(tEnv) do
-				print_log("dcore","[API]["..l[i].."]["..file_name.."] Loading "..type(v).." "..k.." --> "..file_name.."."..k.."")
-				_G[file_name][k] = v
-			end   
+		else
+			print_log("dcore","[API]["..l[i].."] Is disabled by client, won't be loaded!")
 		end
 	end
 end
