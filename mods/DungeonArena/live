@@ -69,6 +69,7 @@ while true do
 		commands.exec('/tp @a -8 5 0')
 		commands.exec('/gamemode 1 @a')
 		commands.exec('/playsound mob.blaze.death @a -8 5 0')
+		_G["removeChests"]()
 		fs.delete(".config")
 		commands.exec('/tellraw @a ["",{"text":"Right-click the computer to restart the game.","color":"gold","bold":true}]')
 		sleep(0.1)
