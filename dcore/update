@@ -41,11 +41,11 @@ if(a==1)then
 	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/dcore")
 elseif(a==2)then
 	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/dcore")
-elseif(a==3)
+elseif(a==3)then
 	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/dev")
 	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/indev")
 	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/old")
-elseif(a==4)
+elseif(a==4)then
 	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/")
 end
 
