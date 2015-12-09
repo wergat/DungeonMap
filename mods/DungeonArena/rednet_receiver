@@ -2,6 +2,7 @@ print("Begin rednet receiver program!")
 rednet.open("top")
 
 local res = function()
+	_G["removeChests"]()
 	fs.delete(".config") 
 	os.reboot()
 end
@@ -58,6 +59,7 @@ while true do
 		elseif(message == "reboot")then
 			os.reboot()
 		elseif(message == "reset")then
+			_G["removeChests"]()
 			fs.delete(".config") 
 			os.reboot()
 		else
