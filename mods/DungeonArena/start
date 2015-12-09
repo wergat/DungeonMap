@@ -281,7 +281,7 @@ local function summonChests()
 	set_v("chest_coords", textutils.serialize(chosen))
 end
 write(".")
-function removeChests()
+_G["removeChests"] = function()
 	if not get_v("chest_coords") then
 		return false
 	end
