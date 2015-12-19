@@ -32,7 +32,7 @@ end
 --Gets the plural form of a mob name.
 --@name: Internal mob name.
 local exceptions = {["Zombie Pigman"] = "Zombie Pigmen"}
-local function pluralname(name)
+function pluralname(name)
 	name = mob.getMobList()[name]
 	if exceptions[name] then
 		return exceptions[name]
