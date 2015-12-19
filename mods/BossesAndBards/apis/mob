@@ -16,7 +16,7 @@ end
 local name1 = {"chel", "pr", "aer", "cat", "lu", "f", "cr", "o", "ali", "exan", "at", "we"}
 local name2 = {"est", "y", "ul", "in", "cr", "am", "im", "rd", "en", "imi", "ene", "rg"}
 local name3 = {"ra", "an", "us", "itus", "um", "es", "son", "o", "is", "s", "fyr", "at"}
-local function boss_name(units,seed)
+function boss_name(units,seed)
 	if seed then
 		math.randomseed(seed)
 	end
