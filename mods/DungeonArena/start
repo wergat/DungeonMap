@@ -172,7 +172,7 @@ if not get_v("stage") then
 			end
 		end
 	end
-	commands.exec('/give @a 4100 1 1 {display:{Name:"Options"},computerID:2,upgrade:1}')
+	commands.exec('/give @a computercraft:pocketComputer 1 1 {display:{Name:"Options"},computerID:2,upgrade:1}')
 end
 write(".")
 function killVillagers()
@@ -268,7 +268,7 @@ local function summonChests()
 	local coords = getChest(past)
 	past[coords] = true
 	chosen[#chosen+1] = coords
-	commands.exec("/say " .. textutils.serialize(coords))
+	--commands.exec("/say " .. textutils.serialize(coords))
 	sleep(0.1)
 	commands.setblock(coords[1],coords[2],coords[3],"anvil")
 	print("Done summoning anvil")
