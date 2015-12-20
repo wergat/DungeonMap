@@ -1,6 +1,7 @@
 dcore.requireAPI("advitem")
 dcore.requireAPI("potion")
 
+
 --Trades that all drug dealers have
 trades = {}
 function summon_drug(x,y,z,difficulty,seed)
@@ -41,4 +42,15 @@ function summon_drug(x,y,z,difficulty,seed)
 	local cmd = '/summon Villager ' .. x .. " " .. y .. " " .. z .. ' {Profession:2,CustomName:"Drug Dealer",CustomNameVisible:0,CanPickUpLoot:0,Offers:{Recipes:[' .. tstr .. ']}}'
 	suc, res = commands.exec(cmd)
 	return suc, cmd
+end
+
+local old_summon = villager.summon
+villager.summon = function(...)
+	local tArgs = {...}
+	if tArgs[1] == "drug" then
+		table.remove(tArgs, 1)
+		summon_drug(unpack(tArgs))
+	else
+		return old_summon(unpack(tArgs))
+	end
 end
