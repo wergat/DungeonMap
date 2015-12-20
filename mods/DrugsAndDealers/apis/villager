@@ -1,15 +1,6 @@
 dcore.requireAPI("advitem")
 dcore.requireAPI("potion")
 
-function genCoatColor()
-	local coat = math.random(1,4)
-	if coat == 2 then
-		return genCoatColor()
-	else
-		return coat
-	end
-end
-
 --Trades that all drug dealers have
 trades = {}
 function summon_drug(x,y,z,difficulty,seed)
