@@ -11,5 +11,5 @@ local function get_vv(id)
 end
 
 if get_vv("lv") then
-	trades = {"{buy:{id:266,Count:4,tag:{display:{Name:\"Gold Ingot\", Lore:[\"This item is part of the currency exchange\", \"It is worth exactly 2'500 quaz\"]}}},maxUses:999999,sell:{id:40,Count:1,Damage:0,tag:{display:{Name:\"1-Up\",Lore:[\"© Half-Price Drugs 1981-2023\"]}}},rewardExp:false}"}
+	trades = {"{buy:" .. dcore.getNBTStringFromTable(getCurrencyTradeTablesByPrice(10000, 2)) .. ",maxUses:999999,sell:{id:40,Count:1,Damage:0,tag:{display:{Name:\"1-Up\",Lore:[\"© Half-Price Drugs 1981-2023\"]}}},rewardExp:false}"}
 end
