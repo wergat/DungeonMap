@@ -43,9 +43,9 @@ print("Currently at " .. lives .. " lives")
 while true do
 	_G["plist"] = cmd.getAllPlayerNames()
 	sleep(0.5)
-	local success, cleart = commands.exec("/clear @a 40") --t = t + 0.2
+	local success, cleart = commands.exec("/clear @a red_mushroom") --t = t + 0.2
 	if success then
-		n = cleart[2]:match("%d+")
+		n = cleart[1]:match("%d+")
 		sleep(1)
 		lives = lives + n
 		commands.exec('/tellraw @a ["",{"text":"You now have ","color":"green"},{"text":"' .. lives .. '","color":"gold","bold":true},{"text":" lives.","color":"green","bold":false}]')
