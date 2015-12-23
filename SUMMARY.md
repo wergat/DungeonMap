@@ -1,4 +1,3 @@
 # Summary
 
-* [mod ](mob.md)
 
