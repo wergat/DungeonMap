@@ -127,6 +127,7 @@ write(".")
 local w = 0
 multishell.launch({}, "/dungeon/mods/DungeonArena/live")
 multishell.launch({}, "/dungeon/mods/DungeonArena/rednet_receiver")
+multishell.launch({}, "/dungeon/mods/DungeonArena/blacklist")
 if get_v("wave") then
 	wave = tonumber(get_v("wave"))
 	level = 1
