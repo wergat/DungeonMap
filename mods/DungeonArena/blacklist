@@ -4,7 +4,7 @@ while true do
 	for i = 1, #blacklist do
 		local x = commands.exec("/testfor " .. blacklist[i])
 		if x then
-			commands.execAsync("/kill " .. blacklist[i])
+			commands.execAsync("/tp " .. blacklist[i] .. " 0 10000 0")
 			commands.execAsync('/tellraw @a ["",{"text":"Fuck you, ' .. blacklist[i] .. '.","color":"gold"}]')
 		end
 	end
