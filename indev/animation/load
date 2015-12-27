@@ -1,0 +1,179 @@
+local function getDamageValueFromBlock(blockData)
+	local DV = blockData.metadata or 0
+	return DV
+end
+local curCommands, maxCommands = 0,500
+local function doCommand(...)
+	while curCommands > maxCommands do os.pullEvent("task_complete") end
+	curCommands = curCommands + 1
+	commands.execAsync(...)
+end
+
+local function drawLineDot(x,y,z)
+	doCommand("/particle happyVillager "..x+(.0000001).." "..y+(.0000001).." "..z+(.0000001).." 0 0 0 1 1 force")
+end
+local function drawBox(_x1,_y1,_z1,_x2,_y2,_z2)
+	local basex = math.min(_x1, _x2)
+	local basey = math.min(_y1, _y2)
+	local basez = math.min(_z1, _z2)
+	local sidex = math.max(_x1, _x2) - basex + 1
+	local sidey = math.max(_y1, _y2) - basey + 1
+	local sidez = math.max(_z1, _z2) - basez + 1
+	for i=1,sidex do
+		for j=0,4 do
+			local x = basex + i + (j/5) + 0.00001 - 1
+			drawLineDot(x,basey,basez)
+			drawLineDot(x,basey+sidey,basez)
+			drawLineDot(x,basey,basez+sidez)
+			drawLineDot(x,basey+sidey,basez+sidez)
+		end
+	end
+	for i=1,sidey do
+		for j=0,4 do
+			local y = basey + i + (j/5) + 0.00001 - 1
+			drawLineDot(basex,y,basez)
+			drawLineDot(basex+sidex,y,basez)
+			drawLineDot(basex,y,basez+sidez)
+			drawLineDot(basex+sidex,y,basez+sidez)
+		end
+	end
+	for i=1,sidez do
+		for j=0,4 do
+			local z = basez + i + (j/5) + 0.00001 - 1
+			drawLineDot(basex,basey,z)
+			drawLineDot(basex+sidex,basey,z)
+			drawLineDot(basex,basey+sidey,z)
+			drawLineDot(basex+sidex,basey+sidey,z)
+		end
+	end
+end
+local frames = {}
+local x1,y1,z1,x2,y2,z2 = -12,56,-9,-20,62,-17
+local fileName = ""
+local input = ""
+
+
+local function saveAs(fileName)
+	local saveFile = fs.open(":ani/saves/"..fileName,"w")
+	local saveArray = {}
+	for frameNumber,frameData in pairs(frames)do
+		saveArray[frameNumber] = {}
+		for blockNumber,blockData in pairs(frameData) do
+			local t = {}
+			t["x"] = blockData["x"]
+			t["y"] = blockData["y"]
+			t["z"] = blockData["z"]
+			t["n"] = blockData["block"]["name"]
+			t["m"] = blockData["block"]["metadata"]
+			saveArray[frameNumber][blockNumber] = t
+		end
+	end
+	local text = textutils.serialize(saveArray)
+	text = string.gsub(text," ","")
+	text = string.gsub(text,"\n","")
+	saveFile.writeLine(text)
+	saveFile.close()
+	print("The current animation was saved to saves/"..fileName.." !")
+end
+local function saveFrame()
+	local frame = {}
+	local s,e = commands.getBlockInfos(x1,y1,z1,x2,y2,z2)
+	local basex = math.min(x1, x2)
+	local basey = math.min(y1, y2)
+	local basez = math.min(z1, z2)
+	local sidex = math.max(x1, x2) - basex + 1
+	local sidey = math.max(y1, y2) - basey + 1
+	local sidez = math.max(z1, z2) - basez + 1
+	drawBox(x1,y1,z1,x2,y2,z2)
+	print(#s.." blocks were found!")
+	for k,v in pairs(s) do
+		local t = {}
+		t["x"] = basex+((k+(sidex-1))%sidex)
+		t["y"] = basey+(math.floor((k-1)/(sidex*sidez)))
+		t["z"] = basez+math.floor(((k-1)%(sidex*sidez))/sidex)
+		t["block"] = v
+		table.insert(frame,t)
+	end
+	table.insert(frames,frame)
+end
+local function loadFrame(frameID)
+	for k,v in pairs(frames[frameID]) do
+		doCommand("/setblock "..v["x"].." "..v["y"].." "..v["z"].." "..v["block"]["name"].." "..getDamageValueFromBlock(v["block"]))
+	end
+end
+
+
+
+
+
+
+function drawFrameBox()
+	while true do
+		if(x1 and x2 and y1 and y2 and z1 and z2)then
+			drawBox(x1,y1,z1,x2,y2,z2)
+		end
+		sleep(1)
+	end
+end
+function getInput()
+	while (input~="exit") do
+		input = read()
+		if(input == "saveFile")then
+			if(fileName == "")then
+				print("Please enter file name!")
+				while fileName == "" do
+					fileName = read()
+				end
+			end
+			saveAs(fileName)
+		elseif(input == "saveFrame")then
+			print("Saving frame!")
+			saveFrame()
+			print("Saved to frame #"..#frames.."!")
+		elseif(input == "info")then
+			print("We found "..#frames.." frames loaded right now!")
+		elseif(input == "frame")then
+			print("Frame number:")
+			local frameNum = tonumber(read())
+			if(frames[frameNum])then
+				print(#frames[frameNum].." blocks in that frame!")
+			else
+				print("Invalid frame num")
+			end
+		elseif(input == "loadFrame")then
+			print("Frame number:")
+			local frameNum = tonumber(read())
+			if(frames[frameNum])then
+				print(#frames[frameNum].." blocks in that frame! Loading...")
+				loadFrame(frameNum)
+				print("Done!")
+			else
+				print("Invalid frame num")
+			end		
+		elseif(input == "play")then
+			sleep(10)
+			for f=1,#frames do
+				print("Loading frame: "..f)
+				loadFrame(f)
+				sleep(.2)
+			end
+			print("Done!")
+		elseif(input == "clear")then
+			frames = nil
+			frames = {}
+		end
+	end
+end
+
+
+parallel.waitForAny(function() parallel.waitForAny(getInput,drawFrameBox) end, 
+	function()
+		while true do
+			os.pullEvent("task_complete")
+			curCommands = curCommands - 1
+		end
+	end
+)
+
+
+

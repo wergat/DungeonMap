@@ -1,0 +1,434 @@
+os.loadAPI("apis/dcore")
+os.loadAPI(":dungeon/dcore/apis/dcore")
+dcore.requireAPI("player")
+
+-- Config
+local theSpell = "paseinheawithe paseslowe"
+local playerName = "Wergat"
+local baseLatency = 39
+
+
+local spellCast = 0
+local curCommands, maxCommands = 0,500
+local function doCommand(...)
+	while curCommands > maxCommands do os.pullEvent("task_complete") end
+	curCommands = curCommands + 1
+	commands.execAsync(...)
+end
+
+local openRocketCommands = {}
+-- Registers a command to be executed once rocket with rocketID explodes
+function registerRocketCommand(rocketID,command,lifetime)
+	if(not openRocketCommands[rocketID])then openRocketCommands[rocketID] = {} end
+	if(not openRocketCommands[rocketID]["commands"])then openRocketCommands[rocketID]["commands"] = {} end
+	if(not openRocketCommands[rocketID]["lifetime"])then openRocketCommands[rocketID]["lifetime"] = lifetime end
+	if(command)then
+		table.insert(openRocketCommands[rocketID]["commands"],command)
+	end
+end
+local function rotationToMotion(xR,yR,baseSpeed)
+	local xRRad = (xR + 0.0001)*math.pi/180
+	local yRRad = (yR + 0.0001)*math.pi/180
+	local xMotion = -1*math.sin(xRRad)*baseSpeed*math.cos(yRRad) + 0.0000001
+	local yMotion = -2*math.sin(yRRad)*baseSpeed + 0.0000001
+	if(yMotion<0)then yMotion = yMotion * (math.floor(.5+(baseSpeed)/2*10)/10) end
+	local zMotion = math.cos(xRRad)*baseSpeed*math.cos(yRRad) + 0.0000001
+	return xMotion,yMotion,zMotion
+end
+function getLifetimeTable()
+	local times = {}
+	for k,v in pairs(openRocketCommands) do
+		if(v["lifetime"])then
+			times[v["lifetime"]] = true
+		end
+	end
+	return times
+end
+
+function getUnusedRocketID()
+	local num = 1
+	while openRocketCommands[num] do num = num + 1 end
+	openRocketCommands[num] = {}
+	return num
+end
+
+function getRandomUUID()
+	local s = "CC_MGC_RE_"
+	local pool = {0,1,2,3,4,5,6,7,8,9,"a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"}
+	for i=1,10 do
+		s = s..pool[math.random(#pool)]
+	end
+	return s
+end
+
+
+local effectModifierList = {}
+-- TODO: Check for blacklist key letters
+function registerEffectModifier(typ,part,func)
+	if(not effectModifierList[typ])then effectModifierList[typ] = {} end
+	effectModifierList[typ][part] = func
+end
+
+local selectorReplacementsList = {}
+function registerSelectorReplacer(str,var)
+	selectorReplacementsList[str] = var
+end
+registerSelectorReplacer("ARGUMENT_RADIUS","radius")
+
+local SPELL_SYTNTAX = {}
+SPELL_SYTNTAX["effectStart"] = "se"
+SPELL_SYTNTAX["projectileStart"] = "pa"
+
+-- ///////// Loading default effects
+local function loadDefaultEffects()
+	local effects = {
+	-- [effectName] = {spellPart,durabilityMultiplier,color}
+		["minecraft:speed"] = {"spee",5,0x7cafc6},
+		["minecraft:slowness"] = {"slowe",2,0x5a6c81},
+		["minecraft:haste"] = {"haste",3,0xd9c043},
+		["minecraft:mining_fatigue"] = {"mifa",1,0x4a4217},
+		["minecraft:strength"] = {"stre",1,0x932423},
+		["minecraft:instant_health"] = {"inhea",0,0xf82423},
+		["minecraft:instant_damage"] = {"intama",0,0x430a09},
+		["minecraft:jump_boost"] = {"jubo",3,0x21fa4b}, -- 0x786297
+		["minecraft:nausea"] = {"nase",1,0x551d4a},
+		["minecraft:regeneration"] = {"rege",1,0xcd5cab},
+		["minecraft:resistance"] = {"resi",1,0x99453a},
+		["minecraft:fire_resistance"] = {"fire",1,0xe49a3a},
+		["minecraft:water_breathing"] = {"wabrea",1,0x2e5299},
+		["minecraft:invisibility"] = {"invisi",1,0x7f8392},
+		["minecraft:blindness"] = {"bli",1,0x1f1f23},
+		["minecraft:night_vision"] = {"nivisio",1,0x1f1fa1},
+		["minecraft:hunger"] = {"hunge",1,0x5876539},
+		["minecraft:weakness"] = {"weakne",1,0x484d48},
+		["minecraft:poison"] = {"poiso",1,0x4e9331},
+		["minecraft:wither"] = {"withe",1,3484199},
+		["minecraft:health_boost"] = {"heaboo",1,16284963},
+		["minecraft:absorption"] = {"abso",1,2445989},
+		["minecraft:saturation"] = {"satu",1,16262179}}
+	for k,v in pairs(effects) do
+		local tf = function(self)
+			return "/effect "..self:getSelectorString().." "..k.." "..math.max(self.duration,1).." "..(self.strength-1).." true"
+		end
+		local f = function(self)
+			self.duration = self.duration * v[2]
+			self.triggerFunction = tf
+			self.color = {red = math.floor(tonumber(v[3])/65536),green = math.floor((tonumber(v[3])/256)%256),blue = math.floor(tonumber(v[3])%256)}
+			return self
+		end
+		registerEffectModifier("trigger",v[1],f)
+	end
+end
+loadDefaultEffects()
+
+
+function newEffect(spell)
+	local effectObject = {}
+	-- Also sets the particle effects of the rocket
+	effectObject.radius = 4
+	effectObject.strength = 10
+	effectObject.duration = 1
+	effectObject.manaCost = 1
+	effectObject.forceTrail = false
+	effectObject.forceFlicker = false
+	effectObject.target = {["selector"] = "e",["arguments"] = {["r"] = "ARGUMENT_RADIUS"}}
+	effectObject.triggerFunction = nil
+	effectObject.color = {red = math.random(255),green = math.random(255),blue = math.random(255)}
+	
+	effectObject.getSelectorString = function(self)
+		local str = "@"..self.target.selector.."["
+		for k,v in pairs(self.target.arguments)do
+			local argValue = v
+			for str,var in pairs(selectorReplacementsList)do
+				-- TODO: more error checking right here in case someone messes up something!
+				argValue = argValue:gsub(str,tostring(self[var]))
+			end
+			str = str..k.."="..argValue..","
+		end
+		return str.."]"
+	end
+	effectObject.getModifier = function(self,typ)
+		for k,v in pairs((effectModifierList[typ] or {})) do
+			if(string.sub((spell or ""),1,k:len()) == k)then
+				spell = string.sub(spell,k:len()+1,-1)
+				self = v(self)
+				return true
+			end
+		end
+		return
+	end
+	effectObject.getManaCost = function(self)
+		return manaCost
+	end
+	
+	local t = {"radius","strength","duration","manaCost","target","trigger"}
+	local foundSomething = true
+	while foundSomething do
+		foundSomething = false
+		for i=1,#t do
+			foundSomething = foundSomething or effectObject:getModifier(t[i])
+		end
+	end
+	
+	effectObject.trigger = function(self)
+		if(self.triggerFunction)then
+			return self:triggerFunction()
+		else
+			return "/effect @e[r=4] minecraft:instant_health 1 1 true"
+		end
+	end
+	return effectObject
+end
+
+
+local function getChangedColorSpectrum(baseColor)
+	local function a(_c,_p) if(_p>1)then
+		return math.floor(255-((255-_c)*(1/_p)))
+		else return math.floor(_c*_p) end 
+	end
+	local function c(_r,_g,_b) return (_b+256*_g+_r*65536) end
+	local r,g,b = baseColor.r,baseColor.g,baseColor.b
+	local colors = {}
+	colors[1] = c(a(r,1.1),a(g,0.9),a(b,0.9)) -- more red
+	colors[2] = c(a(r,0.9),a(g,1.1),a(b,0.9)) -- more green
+	colors[3] = c(a(r,0.9),a(g,0.9),a(b,1.1)) -- more blue
+	colors[4] = c(a(r,0.7),a(g,0.7),a(b,0.7)) -- darker
+	colors[5] = c(a(r,1.4),a(g,1.4),a(b,1.4)) -- brighter
+	return colors
+end
+
+function newProjectile(spell)
+	local projectileObject = {}
+	projectileObject.particle = {["type"] = 0,["flicker"] = 0,["trail"] = 0}
+	local a = math.random(10)
+	projectileObject.speed = math.floor((a/10+1)*10)/10
+	projectileObject.lifetime = math.floor((120/(a+3)+2)*2)/10
+	projectileObject.effects = {}
+	projectileObject.baseColor = {["r"] = 0,["g"] = 0,["b"] = 0}
+	projectileObject.fadeColor = {["r"] = 0,["g"] = 0,["b"] = 0}
+	projectileObject.doShoot = true
+	projectileObject.id = getUnusedRocketID()
+	projectileObject.uuid = getRandomUUID()
+	
+	projectileObject.setParticle = function(self,particleType,value)
+		self.particle[particleType] = value
+	end
+	projectileObject.getParticleValue = function(self,particleType)
+		return self.particle[particleType]
+	end
+	projectileObject.getNBTTable = function(self)
+		local t = {}
+		t["LifeTime"] = self.lifetime
+		local e = {
+			["Type"] = self.particle["type"],
+			["Flicker"] = self.particle["flicker"],
+			["Trail"] = self.particle["trail"],
+			["Colors"] = getChangedColorSpectrum(self.baseColor),
+			["FadeColors"] = getChangedColorSpectrum(self.fadeColor)}
+		t["FireworksItem"] = {["id"] = 401,["Count"] = 1}
+		t["FireworksItem"]["tag"] = {["projID"] = self.id,["spellID"] = spellUsed,["nameID"] = self.uuid,["Fireworks"] = {["Explosions"] = {e}}}
+		t["CustomName"] = self.uuid
+		t["CustomNameVisible"] = 1
+		return t
+	end
+	
+	projectileObject.getManaCost = function(self)
+		local totalManaCost = 0
+		for k,v in pairs(self.effects) do totalManaCost = totalManaCost + v:getManaCost() end
+		return totalManaCost
+	end
+	projectileObject.getAvgColor = function(self)
+		local avgColorSum = {red = 0,green = 0,blue = 0}
+		for k,v in pairs(self.effects) do
+			avgColorSum.red = avgColorSum.red + v.color.red
+			avgColorSum.green = avgColorSum.green + v.color.green
+			avgColorSum.blue = avgColorSum.blue + v.color.blue
+		end
+		return {r = math.floor(avgColorSum.red/#self.effects),g = math.floor(avgColorSum.green/#self.effects),b = math.floor(avgColorSum.blue/#self.effects)}
+	end
+	
+	
+	projectileObject.addEffect = function(self,newEffect)
+		table.insert(self.effects,newEffect)
+	end
+	projectileObject.getEffect = function(self)
+		return self.effects
+	end
+	projectileObject.setBaseColor = function(self,r,g,b)
+		self.baseColor = {["r"] = r,["g"] = g,["b"] = b}
+	end
+	projectileObject.setFadeColor = function(self,r,g,b)
+		self.fadeColor = {["r"] = r,["g"] = g,["b"] = b}
+	end
+	projectileObject.autoColor = function(self)
+		self.baseColor = self:getAvgColor()
+		self.fadeColor = self:getAvgColor()
+	end
+	projectileObject.autoParticle = function(self)
+		local insta = 0
+		local forceFlicker = false
+		local forceTrail = false
+		local allRadius = 0
+		for _,v in pairs(projectileObject.effects) do
+			if(v.duration <2)then
+				insta = insta + 1
+			end
+			forceFlicker = forceFlicker or v["forceFlicker"]
+			forceTrail = forceTrail or v["forceTrail"]
+			allRadius = allRadius + v["radius"]
+		end
+		if((allRadius/#projectileObject.effects)>5)then
+			projectileObject.particle["type"] = 1
+		end
+		if(insta >= #projectileObject.effects*0.7)then
+			projectileObject.particle["type"] = 4
+		end
+		projectileObject.particle["flicker"] = ((insta >= #projectileObject.effects*0.7 or forceFlicker) and 1 or 0)
+	end
+	
+	projectileObject.fire = function(self,player)
+		for _,v in pairs(projectileObject.effects) do
+			local command = v:trigger()
+			registerRocketCommand(self.id,command,self.lifetime)
+		end
+		-- Calculating position/rotation of rocket
+		local x,y,z = player:getPosition()
+		local xR,yR = player:getRotation()
+		xR = xR + ((math.random(spellCast)-(spellCast/2))/20)
+		yR = yR + ((math.random(spellCast)-(spellCast/2))/20)
+		local xMotion,yMotion,zMotion = rotationToMotion(xR,yR,self.speed)
+		local FireEntity = self:getNBTTable()
+		FireEntity["Motion"] = {xMotion,yMotion,zMotion}
+		-- Summoning the rocket
+		local summonCommand = "FireworksRocketEntity "..x.." "..(y+1.8).." "..z.." "..dcore.getNBTStringFromTable(FireEntity)
+		local s,e = commands.summon(summonCommand)
+		doCommand("/scoreboard players set @e[type=FireworksRocketEntity] lifeTimeLeft "..(self.lifetime*20).." {FireworksItem:{tag:{projID:"..self.id.."}}}")
+		if(not s)then print(e[1]) end
+	end
+	-- Do the spell stuff
+	for word in string.gmatch((spell or ""),"(%w+)") do
+		if(string.sub(word,1,2) == SPELL_SYTNTAX.effectStart)then
+			projectileObject:addEffect(newEffect(string.sub(word,3,-1)))
+		end
+	end
+	
+	return projectileObject
+end
+
+function newSpell(spell)
+	local spellObject = {}
+	spellObject.projectiles = {}	
+	spellObject.addProjectile = function(self,projectile)
+		table.insert(self.projectiles,projectile)
+		return projectile
+	end
+	spellObject.getProjectiles = function(self)
+		return self.projectiles
+	end
+	spellObject.auto = function(self)
+		for _,v in pairs(self.projectiles) do
+			v:autoColor()
+			v:autoParticle()
+		end
+	end
+	spellObject.cast = function(self,castingPlayerObject)
+		castingPlayerObject:updateLocation()
+		for _,v in pairs(self.projectiles) do
+			v:fire(castingPlayerObject)
+		end
+	end
+	
+	local typ = nil
+	local str = ""
+	local function flushString()
+		if(typ == SPELL_SYTNTAX.projectileStart)then
+			spellObject:addProjectile(newProjectile(string.sub(str,(SPELL_SYTNTAX.projectileStart:len()+1),-1)))
+		end
+	end
+	for word in string.gmatch((spell or ""),"(%w+)") do
+		local newTyp = nil
+		-- Check for syntax -- Spell modifiers to be entered here (TODO:)
+		if(string.sub(word,1,SPELL_SYTNTAX.projectileStart:len()) == SPELL_SYTNTAX.projectileStart)then	newTyp = SPELL_SYTNTAX.projectileStart end
+		
+		-- Checking of type has changed
+		if(newTyp~=nil)then
+			flushString()
+			-- Spell modifiers to be entered here,too (TODO:)
+			typ = newTyp
+			str = word
+		else
+			str = str.." "..word
+		end
+	end
+	flushString()
+	
+	return spellObject
+end
+
+
+function shoot()
+	local wergat = player.getPlayerByName(playerName)
+	while true do
+		spellUsed = wergat:getScoreboardValue("spellUsed")
+		if(spellUsed>0)then
+			spellCast = spellCast + spellCast + 500
+			wergat:setScoreboardValue("spellUsed",0)
+			local spell = newSpell(theSpell)
+			spell:auto()
+			spell:cast(wergat)		
+		end
+	end
+end
+function countDown()
+	local i = 0
+	while true do
+		doCommand("/scoreboard players remove @e[type=FireworksRocketEntity] lifeTimeLeft 1")
+		i = i + 1
+		if(spellCast>0)then spellCast = math.floor(spellCast*0.99) end
+		if(i>1000)then i = 0 doCommand("/scoreboard players reset @e[type=FireworksRocketEntity,score_lifeTimeLeft=0] lifeTimeLeft") doCommand("/kill @e[type=FireworksRocketEntity,score_lifeTimeLeft=0]") end
+	end
+end
+function explode()
+	while true do
+		local s,d = commands.exec("/entitydata @e[type=FireworksRocketEntity,score_lifeTimeLeft="..(baseLatency+math.floor(spellCast/20)).."] {}")
+		if(#d>0)then
+			for k,v in pairs(d) do
+				local data = dcore.convertNBTtoTable(string.sub(v,30,-1))
+				-- Just in case the converter does not work right
+				if(data)then
+					if(data["FireworksItem"])then 
+						if(data["FireworksItem"]["tag"])then
+							local projID = data["FireworksItem"]["tag"]["projID"]
+							local uuid = data["FireworksItem"]["tag"]["nameID"]
+							if(openRocketCommands[projID])then
+								for _,command in pairs(openRocketCommands[projID]["commands"] or {})do
+									doCommand("/execute @e[name="..uuid.."] ~ ~ ~ "..command)
+								end
+								openRocketCommands[projID] = nil
+							end
+						end 
+					end
+				end
+			end
+		end
+	end
+end
+
+
+commands.execAsync('/give @p written_book 1 0 {pages:["[\\"\\",{\\"text\\":\\"Use Spell #1\\",\\"clickEvent\\":{\\"action\\":\\"run_command\\",\\"value\\":\\"/scoreboard players set @p spellUsed 1\\"}}]"],title:"Spell Book",author:"Unknown Author"}')
+commands.execAsync("/scoreboard objectives add spellUsed dummy")
+commands.execAsync("/scoreboard objectives add lifeTimeLeft dummy")
+commands.execAsync("/scoreboard players reset * lifeTimeLeft")
+local a,b = commands.exec("/testfor @e[type=ArmorStand,name="..playerName.."]")
+if(not a)then commands.exec("/summon ArmorStand ~ ~1 ~ {CustomName:\""..playerName.."\",ShowArms:1,Invisible:1,NoGravity:1,DisabledSlots:1973790}") end
+
+
+parallel.waitForAny(function() parallel.waitForAny(shoot,explode,countDown) end, 
+	function()
+		while true do
+			os.pullEvent("task_complete")
+			curCommands = curCommands - 1
+		end
+	end
+)
+
