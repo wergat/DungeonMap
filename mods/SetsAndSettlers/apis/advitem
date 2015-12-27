@@ -5,7 +5,7 @@ local function isSetItem(q)
  return (q>6 and math.random(5)>1)
 end
 local function getSetItemName(q,setDataTable,slot)
- return "งlง2*งr "..advitem.q_color[q]..setDataTable["pre"].." "..setDataTable["items"][slot]
+ return "ยงlยง2*ยงr "..advitem.q_color[q]..setDataTable["pre"].." "..setDataTable["items"][slot]
 end
 
 function getLoreOfItem(_colorValue)
@@ -47,3 +47,4 @@ function getLoreOfItem(_colorValue)
  setItemData("loreTable",loreArr)
 end
 
+--Placeholder
