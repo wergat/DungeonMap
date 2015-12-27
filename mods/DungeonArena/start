@@ -116,12 +116,15 @@ local function get_v(id)
 	if all[id] then
 		return all[id]
 	else
-		return false
+		return nil
 	end
 end
 write(".")
-set("Do you want to be able to play copyrighted music?", "cm")
-set("Do you want a limited amount of lives, with extra lives being purchaseable?", "lv")
+if get_v("cm") == nil then
+	set("Do you want to be able to play copyrighted music?", "cm")
+	set("Do you want a limited amount of lives, with extra lives being purchaseable?", "lv")
+	os.reboot()
+end
 write(".")
 --Check and set settings
 local w = 0
@@ -218,7 +221,7 @@ function summonVillagers()
 	villager.summon_currency(77,26,38)
 	villager.summon_currency(80,26,38)
 	villager.summon_food(77,26,31)
-	--villager.summon_sell(67,26,28)
+	villager.summon("trash",67,26,28)
 	for i = 1, #villager_areas do
 		villager.summon("equipment",villager_areas[i][1], villager_areas[i][2], villager_areas[i][3], level+5, 1, 0, true)
 		sleep(0.2)
@@ -325,7 +328,7 @@ end
 if stage == "start" then
 	--Setup wave
 	shell.run("/dungeon/mods/DungeonArena/reset", level, wave)
-	shell.run("/dungeon/mods/DungeonArena//wave", level)
+	shell.run("/dungeon/mods/DungeonArena/wave", level)
 end
 
 --Remove chests
@@ -336,10 +339,18 @@ if get_v("stage") ~= nil and get_v("stage") ~= "start" then
 	print("\nSkipping to stage " .. stage)
 	commands.exec('/tellraw @a "Skipping to stage ' .. stage .. '!"')
 end
+
+local messages = {"Words of encouragement!", "I'd say you're doing great, but I don't know.", "You're doing great!", "Meow meow meow!", "Blank.", "Please put that into the Creator's jokebox.", "#WergatYouFool", "Punchline!", "Splash!", "Help! I'm trapped in a splash factory!", "H2O, too!"}
 while true do
 	if stage == "start" then
-		commands.exec("/setblock -6 5 -1 air")
-		commands.exec('/tellraw @a "Wave ' .. wave .. '"')
+		if http.get("http://www.random.org") then
+			math.randomseed(http.get("https://www.random.org/integers/?num=1&min=1&max=" .. #messages .. "&col=1&base=10&format=plain&rnd=new").readAll())
+		else
+			math.randomseed(os.time())
+		end
+		commands.exec("/setblock -6 5 -2 air")
+		commands.exec('/title @a title ["",{"text":"Wave ","color":"gold"},{"text":"' .. wave .. '","color":"blue"}]')
+		commands.exec('/title @a subtitle ["",{"text":"' .. messages[math.random(#messages)] .. '","color":"blue"}]')
 		set_v("wave", wave)
 		
 		--Summon chests
@@ -357,11 +368,13 @@ while true do
 		commands.exec("/setblock 84 29 23 iron_bars")
 	
 		-- Open Key Gate
-		commands.exec("/setblock 64 19 45 air")
-		commands.exec("/setblock 64 20 45 air")
+		for i = 1, 3 do --extra checks, some problems here
+			commands.exec("/setblock 64 19 45 air")
+			commands.exec("/setblock 64 20 45 air")
+		end
 	
 		-- Reset Redstone reciever
-		commands.exec("/setblock -6 5 -1 air")
+		commands.exec("/setblock -6 5 -2 air")
 	
 		-- Place Loot Chest
 		chest.placeChest(level+5,64,20,53)
@@ -401,7 +414,7 @@ while true do
 		-- Summon the next wave
 		sleep(1)
 		print("Starting loading mobs")
-		shell.run("/dungeon/mods/DungeonArena//wave", level)
+		shell.run("/dungeon/mods/DungeonArena/wave", level)
 		print("Done loading mobs")
 	
 		--Remove chests
