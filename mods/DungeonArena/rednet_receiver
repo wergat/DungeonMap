@@ -1,9 +1,10 @@
 print("Begin rednet receiver program!")
 rednet.open("top")
 
-local res = function()
+local function res()
 	_G["removeChests"]()
-	fs.delete(".config") 
+	fs.delete(".config")
+	rednet.send(2, 1, "controls")
 	os.reboot()
 end
 local function get_vv(id)
@@ -29,7 +30,6 @@ local ts = function()
 end
 commandList = {
 	["Reset"] = res,
---	["commands"] = cmds, Why is this not wrking? Does it have to??!?
 	["Test"] = ts,
 	["Lives"] = getAmountOfLivesStillRemaining,
 }
