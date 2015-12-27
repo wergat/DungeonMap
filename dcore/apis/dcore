@@ -4,7 +4,7 @@ config = {
 	DIR_TOTAL = ":dungeon", -- Default: ":dungeon"
 	DIR_MODS = ":dungeon/mods", -- Default: ":dungeon/mods"
 	DIR_LOGS = ":dungeon/logs", -- Default: ":dungeon/logs"
-	DIR_APIS = ":dungeon/dcore/apis", -- Default: ":dungeon/apis"
+	DIR_APIS = ":dungeon/dcore/apis", -- Default: ":dungeon/dcore/apis"
 	
 	-- // Performance Settings	
 	-- The amount of commands the computer runs before sleeping
@@ -110,8 +110,8 @@ function isModEnabled(modName)
 end
 
 function Error(text,level)
-	print_log("error",text)
-	error(text,3)
+	print_log("error","[ERROR]   "..text)
+	error(text,level or 3)
 end
 
 function Warning(text)
