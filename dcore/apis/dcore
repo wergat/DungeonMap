@@ -4,7 +4,7 @@ config = {
 	DIR_TOTAL = ":dungeon", -- Default: ":dungeon"
 	DIR_MODS = ":dungeon/mods", -- Default: ":dungeon/mods"
 	DIR_LOGS = ":dungeon/logs", -- Default: ":dungeon/logs"
-	DIR_APIS = ":dungeon/dcore/apis", -- Default: ":dungeon/apis"
+	DIR_APIS = ":dungeon/dcore/apis", -- Default: "dungeon/dcore/apis"
 	
 	-- // Performance Settings	
 	-- The amount of commands the computer runs before sleeping
@@ -66,7 +66,6 @@ function print_log(file,text)
 		end
 	end
 end
-
 function requireAPI(...)
 	local tArgs = { ... }
 	for i=1,#tArgs do
@@ -94,7 +93,6 @@ function requireAPI(...)
 		end
 	end
 end
-
 function isModEnabled(modName)
 	if(fs.exists(":dungeon/mods/"..modName))then
 		local status = false
@@ -110,99 +108,18 @@ function isModEnabled(modName)
 end
 
 function Error(text,level)
-	print_log("error",text)
-	error(text,3)
+	print_log("error","[ERROR]   "..text)
+	error(text,level or 3)
+end
+
+function Warning(text)
+	print_log("error","[WARNING] "..text)
 end
 
 function loadSimilarApis(_forceName)
-	-- File name
-	local file_name = tostring(_forceName) or "--"
-	-- get all mod dirs
-	local l = fs.list(config.DIR_MODS)
-	
-	for i=1,#l do
-		if(isModEnabled(l[i]))then
-			-- l[i] = Modname
-			local pathToAPIFile = config.DIR_MODS.."/"..l[i].."/apis/"..file_name
-			if(fs.exists(pathToAPIFile))then
-				print_log("dcore","[API]["..l[i].."] Loading mod-api "..pathToAPIFile.."")
-				-- Load functions of Mod API's files
-				if(_G[file_name]==nil)then _G[file_name] = {} end
-				local fenv = _G[file_name]
-				fenv["config"] = config		
-				
-				local tEnv = setmetatable(fenv, { __index = _G } )
-				local fnAPI, err = loadfile(pathToAPIFile)
-				if fnAPI then
-					setfenv( fnAPI, tEnv )
-					local ok, err = pcall( fnAPI )
-					if not ok then
-						print_log("error","[API]["..l[i].."] While loading "..pathToAPIFile.."; ")
-						if(firstError)then
-							if(term.isColor())then term.setTextColor(colors.red) end
-							print("error found while loading api files, check logs/error for more informations! "..err)
-							term.setTextColor(colors.white)
-							firstError = false
-						end
-					end
-				else
-					print_log("error","[API]["..l[i].."] While loading "..pathToAPIFile.."; ")
-					if(firstError)then
-						if(term.isColor())then term.setTextColor(colors.red) end
-						print("error found while loading api files, check logs/error for more informations! "..err)
-						term.setTextColor(colors.white)
-						firstError = false
-					end
-				end
-				for k,v in pairs(tEnv) do
-					print_log("dcore","[API]["..l[i].."]["..file_name.."] Loading "..type(v).." "..k.." --> "..file_name.."."..k.."")
-					_G[file_name][k] = v
-				end   
-			end
-		else
-			print_log("dcore","[API]["..l[i].."] Is disabled by client, won't be loaded!")
-		end
-	end
 end
 function runFileInAllMods(_fileName)
-	-- File name
-	local file_name = tostring(_fileName) or "--"
-	
-	print_log("dcore","[EVENT] STARTED EVENT "..file_name.." !")
-	-- get all mod dirs
-	local l = fs.list(config.DIR_MODS)
-	for i=1,#l do
-		-- l[i] = Modname
-		local pathToAPIFile = config.DIR_MODS.."/"..l[i].."/event/"..file_name
-		if(fs.exists(pathToAPIFile))then
-			print_log("dcore","[EVENT]["..file_name.."]["..l[i].."] Starting "..pathToAPIFile.."")
-			local tEnv = setmetatable({}, { __index = _G } )
-			local fnAPI, err = loadfile(pathToAPIFile)
-			if fnAPI then
-				setfenv( fnAPI, tEnv )
-				local ok, err = pcall( fnAPI )
-				if not ok then
-					print_log("error","[EVENT]["..file_name.."]["..l[i].."] While loading "..pathToAPIFile.."; ")
-					if(firstError)then
-						if(term.isColor())then term.setTextColor(colors.red) end
-						print("error found while loading api files, check logs/error for more informations! "..err)
-						term.setTextColor(colors.white)
-						firstError = false
-					end
-				end
-			else
-				print_log("error","[EVENT]["..file_name.."]["..l[i].."] While loading "..pathToAPIFile.."; ")
-				if(firstError)then
-					if(term.isColor())then term.setTextColor(colors.red) end
-					print("error found while loading api files, check logs/error for more informations! "..err)
-					term.setTextColor(colors.white)
-					firstError = false
-				end
-			end
-		end
-	end
 end
-
 
 -- 1.20
 function getEngineVersion()
@@ -219,63 +136,160 @@ end
 
 
 
-local function tableToNBT(t)
-	local nbt = ""
-	-- None-Table inputs first for easier debugging
-	for k,v in pairs(t) do
-		if(type(v)~="table")then
-			if(t[1]==nil)then
-				if(type(v)~="string" or v=="1b" or v=="0b")then
-					if(type(v) == "boolean")then
-						nbt = nbt..k..":"..tostring(v)..","
+
+function getNBTStringFromTable(t)
+	local function tableToNBT(t)
+		local nbt = ""
+		-- None-Table inputs first for easier debugging
+		for k,v in pairs(t) do
+			if(type(v)~="table")then
+				if(t[1]==nil)then
+					if(type(v)~="string" or v=="1b" or v=="0b")then
+						if(type(v) == "boolean")then
+							nbt = nbt..k..":"..tostring(v)..","
+						else
+							nbt = nbt..k..":"..v..","
+						end
 					else
-						nbt = nbt..k..":"..v..","
+						nbt = nbt..k..":\""..v.."\","
 					end
 				else
-					nbt = nbt..k..":\""..v.."\","
+					nbt = nbt..v..","
 				end
-			else
-				nbt = nbt..v..","
 			end
-		end
-	end	
-	
-	for k,v in pairs(t) do
-		if(type(v)=="table")then
-			if(v[1]~=nil)then
-				nbt = nbt..k..":["..string.sub(tableToNBT(v),1,-2).."],"
-			else
-				if(type(k)~="number")then
-					nbt = nbt..k..":{"..string.sub(tableToNBT(v),1,-2).."},"
+		end	
+		
+		for k,v in pairs(t) do
+			if(type(v)=="table")then
+				if(v[1]~=nil)then
+					nbt = nbt..k..":["..string.sub(tableToNBT(v),1,-2).."],"
 				else
-					nbt = nbt.."{"..string.sub(tableToNBT(v),1,-2).."},"
+					if(type(k)~="number")then
+						nbt = nbt..k..":{"..string.sub(tableToNBT(v),1,-2).."},"
+					else
+						nbt = nbt.."{"..string.sub(tableToNBT(v),1,-2).."},"
+					end
 				end
 			end
 		end
+		return nbt 
 	end
-	
-	return nbt 
-end
-function getNBTStringFromTable(t)
 	if(type(t)=="table")then
 		return "{"..string.sub(tableToNBT(t),1,-2).."}"
 	else
 		return ""
 	end
 end
+function convertNBTtoTable(startString)
+	local function getCharAtPos(str,pos) return string.sub(str,pos,pos)	end
+	local str = startString
+	local t = {}
+	local err = false
+	if(getCharAtPos(str,1)~="{" and getCharAtPos(str,1)~="[")then err = true Warning("[NBTtoTable] Wrong start of NBT! \""..getCharAtPos(str,1).."\" ("..startString..")") end
+	local isBlocky = (getCharAtPos(str,1) == "[")
+	str = str:sub(2,-1)
+	local keyCount = 0
+	while str:len()>0 and not err and str~="}" and str~="]" do
+		local key
+		local value
+	
+		-- Find key (or value if it is a list)
+		local i = 1
+		while (string.match(getCharAtPos(str,i),"%w") and i<str:len()) do
+			key = (key or "")..(getCharAtPos(str,i))
+			i = i + 1
+		end
+		if(not (getCharAtPos(str,i)==":" or (getCharAtPos(str,i)=="," and isBlocky)))then Warning("[NBTtoTable] End of key error \""..getCharAtPos(str,i).."\" (key = "..key..") ("..startString..") "..tostring(isBlocky).."") err = true end
+		if(getCharAtPos(str,i)=="," and isBlocky)then
+			value = key
+			key = keyCount
+			keyCount = keyCount + 1
+		else
+			str = str:sub(i+1,-1)
+			local function doString()
+				local j = 2
+				while ((not (getCharAtPos(str,j)=="\"" and getCharAtPos(str,j-1)~="\\")) and (j)<str:len()) do
+					value = (value or "")..(getCharAtPos(str,j))
+					j = j + 1
+				end
+				t[key] = (value)
+				str = str:sub(j+1,-1)
+			end
+			local function doNumber()
+				local j = 1
+				-- string.match(getCharAtPos(str,j),"%w") or getCharAtPos(str,j)=="." or (getCharAtPos(str,j)=="-" and j==1)
+				while (getCharAtPos(str,j)~="," and (j)<str:len()) do
+					value = (value or "")..(getCharAtPos(str,j))
+					j = j + 1
+				end
+				local typeIdentifier = value:sub(-1,-1)
+				-- Remove type identifier
+				str = str:sub(j,-1)
+				local v = value:sub(1,-2)
+				if(tonumber(v) or string.len(v)==0)then
+					-- Boolean
+					if(typeIdentifier=="b")then
+						t[key] = ("1"==v and true or false)
+					else -- Number of some kind
+						if(tonumber(typeIdentifier))then
+							t[key] = tonumber(v..typeIdentifier)
+						else
+							t[key] = tonumber(v)
+						end
+					end
+				else
+					t[key] = value
+				end
+			end
+			local function doTable()
+				local j = 2
+				local openSwrily = (getCharAtPos(str,1)=="{" and 1 or 0)
+				local openBlocky = (getCharAtPos(str,1)=="[" and 1 or 0)
+				local isString = false
+				local bracketString = getCharAtPos(str,1)
+				while ((openSwrily>=1 or openBlocky>=1) and (j)<str:len()) do
+					bracketString = bracketString..(getCharAtPos(str,j))
+					if(getCharAtPos(str,j)=="{" and not isString)then openSwrily = openSwrily + 1 end
+					if(getCharAtPos(str,j)=="[" and not isString)then openBlocky = openBlocky + 1 end
+					if(getCharAtPos(str,j)=="]" and not isString)then openBlocky = openBlocky - 1 end
+					if(getCharAtPos(str,j)=="}" and not isString)then openSwrily = openSwrily - 1 end
+					if(getCharAtPos(str,j)=="\"" and getCharAtPos(str,j-1)~="\\")then
+						isString = not isString
+					end
+					j = j + 1
+				end
+				t[key] = convertNBTtoTable(bracketString)
+				str = str:sub(bracketString:len()+1,-1)
+			end
 
+			-- Find Value
+			-- Is number
+			if(string.match(getCharAtPos(str,1),"%w") or getCharAtPos(str,1)=="-")then
+				doNumber()
+				-- Is string
+			elseif(getCharAtPos(str,1)=='"')then
+				doString()
+			elseif(getCharAtPos(str,1)=='{' or getCharAtPos(str,1)=='[')then
+				doTable()
+			else
+				Warning("[NBTtoTable] Invalid stuff type >"..getCharAtPos(str,1).."<")
+				err = true
+			end
+			if(getCharAtPos(str,1)~=",")then err = true Warning("[NBTtoTable] Invalid end of value! Got \""..getCharAtPos(str,1).."\" ("..startString..")") end
+		end
+		-- Remove something?
+		str = str:sub(2,-1)
+	end
+	return t
+end
 
-
+-- /////////////
 -- Grabbing system function and changing them for our use
-
-
-
+-- /////////////
 
 -- Custom type definitions for various stuff
-
 local customTypeRegister = {}
 local nativeType = type
-
 function getTypeOf(data)
 	if(nativeType(data)=="table")then
 		local meta = getmetatable(data)
