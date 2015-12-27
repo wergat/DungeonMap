@@ -1,0 +1,24 @@
+commands.exec("/tp @a 0 100 -10")
+sleep(1.8)
+commands.exec("/effect @a minecraft:blindness 2 1 true")
+commands.exec("/effect @a minecraft:night_vision 2 1 true")
+commands.exec("/tp @a 0 59 -10 0 -90")
+sleep(1.1)
+
+for i=1,30 do
+	commands.exec("/tp @a 0 "..(59+i/60).." -10 0 "..math.floor(-90+i*3))
+end
+commands.exec("/effect @a minecraft:nausea 9 0 true")
+for i=1,20 do
+	local h = math.sin(i/40*math.pi)/4
+	commands.exec("/tp @a 0 "..(59.5+h).." "..(-9.5+h).." 0 "..(math.sin(i/10)*50))
+end
+
+for i=1,15 do
+	local h = math.sin(i/30*math.pi)/4
+	commands.exec("/tp @a 0 "..(59.75+h).." "..(-9.2501+h).." 0 "..((45.465*((15-i)/15))))
+end
+
+for i=1,40 do
+	commands.exec("/tp @a 0 60 -9.0 "..math.floor(math.sin(i/10)*20).." "..(math.floor(math.sin(i/20)*100)/10))
+end

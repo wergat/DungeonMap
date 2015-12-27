@@ -1,7 +1,9 @@
+-- player:castSpell(spell) ???
 function getPlayerByName(_playerName)
 	local playerObject = {}
 	playerObject.name = _playerName
 	playerObject.position = {}
+	playerObject.rotation = {}
 	
 	-- Returns the player name
 	playerObject.getName = function(self)
@@ -33,6 +35,11 @@ function getPlayerByName(_playerName)
 		end
 	end
 	
+	playerObject.setScoreboardValue = function(self,scoreBoardName,scoreBoardValue)
+		local s,t = commands.exec("/scoreboard players set "..self.name.." "..scoreBoardName.." "..scoreBoardValue.."")
+	end
+	
+	
 	-- Get all values of all scoreboard of a player	
 	playerObject.getScoreboardData = function(self)
 		local s,t = commands.exec("/scoreboard players list "..self.name)
@@ -58,17 +65,23 @@ function getPlayerByName(_playerName)
 	
 	-- REturns the players current position
 	playerObject.getPosition = function(self)
-		local s,d = commands.exec("/tp "..self.name.." ~ ~ ~")
-		if(s)then
-			local data = d[1]
-			local s = string.match(data,"([^,]+),([^,]+),([^,]+)$") -- Special string required for calculation of the X-coord.
-			local x = tonumber(string.match(s,"(%d+).(%d*)$").."."..string.match(s,"(%d*)$"))
-			local y = tonumber(tostring(string.match(data,"([^,]+),([^,]+)$")))
-			local z = tonumber(tostring(string.match(data,"([^,]+)$")))
-			self.position = {["x"] = x,["z"] = y,["y"] = z}
-			return x,y,z
-		end
+		return self.position["x"],self.position["y"],self.position["z"]
 	end
+	
+	playerObject.getRotation = function(self)
+		return self.rotation["rX"],self.rotation["rY"]
+	end
+	
+	playerObject.updateLocation = function(self)
+		local s,d = commands.exec("/tp @e[name="..self.name..",type=ArmorStand] "..self.name.."")
+		local s,e = commands.exec("/entitydata @e[name="..self.name..",type=ArmorStand] {}")
+		local data = dcore.convertNBTtoTable(string.sub(e[1],30,-1))
+		self.position = {["x"] = data["Pos"]["0"] or 0,["y"] = data["Pos"]["1"] or 0,["z"] = data["Pos"]["2"] or 0}
+		self.rotation = {["rX"] = data["Rotation"]["0"] or 0,["rY"] = data["Rotation"]["1"] or 0}
+		local s,d = commands.exec("/tp @e[name="..self.name..",type=ArmorStand] 0 10 0")
+	end
+	
+	
 	
 	-- Set semi-important Metadata for player object
 	local metaTable = {}
@@ -81,4 +94,5 @@ function getPlayerByName(_playerName)
 end
 
 -- Register the type "PlayerObject" we just used
+-- TODO: maybe improve the testing for this?
 dcore.registerCustomType("PlayerObject",function(t) if((getmetatable(t)["type"] or "") == "PlayerObject")then return true end end)
