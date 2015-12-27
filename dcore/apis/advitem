@@ -1,6 +1,6 @@
 dcore.requireAPI("items")
 
-local function count(input)
+local function count(input) --Counts, I guess?
 	local int = 0
 	for k,v in pairs(input) do
 		int = int+1
@@ -9,7 +9,7 @@ local function count(input)
 end
 
 qualitys = {"usual","unusual","rare","extraordinary","epic","mythical","legendary","forgotten"}
-q_color = {"งf","งb","ง3","ง1","ง5","งd","ง6","ง4","ง2"}
+q_color = {"ยงf","ยงb","ยง3","ยง1","ยง5","ยงd","ยง6","ยง4","ยง2"}
 
 
 
@@ -169,7 +169,7 @@ function getLoreOfItem(_colorValue)
  local shopprice = advitem.getPriceOfItem(_colorValue)
  local enchArr = getItemData("loreTable")
  
- table.insert(enchArr,"\"Rarity is "..q_color[getItemData("quality")].."งo"..qualitys[getItemData("quality")].."ง5งo\"")
+ table.insert(enchArr,"\"Rarity is "..q_color[getItemData("quality")].."ยงo"..qualitys[getItemData("quality")].."ยง5ยงo\"")
  table.insert(enchArr,"\"Price is about "..shopprice.." gold\"")
  setItemData("loreTable",enchArr)
 end
