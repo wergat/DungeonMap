@@ -1,3 +1,4 @@
+--os.loadAPI(":dungeon/apis/dcore")
 dcore.requireAPI("advitem")
 dcore.requireAPI("potion")
 
@@ -273,7 +274,7 @@ function getChestData(_startDifficulty,_chestType)
 			break
 		end
 	 end
-	 dataTable["CustomName"] = (advitem.q_color[chestRarity]).."§"..firstToUpper(advitem.qualitys[chestRarity])..chest_types[_chestType].."ChestȲ"
+	 dataTable["CustomName"] = (advitem.q_color[chestRarity]).."§l"..firstToUpper(advitem.qualitys[chestRarity])..chest_types[_chestType].."Chest§r"
 	 return dataTable
 end
 
