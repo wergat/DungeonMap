@@ -1,29 +1,29 @@
 local formatting_colors = {
- {"ง0","Black","black",colors.black},
- {"ง1","Dark Blue","dark_blue",colors.blue},
- {"ง2","Dark Green","dark_green",colors.green},
- {"ง3","Dark Aqua","dark_aqua",colors.cyan},
- {"ง4","Dark Red","dark_red",colors.red},
- {"ง5","Dark Purple","dark_purple",colors.purple},
- {"ง6","Gold","gold",colors.orange},
- {"ง7","Gray","gray",colors.lightGray},
- {"ง8","Dark Gray","dark_gray",colors.gray},
- {"ง9","Blue","blue",colors.lightBlue},
- {"งa","Green","green",colors.lime},
- {"งb","Aqua","aqua",colors.cyan},
- {"งc","Red","red",colors.red},
- {"งd","Light Purple","light_purple",colors.magenta},
- {"งe","Yellow","yellow",colors.yellow},
- {"งf","White","white",colors.white}
+ {"ยง0","Black","black",colors.black},
+ {"ยง1","Dark Blue","dark_blue",colors.blue},
+ {"ยง2","Dark Green","dark_green",colors.green},
+ {"ยง3","Dark Aqua","dark_aqua",colors.cyan},
+ {"ยง4","Dark Red","dark_red",colors.red},
+ {"ยง5","Dark Purple","dark_purple",colors.purple},
+ {"ยง6","Gold","gold",colors.orange},
+ {"ยง7","Gray","gray",colors.lightGray},
+ {"ยง8","Dark Gray","dark_gray",colors.gray},
+ {"ยง9","Blue","blue",colors.lightBlue},
+ {"ยงa","Green","green",colors.lime},
+ {"ยงb","Aqua","aqua",colors.cyan},
+ {"ยงc","Red","red",colors.red},
+ {"ยงd","Light Purple","light_purple",colors.magenta},
+ {"ยงe","Yellow","yellow",colors.yellow},
+ {"ยงf","White","white",colors.white}
 }
 
 local formatting_codes = {
- {"งk","Obfuscated"},
- {"งl","Bold"},
- {"งm","Strikethrough"},
- {"งn","Underline"},
- {"งo","Italic"},
- {"งr","Reset"}
+ {"ยงk","Obfuscated"},
+ {"ยงl","Bold"},
+ {"ยงm","Strikethrough"},
+ {"ยงn","Underline"},
+ {"ยงo","Italic"},
+ {"ยงr","Reset"}
 }
 
 local wool_colors = {
@@ -46,7 +46,7 @@ local wool_colors = {
 }
 
 -- Input: official name of wanted color
--- returns Code, e.g. งe
+-- returns Code, e.g. ยงe
 function getFCCodeByOfficialName(_offName)
  local foundCode
  for i=1,16 do
@@ -70,7 +70,7 @@ function qColorToCCColor(_qColor)
 end
 
 
--- Input: color HEX code
+-- Input: color hex code
 -- returns name of color
 function inspectColor(_color)
  local color = tonumber("0x".._color) or tonumber(_color) or 1 -- 1 to ?
@@ -136,4 +136,4 @@ function inspectColor(_color)
  return output
 end
 
-_G["SS"] = function(s) return "ง"..tostring(s) end
+_G["SS"] = function(s) return "ยง"..tostring(s) end
