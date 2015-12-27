@@ -4,7 +4,7 @@ config = {
 	DIR_TOTAL = ":dungeon", -- Default: ":dungeon"
 	DIR_MODS = ":dungeon/mods", -- Default: ":dungeon/mods"
 	DIR_LOGS = ":dungeon/logs", -- Default: ":dungeon/logs"
-	DIR_APIS = ":dungeon/dcore/apis", -- Default: "dungeon/dcore/apis"
+	DIR_APIS = ":dungeon/dcore/apis", -- Default: ":dungeon/apis"
 	
 	-- // Performance Settings	
 	-- The amount of commands the computer runs before sleeping
@@ -66,6 +66,7 @@ function print_log(file,text)
 		end
 	end
 end
+
 function requireAPI(...)
 	local tArgs = { ... }
 	for i=1,#tArgs do
@@ -93,6 +94,7 @@ function requireAPI(...)
 		end
 	end
 end
+
 function isModEnabled(modName)
 	if(fs.exists(":dungeon/mods/"..modName))then
 		local status = false
@@ -108,8 +110,8 @@ function isModEnabled(modName)
 end
 
 function Error(text,level)
-	print_log("error","[ERROR]   "..text)
-	error(text,level or 3)
+	print_log("error",text)
+	error(text,3)
 end
 
 function Warning(text)
@@ -117,8 +119,93 @@ function Warning(text)
 end
 
 function loadSimilarApis(_forceName)
+	-- File name
+	local file_name = tostring(_forceName) or "--"
+	-- get all mod dirs
+	local l = fs.list(config.DIR_MODS)
+	
+	for i=1,#l do
+		if(isModEnabled(l[i]))then
+			-- l[i] = Modname
+			local pathToAPIFile = config.DIR_MODS.."/"..l[i].."/apis/"..file_name
+			if(fs.exists(pathToAPIFile))then
+				print_log("dcore","[API]["..l[i].."] Loading mod-api "..pathToAPIFile.."")
+				-- Load functions of Mod API's files
+				if(_G[file_name]==nil)then _G[file_name] = {} end
+				local fenv = _G[file_name]
+				fenv["config"] = config		
+				
+				local tEnv = setmetatable(fenv, { __index = _G } )
+				local fnAPI, err = loadfile(pathToAPIFile)
+				if fnAPI then
+					setfenv( fnAPI, tEnv )
+					local ok, err = pcall( fnAPI )
+					if not ok then
+						print_log("error","[API]["..l[i].."] While loading "..pathToAPIFile.."; ")
+						if(firstError)then
+							if(term.isColor())then term.setTextColor(colors.red) end
+							print("error found while loading api files, check logs/error for more informations! "..err)
+							term.setTextColor(colors.white)
+							firstError = false
+						end
+					end
+				else
+					print_log("error","[API]["..l[i].."] While loading "..pathToAPIFile.."; ")
+					if(firstError)then
+						if(term.isColor())then term.setTextColor(colors.red) end
+						print("error found while loading api files, check logs/error for more informations! "..err)
+						term.setTextColor(colors.white)
+						firstError = false
+					end
+				end
+				for k,v in pairs(tEnv) do
+					print_log("dcore","[API]["..l[i].."]["..file_name.."] Loading "..type(v).." "..k.." --> "..file_name.."."..k.."")
+					_G[file_name][k] = v
+				end   
+			end
+		else
+			print_log("dcore","[API]["..l[i].."] Is disabled by client, won't be loaded!")
+		end
+	end
 end
+
 function runFileInAllMods(_fileName)
+	-- File name
+	local file_name = tostring(_fileName) or "--"
+	
+	print_log("dcore","[EVENT] STARTED EVENT "..file_name.." !")
+	-- get all mod dirs
+	local l = fs.list(config.DIR_MODS)
+	for i=1,#l do
+		-- l[i] = Modname
+		local pathToAPIFile = config.DIR_MODS.."/"..l[i].."/event/"..file_name
+		if(fs.exists(pathToAPIFile))then
+			print_log("dcore","[EVENT]["..file_name.."]["..l[i].."] Starting "..pathToAPIFile.."")
+			local tEnv = setmetatable({}, { __index = _G } )
+			local fnAPI, err = loadfile(pathToAPIFile)
+			if fnAPI then
+				setfenv( fnAPI, tEnv )
+				local ok, err = pcall( fnAPI )
+				if not ok then
+					print_log("error","[EVENT]["..file_name.."]["..l[i].."] While loading "..pathToAPIFile.."; ")
+					if(firstError)then
+						if(term.isColor())then term.setTextColor(colors.red) end
+						print("error found while loading api files, check logs/error for more informations! "..err)
+						term.setTextColor(colors.white)
+						firstError = false
+					end
+				end
+			else
+				print_log("error","[EVENT]["..file_name.."]["..l[i].."] While loading "..pathToAPIFile.."; ")
+				if(firstError)then
+					if(term.isColor())then term.setTextColor(colors.red) end
+					print("error found while loading api files, check logs/error for more informations! "..err)
+					term.setTextColor(colors.white)
+					firstError = false
+				end
+			end
+		end
+	end
 end
 
 -- 1.20
@@ -133,9 +220,6 @@ end
 function version()
 	return "0.12b";
 end
-
-
-
 
 function getNBTStringFromTable(t)
 	local function tableToNBT(t)
@@ -158,7 +242,7 @@ function getNBTStringFromTable(t)
 				end
 			end
 		end	
-		
+		-- Table inputs later for easier debugging
 		for k,v in pairs(t) do
 			if(type(v)=="table")then
 				if(v[1]~=nil)then
@@ -283,6 +367,7 @@ function convertNBTtoTable(startString)
 	return t
 end
 
+
 -- /////////////
 -- Grabbing system function and changing them for our use
 -- /////////////
@@ -290,6 +375,7 @@ end
 -- Custom type definitions for various stuff
 local customTypeRegister = {}
 local nativeType = type
+
 function getTypeOf(data)
 	if(nativeType(data)=="table")then
 		local meta = getmetatable(data)
@@ -305,6 +391,7 @@ function getTypeOf(data)
 	end
 	return nativeType(data)
 end
+
 _G["type"] = getTypeOf
 
 function registerCustomType(typeName,typeFunction)
