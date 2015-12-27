@@ -1,4 +1,7 @@
 local function get_vv(id)
+	if not fs.exists(".config") then
+		return nil
+	end
 	local open = fs.open(".config", "r")
 	local all = open.readAll()
 	open.close()
@@ -6,12 +9,12 @@ local function get_vv(id)
 	if all[id] then
 		return all[id]
 	else
-		return false
+		return nil
 	end
 end
 
 if get_vv("lv") then
-	trades = {"{buy:" .. dcore.getNBTStringFromTable(getCurrencyTradeTablesByPrice(10000, 2)) .. ",maxUses:999999,sell:{id:40,Count:1,Damage:0,tag:{display:{Name:\"1-Up\",Lore:[\"© Half-Price Drugs 1981-2023\"]}}},rewardExp:false}"}
+	trades = {"{buy:" .. dcore.getNBTStringFromTable(getCurrencyTradeTablesByPrice(10000, 2)) .. ",maxUses:999999,sell:{id:40,Count:1,Damage:0,tag:{display:{Name:\"1-Up\",Lore:[\"ɠHalf-Price Drugs 1981-2023\"]}}},rewardExp:false}"}
 end
 if http.get("http://www.timeapi.org/utc/now?%25b") then
 	local month = http.get("http://www.timeapi.org/utc/now?%25b").readAll()
