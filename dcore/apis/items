@@ -4,7 +4,7 @@ local items = {}
  items[261] = {["type"] = "weapon",["id"] = "minecraft:bow",["name"] = "Bow",["sets"] = {5},["durability"] = 385,["stack_size"] = 1}
  items[267] = {["type"] = "weapon",["id"] = "minecraft:iron_sword",["name"] = "Iron Sword",["sets"] = {3,101},["durability"] = 251,["stack_size"] = 1}
  items[268] = {["type"] = "weapon",["id"] = "minecraft:wooden_sword",["name"] = "Wooden Sword",["sets"] = {1},["durability"] = 60,["stack_size"] = 1}
- items[272] = {["type"] = "weapon",["id"] = "minecraft:wooden_sword",["name"] = "Stone Sword",["sets"] = {2},["durability"] = 132,["stack_size"] = 1}
+ items[272] = {["type"] = "weapon",["id"] = "minecraft:stone_sword",["name"] = "Stone Sword",["sets"] = {2},["durability"] = 132,["stack_size"] = 1}
  items[276] = {["type"] = "weapon",["id"] = "minecraft:diamond_sword",["name"] = "Diamond Sword",["sets"] = {},["durability"] = 1562,["stack_size"] = 1}
  items[283] = {["type"] = "weapon",["id"] = "minecraft:golden_sword",["name"] = "Golden Sword",["sets"] = {4},["durability"] = 33,["stack_size"] = 1}
  
