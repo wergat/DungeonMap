@@ -14,12 +14,7 @@ local function get_vv(id)
 end
 
 if get_vv("lv") then
-	trades = {"{buy:" .. dcore.getNBTStringFromTable(getCurrencyTradeTablesByPrice(10000, 2)) .. ",maxUses:999999,sell:{id:40,Count:1,Damage:0,tag:{display:{Name:\"1-Up\",Lore:[\"ɠHalf-Price Drugs 1981-2023\"]}}},rewardExp:false}"}
+	trades = {"{buy:" .. dcore.getNBTStringFromTable(getCurrencyTradeTablesByPrice(10000, 2)) .. ",maxUses:999999,sell:{id:40,Count:1,Damage:0,tag:{display:{Name:\"1-Up\",Lore:[\"© Half-Price Drugs 1981-2023\"]}}},rewardExp:false}"}
 end
-if http.get("http://www.timeapi.org/utc/now?%25b") then
-	local month = http.get("http://www.timeapi.org/utc/now?%25b").readAll()
-	local day = http.get("http://www.timeapi.org/utc/now?%25d").readAll()
-	if month == "Dec" and tonumber(day) > 23 then --Katmas, treated as December 24-31
-		trades[#trades+1] = "{buy:" .. dcore.getNBTStringFromTable(getCurrencyTradeTablesByPrice(100, 2)) .. ",maxUsers:999999,sell:{id:383,Count:1,Damage:98,tag:{display:{Name:\"Kitty\",Lore:[\"On the Sixteenth day of Ka- wait, sorry.\"]}}}}"
-	end
-end
+--Previously christmas-only, now all time
+trades[#trades+1] = "{buy:" .. dcore.getNBTStringFromTable(getCurrencyTradeTablesByPrice(100, 2)) .. ",maxUsers:999999,sell:{id:383,Count:1,Damage:98,tag:{display:{Name:\"Bilbo the Cat\",Lore:[\"R.I.P Bilbo, Early 2008-December 28th, 2015.\", \"You will be missed.\"]}}}}"
