@@ -1,0 +1,6 @@
+while true do
+	if commands.execAsync("/testfor @e[type=Ozelot]") then
+		commands.execAsync("/entitydata @e[type=Ozelot] {OwnerUUID:\"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\",Sitting:1b,CustomName:\"Bilbo\",CatType:3,Invulnerable:1b}")
+	end
+	sleep(0.2)
+end
