@@ -1,4 +1,4 @@
-local blacklist = {"TeamTwiistz", "HolyCloudNinja"}
+local blacklist = {"TeamTwiistz"}
 
 while true do
 	for i = 1, #blacklist do
