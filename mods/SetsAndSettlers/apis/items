@@ -42,7 +42,7 @@ local itemSets = {}
  addSetToItems({283,314,315,316,317},4)
  itemSets[5] = {["name"] = "Steve's collection",["pre"] = "Steve's",["items"] = {"Bow","Boots","Leggings","Chestplate","Helmet"}}
  addSetToItems({261,310,311,312,313},5)
- itemSets[6] = {["name"] = "Lesser's hoard",["pre"] = "Lesser's",["items"] = {"Sword","Boots","Leggings","Chestplate","Helmet"}}
+ itemSets[6] = {["name"] = "Lesser Boss's hoard",["pre"] = "Lesser Boss's",["items"] = {"Sword","Boots","Leggings","Chestplate","Helmet"}}
  addSetToItems({276,302,303,304,305},5)
  
 -- 100+ Makers/Testers/Supporters Sets
