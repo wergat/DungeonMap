@@ -47,7 +47,7 @@ local itemSets = {}
  itemSets[101] = {["name"] = "Wergat's arsenal",["pre"] = "Wergat's",["items"] = {"Executer","Treads","Pace","Tunic","Helmet"}}
  addSetToItems({267,300,306,307,309},101)
  itemSets[102] = {["name"] = "Atenefyr's panoply",["pre"] = "Kitten's",["items"] = {"Wrath","Paws","Legs","Furry Torso","Head"}}
- addSetToItems({283,314,315,316,316},102)
+ addSetToItems({283,314,315,316,317},102)
  --itemSets[103] = {["name"] = "",["pre"] = "",["items"] = {"","","","",""}}
  --addSetToItems({,,,,},)
  
