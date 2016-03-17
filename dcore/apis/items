@@ -129,7 +129,7 @@ end
 -- TODO: once 1.8 approaches, optimize this function for it!
 function useRightItemID(input)
 	local itemId = getIDWithID(input)
-	if(USE_STRING_FOR_ITEM_ID)then
+	if(config.USE_STRING_FOR_ITEM_ID)then
 		return items[itemId]["id"]
 	else
 		return itemId
