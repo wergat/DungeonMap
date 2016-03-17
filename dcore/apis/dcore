@@ -1,5 +1,5 @@
 -- Config, you can change this if you want
-config = {
+_G["config"] = {
 	-- General folder stuff, recommended to leave as it is
 	DIR_TOTAL = ":dungeon", -- Default: ":dungeon"
 	DIR_MODS = ":dungeon/mods", -- Default: ":dungeon/mods"
