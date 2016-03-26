@@ -1,3 +1,6 @@
+os.loadAPI(":dungeon/dcore/apis/dcore")
+dcore.requireAPI("github")
+
 JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
 print("Welcome to the Dungeon Map updater!")
 
@@ -16,6 +19,12 @@ if not http.get("https://api.github.com/") then
 	end
 	error()
 end
+
+if(not github)then
+	printError("Github API is not installed!")
+	error("Github API is not installed!")
+end
+
 
 local SHACodes = {}
 if fs.exists(":dungeon/hashes") then
@@ -49,7 +58,8 @@ elseif(a==4)then
 	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/")
 end
 
-
+local githubKey = github.pickWorkingKey(github.keylist)
+github.setKey(githubKey)
 
 
 
@@ -79,12 +89,12 @@ local cancle
 
 local function downloadFromDir(url)
 	if(cancle)then return end
-	local x = http.get(url)
+	local x = github.get(url)
 	if x then
 		x = x.readAll()
 	else
 		local currentTime = getCurrentTimeAsUNIXTimespamp()
-		local githubRateTable = JSON:decode(http.get("https://api.github.com/rate_limit").readAll())
+		local githubRateTable = JSON:decode(github.get("https://api.github.com/rate_limit").readAll())
 		local githubRateLimit = githubRateTable["resources"]["core"]["reset"]
 		local waitTime = githubRateLimit - currentTime
 		local mins = math.floor(waitTime/60)
@@ -111,7 +121,7 @@ local function downloadFromDir(url)
 			for k,v in pairs(BLACKLIST) do if(v==path)then return end end
 			print(" Downloading file: " .. path)
 			logfile.writeLine("Downloading file: " .. path)
-			local xt = http.get(f["download_url"]).readAll()
+			local xt = github.get(f["download_url"]).readAll()
 			local open = fs.open("dungeon/" .. path, "w")
 			open.write(xt)
 			open.close()
