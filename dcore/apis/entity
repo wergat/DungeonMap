@@ -1,0 +1,52 @@
+function newSelector(arg)
+	local selectorObject = {
+		["selector"] = tostring((arg or "e")),
+		["arguments"] = {},
+		["setSelector"] = function(self,newSelector)
+			self.selector = newSelector
+			return self
+		end,
+		["setArgument"] = function(self,argument,value)
+			self.arguments[argument] = value
+			return self
+		end,
+		["add"] = function(self,argument,value)
+			return self:setArgument(argument,value)
+		end,
+		["toString"] = function(self)
+			local args = ""
+			for k,v in pairs(self.arguments)do
+				args = args..k.."="..v..","
+			end
+			if(args~="")then args = "["..args.."]" end
+			return "@"..self.selector..args
+		end
+	}
+	
+	local metaTable = {}
+	metaTable["type"] = "EntityObject"
+	metaTable["__tostring"] = function(self)
+		return self:toString()
+	end
+	
+	selectorObject = setmetatable(selectorObject,metaTable)
+	
+	return selectorObject
+end
+function newSel(arg)
+	return newSelector(arg)
+end
+
+
+function newEntity()
+	local entityObject = {}
+	entityObject.selector = {}
+	
+	return entityObject
+end
+
+
+
+
+dcore.registerCustomType("EntityObject")
+dcore.registerCustomType("SelectorObject")

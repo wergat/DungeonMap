@@ -42,14 +42,12 @@ local itemSets = {}
  addSetToItems({283,314,315,316,317},4)
  itemSets[5] = {["name"] = "Steve's collection",["pre"] = "Steve's",["items"] = {"Bow","Boots","Leggings","Chestplate","Helmet"}}
  addSetToItems({261,310,311,312,313},5)
- itemSets[6] = {["name"] = "Lesser Boss's hoard",["pre"] = "Lesser Boss's",["items"] = {"Sword","Boots","Leggings","Chestplate","Helmet"}}
- addSetToItems({276,302,303,304,305},5)
  
 -- 100+ Makers/Testers/Supporters Sets
  itemSets[101] = {["name"] = "Wergat's arsenal",["pre"] = "Wergat's",["items"] = {"Executer","Treads","Pace","Tunic","Helmet"}}
  addSetToItems({267,300,306,307,309},101)
  itemSets[102] = {["name"] = "Atenefyr's panoply",["pre"] = "Kitten's",["items"] = {"Wrath","Paws","Legs","Furry Torso","Head"}}
- addSetToItems({283,314,315,316,317},102)
+ addSetToItems({283,314,315,316,316},102)
  --itemSets[103] = {["name"] = "",["pre"] = "",["items"] = {"","","","",""}}
  --addSetToItems({,,,,},)
  
@@ -61,9 +59,10 @@ function getSetByID(_setId)
 end
 
 function getRandomSetIDByItem(_itemId)
- local setsToChooseFrom = #getItem(_itemId)["sets"]
- if(setsToChooseFrom<1 or getItem(_itemId)["sets"]==nil)then return nil else
-  local choosenSet = math.random(setsToChooseFrom)
-  return getItem(_itemId)["sets"][choosenSet]
- end
+	local item = items.getItem(_itemId)
+	local setsToChooseFrom = #item["sets"]
+	if(setsToChooseFrom<1 or items.getItem(_itemId)["sets"]==nil)then return nil else
+		local choosenSet = math.random(setsToChooseFrom)
+		return items.getItem(_itemId)["sets"][choosenSet]
+	end
 end

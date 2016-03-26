@@ -2,7 +2,7 @@ os.loadAPI(":dungeon/dcore/apis/dcore")
 dcore.requireAPI("mob")
 
 local tArgs = {...}
-local difficulty = tonumber(tArgs[1]) or 1 -- 1 to ?
+local difficulty = tonumber(tArgs[1]/20) or 1 -- 1 to ?
 local mobName = tArgs[2]-- 1 to ?
 
 print("Summoning d:"..difficulty.." t:"..(mobName or "?").."")

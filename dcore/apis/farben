@@ -73,7 +73,7 @@ end
 -- Input: color hex code
 -- returns name of color
 function inspectColor(_color)
- local color = tonumber("0x".._color) or tonumber(_color) or 1 -- 1 to ?
+ local color = tonumber(_color) or 1 -- 1 to ?
 
  r = math.floor(color/65536)
  g = math.floor((color%65536)/256)
@@ -95,8 +95,7 @@ function inspectColor(_color)
  if(brightness>.55)then output = "bright " end
  if(brightness>.65)then output = "light " end
  if(brightness>.75)then output = "really bright " end
- 
- 
+
  if(r==0 and g==0 and b==0)then output = "Black"
  elseif(r==4 and g==4 and b==4)then output = "White"
  elseif(r==g and r==b and b==g)then output = output.."gray"

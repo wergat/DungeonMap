@@ -1,360 +1,424 @@
 dcore.requireAPI("items")
+dcore.requireAPI("farben")
+dcore.requireAPI("ench")
 
+
+-- //////////////////
+--  Data calculation and initialization
+-- //////////////////
+
+-- ///// Rarity data/calculations
+local rarityLevels = {"usual","unusual","rare","extraordinary","epic","mythical","legendary","forgotten"}
+-- Gets rarity name from rarity level
+function getRarity(_v)
+	return rarityLevels[_v] or nil
+end
+local rarityColors = {"f","b","3","1","5","d","6","4"}
+-- Gets rarity color from rarity level
+function getRarityColor(_v)
+	if(not _v or _v>#rarityColors)then error("Please give a number! ".._v.." does not seem to be a good one!") end
+	return SS(rarityColors[_v]) or nil
+end
+-- Calculates rarity level, optional input is minimum rarity level
+function getRarityLevelOfItem(_forceRarity)
+	local r = _forceRarity or 1
+	local chance = {0.25,0.3,0.35,0.4,0.4,0.4,0.4,0.4} --{1,1,1,1,1,0.75,0.1,0.1}
+	while((math.random(20)/20)<=chance[r] and r<#chance)do r = r + 1 end
+	return r
+end
+
+-- ///// Enchantment Caching
+-- Gathers valid enchantments for an item
+local cachedEFI = {} -- Cached Enchantment for item
+function getEnchantmentForItem(item)
+	return cachedEFI[item]
+end
+local function initcEFI()
+	local eD = ench.getEnchData()
+	for enchId,enchT in pairs(eD) do
+		-- Primary items
+		for _,v in pairs(enchT["primary"])do
+			for _,w in pairs(items.getAllChildren(v))do
+				if(not cachedEFI[w])then cachedEFI[w] = {["primary"] = {},["secondary"] = {}} end
+				table.insert(cachedEFI[w]["primary"],enchId-1)
+			end
+		end
+		-- Secondary items
+		for _,v in pairs(enchT["secondary"])do
+			for _,w in pairs(items.getAllChildren(v))do
+				if(not cachedEFI[w])then cachedEFI[w] = {["primary"] = {},["secondary"] = {}} end
+				table.insert(cachedEFI[w]["secondary"],enchId-1)
+			end
+		end
+	end
+end
+-- Initialize enchantment caching
+initcEFI()
+-- ///// 
+
+
+
+-- ///// Used functions
+-- Counts how many elements a table really has
 local function count(input) --Counts, I guess?
-	local int = 0
+	local int = 0           --Yes it does!
 	for k,v in pairs(input) do
 		int = int+1
 	end
 	return int
 end
-
-qualitys = {"usual","unusual","rare","extraordinary","epic","mythical","legendary","forgotten"}
-q_color = {"§f","§b","§3","§1","§5","§d","§6","§4","§2"}
-
-
-
-
--- Data for the Item generated
-local itemData = {}
-
--- Equipment for mobs
-local equipment = {}
-equipment["zombie"] = {
-	{["chance"] = 0.8,["items"] = {268,272,283,267,276},["type"] = "Sword"}, -- HAND
-	{["chance"] = 0.3,["items"] = {301,305,317,309,313},["type"] = "Feet"}, -- FEET
-	{["chance"] = 0.3,["items"] = {300,304,316,308,312},["type"] = "Legs"}, -- LEGS
-	{["chance"] = 0.4,["items"] = {299,303,315,307,311},["type"] = "Chest"}, -- CHEST
-	{["chance"] = 0.6,["items"] = {298,302,314,306,310},["type"] = "Head"}, -- HEAD
-}
-equipment["melee_skeleton"] = equipment["zombie"]
-equipment["player"] = equipment["zombie"]
-equipment["ranged_skeleton"] = {
-	{["chance"] = 1,["items"] = {261,261,261,261,261},["type"] = "Bow"}, -- HAND
-	{["chance"] = 0.3,["items"] = {301,305,317,309,313},["type"] = "Feet"}, -- FEET
-	{["chance"] = 0.3,["items"] = {300,304,316,308,312},["type"] = "Legs"}, -- LEGS
-	{["chance"] = 0.4,["items"] = {299,303,315,307,311},["type"] = "Chest"}, -- CHEST
-	{["chance"] = 0.6,["items"] = {298,302,314,306,310},["type"] = "Head"}, -- HEAD
-}
-
--- No equipment for those mobs (Cannot wear it)
-equipment["spider"] = {nil}
-equipment["caveSpider"] = {nil}
-equipment["blaze"] = {nil}
-equipment["creeper"] = {nil}
-equipment["slime"] = {nil}
-equipment["witch"] = {nil}
-equipment["wolf"] = {nil}
-equipment["enderman"] = {nil}
-equipment["endermite"] = {nil}
- 
--- Enchantment Data
- local allench = {
-  ["Sword"] = {
-   {["id"] = 16,["maxlv"] = 5,["chance"] = .2}, -- Sharpness
-   {["id"] = 17,["maxlv"] = 5,["chance"] = .2}, -- Smite
-   {["id"] = 18,["maxlv"] = 5,["chance"] = .2}, -- Bane of A
-   {["id"] = 19,["maxlv"] = 2,["chance"] = .1}, -- Knockback
-   {["id"] = 20,["maxlv"] = 2,["chance"] = .1}, -- Fire Aspact
-   {["id"] = 21,["maxlv"] = 3,["chance"] = .1}, -- Looting
-   {["id"] = 34,["maxlv"] = 3,["chance"] = .3}, -- Unbreaking
-  }, 
-  ["Feet"] = {
-   {["id"] = 34,["maxlv"] = 3,["chance"] = .3}, -- Unbreaking
-   {["id"] = 0,["maxlv"] = 4,["chance"] = .3}, -- Protection
-   {["id"] = 1,["maxlv"] = 4,["chance"] = .1}, -- Fire Protection
-   {["id"] = 2,["maxlv"] = 4,["chance"] = .4}, -- Feather Falling
-   {["id"] = 3,["maxlv"] = 4,["chance"] = .15}, -- Blast Protection
-   {["id"] = 4,["maxlv"] = 4,["chance"] = .3}, -- Proj. Protection
-   {["id"] = 7,["maxlv"] = 3,["chance"] = .01}, -- Thorns
-   {["id"] = 8,["maxlv"] = 3,["chance"] = .1}, -- Thorns
-  },
-  ["Legs"] = {
-   {["id"] = 34,["maxlv"] = 3,["chance"] = .3}, -- Unbreaking
-   {["id"] = 0,["maxlv"] = 4,["chance"] = .3}, -- Protection
-   {["id"] = 1,["maxlv"] = 4,["chance"] = .3}, -- Fire Protection
-   {["id"] = 3,["maxlv"] = 4,["chance"] = .15}, -- Blast Protection
-   {["id"] = 4,["maxlv"] = 4,["chance"] = .15}, -- Proj. Protection
-   {["id"] = 7,["maxlv"] = 3,["chance"] = .01}, -- Thorns
-  },
-  ["Chest"] = {
-   {["id"] = 34,["maxlv"] = 3,["chance"] = .3}, -- Unbreaking
-   {["id"] = 0,["maxlv"] = 4,["chance"] = .3}, -- Protection
-   {["id"] = 1,["maxlv"] = 4,["chance"] = .3}, -- Fire Protection
-   {["id"] = 3,["maxlv"] = 4,["chance"] = .15}, -- Blast Protection
-   {["id"] = 4,["maxlv"] = 4,["chance"] = .15}, -- Proj. Protection
-   {["id"] = 7,["maxlv"] = 3,["chance"] = .1}, -- Thorns
-  },
-  ["Head"] = {
-   {["id"] = 34,["maxlv"] = 3,["chance"] = .3}, -- Unbreaking
-   {["id"] = 0,["maxlv"] = 4,["chance"] = .3}, -- Protection
-   {["id"] = 1,["maxlv"] = 4,["chance"] = .3}, -- Fire Protection
-   {["id"] = 3,["maxlv"] = 4,["chance"] = .15}, -- Blast Protection
-   {["id"] = 4,["maxlv"] = 4,["chance"] = .15}, -- Proj. Protection
-   {["id"] = 7,["maxlv"] = 3,["chance"] = .01}, -- Thorns
-  },
-  ["Bow"] = {
-   {["id"] = 48,["maxlv"] = 5,["chance"] = .3}, -- Power
-   {["id"] = 49,["maxlv"] = 2,["chance"] = .3}, -- Punch
-   {["id"] = 50,["maxlv"] = 1,["chance"] = .15}, -- Flame
-   {["id"] = 51,["maxlv"] = 1,["chance"] = .15}, -- Infinity
-   {["id"] = 34,["maxlv"] = 3,["chance"] = .3}, -- Unbreaking
-  },
- }
-
- 
+-- Overrides one table by another... might not work that well...
 local function overrideTable(_a,_b)
- local c = _a
- for k,v in pairs(_b) do
-  if(type(v)=="table")then
-   c[k] = overrideTable(_a[k],v)
-  else
-   c[k] = v
-  end
- end
- return c
-end
-function setItemData(_key,_value)
- itemData[_key] = _value
-end
-function addOnItemData(_key,_value)
- itemData[_key] = itemData[_key] + _value
-end
-function getItemData(_key)
- if(_key)then
-  return itemData[_key]
- else
-  return itemData
- end
-end
-
--- Hijack-able function
-function equipmentRandTier(piecechance,difficulty)
- local tier = getItemData("tier")
- if(difficulty<10)then
-  return math.random(difficulty+3)<(difficulty*piecechance)-(16*tier)+(math.floor(difficulty*0.9))+(math.floor((difficulty-5)*0.9))
- elseif(difficulty<32)then
-  return math.random(difficulty+3)<(difficulty*piecechance)-(17*tier)+(math.floor(difficulty*0.85))+(math.floor((difficulty-5)*0.8))-(math.floor((difficulty-11)*1.1))
- else
-  return math.random(difficulty)<(difficulty*piecechance)-(18*tier)+(math.floor(difficulty*0.6))
- end
-end
-function getColorOfArmor()
- local r,g,b = 0
- 
- for i=1,4 do
-  r = (r or 0)+((math.random(2)-1))
-  g = (g or 0)+((math.random(2)-1))
-  b = (b or 0)+((math.random(2)-1))
- end
- 
- local rarity_level = math.pow((2-r),2)+math.pow((2-g),2)+math.pow((2-b),2)
- local colorCode = (math.floor(b*63.75)+256*math.floor(g*63.75)+65536*math.floor(r*63.75))
- return colorCode,rarity_level
-end
-function getPriceOfItem(color_value)
- local q = getItemData("quality")
- return math.floor(((getItemData("baseprice")+q)*(3^(q))/2+getItemData("enchprice"))*((10+color_value)/10))
-end
-function getRarityLevelOfItem(_forceQ)
- -- change back to "_forceQ or 1", when releasing!!!
- local q = _forceQ or 1
- local chance = {0.75,0.75,0.75,0.75,0.75,0.75,0.75,0.75} --{0.25,0.3,0.35,0.4,0.4,0.4,0.4,0.4}
- while((math.random(20)/20)<=chance[q] and q<#qualitys)do q = q + 1 end
- return q
-end
-
-
-
-function getLoreOfItem(_colorValue)
- local shopprice = advitem.getPriceOfItem(_colorValue)
- local enchArr = getItemData("loreTable")
- 
- table.insert(enchArr,"\"Rarity is "..q_color[getItemData("quality")].."§o"..qualitys[getItemData("quality")].."§5§o\"")
- table.insert(enchArr,"\"Price is about "..shopprice.." gold\"")
- setItemData("loreTable",enchArr)
-end
-
-
--- Equipment processing functions
-function initializeItem(_dlevel,_typeOfItem,mobname,_forceQ)
- -- TODO: Check inputs!
- 
- setItemData("dataTable",{})
- setItemData("loreTable",{})
- setItemData("enchTable",{})
- setItemData("color",nil)
- 
- setItemData("difficultyLevel",_dlevel)
- 
- setItemData("tier",0) -- tier of weapon/armor
- setItemData("value",0) -- level-like value of item
- setItemData("baseprice",0)
- setItemData("enchprice",0)
- setItemData("quality",advitem.getRarityLevelOfItem(_forceQ))
-
- 
- setItemData("mobname",mobname)
- 
- -- what slot the item is in
- setItemData("slot",_typeOfItem or math.random(#equipment[mobname]))
- 
- if(equipment[mobname][getItemData("slot")]~=nil)then
-  -- getTierOfWeapon()
-  while(advitem.equipmentRandTier(equipment[mobname][getItemData("slot")]["chance"],_dlevel) and getItemData("tier")<#equipment[mobname][getItemData("slot")]["items"])do --+math.floor(difficulty+3/(difficulty))
-   addOnItemData("tier",1)
-   addOnItemData("value",((getItemData("tier")-1)*2+1))
-   addOnItemData("baseprice",((getItemData("tier")-1)*23+11))
-  end
- end
- 
- setItemData("itemID",0)
- if(equipment[mobname]~=nil)then
-  if(#equipment[mobname]>0)then
-   setItemData("itemID",equipment[mobname][getItemData("slot")]["items"][getItemData("tier")] or 0)
-  end
- end
-end
-function getMobName(_mobname)
- local mobname = _mobname or "zombie"
- 
- if(equipment[mobname] == nil)then
-  mobname = "zombie"
- end 
- 
- if(math.random(10)==1 and mobname=="player")then
-  mobname = "ranged_skeleton"
-  setItemData("slot",1)
- end
- 
- return mobname
-end
-function canOneMoreEnchantment(_dlevel,es)
- local difficultyAdder = (-17*es)
- local levelReducer = (math.floor(_dlevel/8)*5)
- local tierAdder = ((1-getItemData("tier"))*3)
- return (math.random(_dlevel)<_dlevel+difficultyAdder+levelReducer+tierAdder)
-end
-function getEnchantmentOfItem()
- local choosen_ench = {}
- local es = 1 -- how many enchantment, increases difficulty over time, increases with timeouts
- local effective_es = 1 -- how many enchantment, increases item value over time, not effected by timeouts
- 
- -- Hardness Level for mob to generate
- local dLevel = getItemData("difficultyLevel")
- local mobname = getItemData("mobname")
- local slot = getItemData("slot")
- 
-	-- Calculating ench on item
- while(canOneMoreEnchantment(dLevel,es))do -- +math.floor(10/difficulty-10)
-  local effect = 0
-  local timeout = 30
-  	
-  while timeout>0 do
-   effect = math.random(#allench[equipment[mobname][slot]["type"]])
-   if(math.floor(allench[equipment[mobname][slot]["type"]][effect]["chance"]*dLevel)>math.random(dLevel))then
-    if((choosen_ench[(allench[equipment[mobname][slot]["type"]][effect]["id"]+1)] or 0) < allench[equipment[mobname][slot]["type"]][effect]["maxlv"])then
-     choosen_ench[(allench[equipment[mobname][slot]["type"]][effect]["id"]+1)] = (choosen_ench[(allench[equipment[mobname][slot]["type"]][effect]["id"]+1)] or 0) + 1
-     break
-    end
-   end
-   timeout = timeout - 1
-  end  
-  -- Increase item price with enchantments
-  if(timeout>0)then
-   effective_es = effective_es + 1
-   addOnItemData("value",effective_es + math.random(2))
-   addOnItemData("enchprice",24*(es-1) + math.random(2))
-  end
-  es = es + 1	 
- end
- -- Building enchantment Tag and pricing
- if(count(choosen_ench)>0)then
-  for k,v in pairs(choosen_ench) do
-   if(choosen_ench[k]~=nil)then
-    -- Add enchantment into the table for ench's
-    local enchArr = getItemData("enchTable")
-	table.insert(enchArr,{["id"] = (k-1),["lvl"] = v})
-	setItemData("enchTable",enchArr)
-	
-    addOnItemData("value",v)
-	addOnItemData("enchprice",v*11)
-   end
-  end
- end
-end
-
--- _dlevel = guideline level of item
--- _typeOfItem = slot the item is in
--- _mobname = {zombie,player,ranged_skeleton,...}
--- _forceQ = forces a quality the item must have
-function getEquipment(_dlevel,_typeOfItem,_mobname,_forceQ)
-	-- CHECK INPUTS
-	if(type(_dlevel)=="number")then
-		if(_dlevel<0)then
-			_dlevel = 0
+	local c = _a
+	for k,v in pairs(_b) do
+		if(type(v)=="table")then
+			c[k] = overrideTable(_a[k],v)
+		else
+			c[k] = v
 		end
-	else
-		error("getEquipment's first argument needs to be a number and is not optional!",2)
 	end
+	return c
+end
+-- ///// 
 
- --dcore.evaluateInputs(_dlevel,_typeOfItem,_mobname,_forceQ)
- local mobname = advitem.getMobName(_mobname)
- advitem.initializeItem(_dlevel,_typeOfItem,mobname,_forceQ)
- local returnTable = {}
- local additionalInfo = false
- 
- -- calculate Enchantments
- if(getItemData("tier")>0)then
-  addOnItemData("value",((math.random(2)-1)/2))
-  addOnItemData("baseprice",math.random(getItemData("tier")*2))
-  advitem.getEnchantmentOfItem()
-  local colorValue = 0
-  -- Colored Armor
-  
-  -- rework, bacuse t and i are not existing anymore!
-  if(getItemData("tier")==1 and getItemData("slot")>1 and math.floor(100)>1)then
-   local a,b = advitem.getColorOfArmor()
-   setItemData("color",a)
-   colorValue = b
-  end
-  
-  advitem.getLoreOfItem(colorValue)
-  local itemName = items.getName(getItemData("itemID"))
-  local dataTable = {}
-  dataTable["id"] = getItemData("itemID")
-  dataTable["tag"] = {}
-  
-  -- Add ench tag, if existing
-  if(table.getn(getItemData("enchTable"))>0)then dataTable["tag"]["ench"] = getItemData("enchTable") end
-  -- Add lore and name of Item
-  dataTable["tag"]["display"] = {["Name"] = itemName,["Lore"] = getItemData("loreTable")}
-  
-  -- Add the color tag
-  
-  if(getItemData("color")~=nil)then dataTable["tag"]["display"]["color"] = getItemData("color") end
 
-  --dataTable["tag"]["price"] = advitem.getPriceOfItem(colorValue)
-  -- tags:
-  --	?isLegendary // for effetcs
-  --	?isSetItem   //
-  --	?setID       // item set ID
-  --	!price       // price for buy/selling item
-  returnTable = overrideTable(dataTable,getItemData("dataTable"))
-  -- I might add more to this, just tell me what :)
-  additionalInfo = {["itemID"] = getItemData("itemID"),["value"] = getItemData("value"),["price"] = advitem.getPriceOfItem(colorValue)}
- end
- return returnTable,additionalInfo
+
+
+-- ///// Default weapon and armor registration
+-- // Weapon
+local weapons = {}
+-- Registers weapon.
+function registerWeapon(weaponObject)
+	local newWeaponObject = {}
+	newWeaponObject.typ = weaponObject.weaponType
+	newWeaponObject.itemID = weaponObject.itemID
+	table.insert(weapons,newWeaponObject)
+end
+-- Register all in items listed pieces of swords
+for _,t in pairs(items.getItemTypesOfParent("weapon")) do
+	for k,v in pairs(items.getAllItemsOfType(t))do
+		local item = items.getItem(v)
+		registerWeapon{weaponType = t,itemID = item["id"]}
+	end
 end
 
+-- // Armor
+local armor = {}
+-- Registers armor.
+function registerArmor(armorObject)
+	local newArmorObject = {}
+	newArmorObject.typ = armorObject.armorType
+	newArmorObject.itemID = armorObject.itemID
+	table.insert(armor,newArmorObject)
+end
+-- Register all in items listed pieces of armor (At least (Helmet|Chestplate|Leggings|Shoes))
+for _,t in pairs(items.getItemTypesOfParent("armor")) do
+	for k,v in pairs(items.getAllItemsOfType(t))do
+		local item = items.getItem(v)
+		registerArmor{armorType = t,itemID = item["id"]}
+	end
+end
+
+
+
+-- ///// Attributes calculations, registration and attribute data
+local attributes = {}
+local attributeTypes = {}
+-- TODO: check for unregistered, yet active attribute types
+function registerAttribute(attribute,equipmentType)
+	for _,v in pairs(items.getAllChildren(equipmentType))do
+		if(not attributes[v])then attributes[v] = {} end
+		table.insert(attributes[v],attribute)
+	end
+	if(not attributeTypes[attribute.type])then attributeTypes[attribute.type] = {["registered"] = false} end
+	attributeTypes[attribute.type]["active"] = true
+end
+function getAttributeTypes()
+	local t = {}
+	for k,_ in pairs(attributeTypes)do table.insert(t,k) end
+	return t
+end
+function getAttributesForItem(item)
+	return attributes[item]
+end
+function getRandomAttributeType()
+	return getRAE(getAttributeTypes())
+end
+function getRandomAttributeForItem(item)
+	local attType = getRandomAttributeType()
+	if(not attributes[item])then error("Item not found!"..tostring(item),2) end
+	local attributeFound = getRAE(attributes[item])
+	while attributeFound.type ~= attType and math.random(10)>1 do
+		attributeFound = getRAE(attributes[item])
+	end
+	return attributeFound
+end
+function registerAttributeType(attType,data)
+	if(not attributeTypes[attType])then attributeTypes[attType] = {} end
+	attributeTypes[attType]["registered"] = true
+	attributeTypes[attType]["trigger"] = data.trigger
+end
+
+-- Register most stuff in our current database, like enchantments
+-- Enchantments
+for _,itemType in pairs(items.getAllChildren("equipment"))do
+	local attribute = {}
+	attribute.init = function(self)
+		local enchs = getEnchantmentForItem(itemType)
+		local choosenEnch = nil
+		if(#enchs.secondary > 0)then
+			choosenEnch = getRAE(enchs.secondary)
+		end
+		if(#enchs.primary > 0 and (math.random(3) > 1 or not choosenEnch))then
+			choosenEnch = getRAE(enchs.primary)
+		end
+		local level = math.random(ench.getMaxLvWithID(choosenEnch))
+		return {ench = choosenEnch,lv = level,["type"] = "enchantment"}
+	end
+	attribute.type = "enchantment"
+	registerAttribute(attribute,itemType)
+end
+registerAttributeType("enchantment",{trigger = function(self)
+	local allEnchData = {}
+	for k,v in pairs(self.attributes) do
+		if(v.type == "enchantment")then
+			allEnchData[v["ench"]] = math.min(((allEnchData[v["ench"]] or 0) + v["lv"]),ench.getMaxLvWithID(v["ench"]))
+		end
+	end
+	local enchAmount = 1
+	for k,v in pairs(allEnchData)do
+		if(not self.tag.ench)then self.tag.ench = {} end
+		table.insert(self.tag.ench,{id = k,lvl = v})
+		self.price = math.floor(self.price + 20 + (v*40+((v^3-1)*60))*enchAmount^2)
+		self.value = math.floor(self.value + 8 + (v*4+((v-1)*1.5))) + enchAmount * 10
+		enchAmount = enchAmount + 1
+		--table.insert(self.tag.display.Lore,"\""..ench.getEnchByID(k).name.." lv "..v.."\"")
+	end
+	return self
+end})
+
+-- Attribute Modifiers
+local attributeData = {}
+attributeData["generic.movementSpeed"] = {["applies"] = {"equipment"},["factor"] = .005,["operation"] = 1}
+attributeData["generic.maxHealth"] = {["applies"] = {"armor"},["factor"] = 1,["operation"] = 0}
+attributeData["generic.attackDamage"] = {["applies"] = {"melee","armor"},["factor"] = 1,["operation"] = 0}
+
+for attributeModType,data in pairs(attributeData)do
+	local attribute = {}
+	attribute.init = function(self) return {attModType = attributeModType,oprt = math.random(10),amount = (math.random(3)+2),["type"] = "attributeModifier"} end
+	attribute.type = "attributeModifier"
+	for _,appliesTo in pairs(data.applies)do
+		registerAttribute(attribute,appliesTo)
+	end
+end
+registerAttributeType("attributeModifier",{trigger = function(self)
+	local allAttributeData = {}
+	for k,v in pairs(self.attributes) do
+		if(v.type == "attributeModifier")then
+			allAttributeData[v["attModType"]] = (allAttributeData[v["attModType"]] or 0) + v["amount"]
+		end
+	end
+	local attributeAmount = 1
+	for k,v in pairs(allAttributeData)do
+		local value = v * attributeData[k]["factor"]
+		if(not self.tag.AttributeModifiers)then self.tag.AttributeModifiers = {} end
+		local t = {["AttributeName"] = k}
+		t["Operation"] = attributeData[k].operation
+		t["UUIDLeast"] = math.random(1000000000)
+		t["UUIDMost"] = math.random(1000000000)
+		t["Name"] = "kitten"
+		if(self.itemID and k == "generic.attackDamage")then
+			local item = items.getItemWithStringID(self.itemID)
+			if(item.types["weapon"] and item.damage)then
+				table.insert(self.tag.display.Lore,"\"gets +"..value.." from AttributeModifiers\"")
+				value = value + item.damage
+			end
+		end
+		t["Amount"] = value
+		table.insert(self.tag.AttributeModifiers,t)
+		self.price = math.floor(self.price + 53 + (v*40+((v^2-1)*120)) * attributeAmount^2)
+		self.value = math.floor(self.value + 15 + (v*4+((v-1)*2)) + attributeAmount * 12)
+		attributeAmount = attributeAmount + 1
+	end
+	if(self.itemID)then
+		local item = items.getItemWithStringID(self.itemID)
+		if(item.types["weapon"] and item.damage)then
+			if(not allAttributeData["generic.attackDamage"])then
+				if(not self.tag.AttributeModifiers)then self.tag.AttributeModifiers = {} end
+				local t = {["AttributeName"] = "generic.attackDamage"}
+				t["Operation"] = 0
+				t["UUIDLeast"] = math.random(1000000000)
+				t["UUIDMost"] = math.random(1000000000)
+				t["Name"] = "defaultATKDMG"
+				t["Amount"] = item.damage
+				table.insert(self.tag.AttributeModifiers,t)
+			end
+		end
+	end
+	return self
+end})
+
+-- Other stuff
+local stats = {}
+
+
+
+
+
+
+
+
+
+-- //////////////////
+--   Data processing and item creation
+-- //////////////////
+
+function newItem(args)
+	local args = args or "equipment"
+	local itemObject = {}
+	itemObject.itemType = args.itemType or args -- (Armor|Weapon|...)
+	itemObject.rarity = args.rarity or getRarityLevelOfItem(args.rarityMinLevel)
+	itemObject.attributes = args.attributes or {}
+	itemObject.itemLevel = args.itemLevel or 5
+	itemObject.itemTier = args.itemTier or nil
+	
+	itemObject.baseType = itemObject.itemType
+	itemObject.itemType = items.getRandomChild(itemObject.itemType)
+	
+	itemObject.tag = {["display"] = {["Lore"] = {}},["cc"] = {}}
+	itemObject.price = 20
+	itemObject.value = 10
+	itemObject.itemID = nil
+	
+		
+	-- Returns the color and color rarity for leather armor
+	itemObject.setColorOfArmor = function(self)
+		if(self.itemID)then
+			if(items.getItemWithStringID(self.itemID).types.dyeable)then
+				local r,g,b
+				for i=1,4 do
+					r = (r or 0)+((math.random(2)-1))
+					g = (g or 0)+((math.random(2)-1))
+					b = (b or 0)+((math.random(2)-1))
+				end
+				-- Something in-between 0 and 12, 0 = common, 12 = really rare
+				local rarity_level = math.pow((2-r),2)+math.pow((2-g),2)+math.pow((2-b),2)
+				-- Color code number
+				local colorOfArmor = (math.floor(b*63.75)+256*math.floor(g*63.75)+65536*math.floor(r*63.75))
+				self.tag.color = colorOfArmor
+				table.insert(self.tag.display.Lore,"Color is "..farben.inspectColor(colorOfArmor))
+				self.tag.display.color = colorOfArmor
+				return rarity_level
+			end
+		end
+		return 0
+	end
+	
+	itemObject.autoLore = function(self)
+		 table.insert(self.tag.display.Lore,"\"Rarity is "..getRarityColor(self.rarity)..SS("o")..getRarity(self.rarity)..SS(5)..SS("o").."\"")
+		 table.insert(self.tag.display.Lore,"\"Price is about "..self.price.." quaz\"")
+	end
+	
+	itemObject.autoItemID = function(self)
+		local item = items.getItem(items.getOneItemWithTag(self.itemType))
+		if(not item)then print(self.itemType) end
+		self.itemID = item["id"]
+	end
+	
+	itemObject.autoTier = function(self)
+		if(not self.itemID)then self:autoItemID() end
+		local item = items.getItemWithStringID(self.itemID)
+
+		-- Check if item has a tier
+		if(not item.types["no_tier"])then
+			-- Then set an tier for that item!
+			for k,v in pairs(items.getSortedTiers())do
+				-- Go though all the item tiers and check for the chances
+				local chance = items.getChanceOfTier(self.itemLevel,v["name"])
+				if(chance > 0 and not self.itemTier)then
+					if(chance < 100)then
+						if(math.random(10000) <= chance*100)then
+							self.itemTier = v["name"]
+						end
+					else
+						self.itemTier = v["name"]
+					end
+				end
+				if(self.itemTier)then
+					self.value = self.value + k * 50 * k
+				end
+			end
+			local newItem = items.getItem(items.getOneItemWithTag{self.itemType,self.itemTier})
+			self.itemID = newItem["id"]
+			if(not self.itemTier)then self.itemID = nil end
+		end
+	end
+	
+	itemObject.getNewAttribute = function(self)
+		local newAttribute = getRandomAttributeForItem(self.itemType)
+		return newAttribute.init()
+	end
+	
+	itemObject.autoPrice = function(self)
+		self.price = math.floor(self.price * (1+self.rarity/10) * (1+math.sqrt(items.getDurability(self.itemID))/100))
+		self.value = math.floor(self.value * (1+math.sqrt(items.getDurability(self.itemID))/100))
+	end
+	
+	itemObject.auto = function(self)
+		self:autoItemID()
+		self:autoTier()
+		if(self.itemID)then
+			if(not self.tag.cc.rolls)then self.tag.cc.rolls = {} end
+			local c = (self.rarity*2)
+			while #self.attributes <= c do
+				if((self.itemLevel >= 25) or math.random(25) < self.itemLevel)then
+					local seed = math.random(10000000)
+					math.randomseed(seed)
+					table.insert(self.attributes,self:getNewAttribute())
+					--table.insert(self.tag.display.Lore,"\""..tostring(#self.attributes).." is a "..tostring(self.attributes[#self.attributes]["type"]).."\"")
+					table.insert(self.tag.cc.rolls,seed)
+				else c = c - 1 end
+			end
+			for k,v in pairs(getAttributeTypes()) do
+				if(attributeTypes[v]["registered"])then
+					self = attributeTypes[v].trigger(self)
+				end
+			end
+			self:setColorOfArmor()
+			self.tag.display.Name = getRarityColor(self.rarity)..items.getName(self.itemID)
+			self:autoPrice()
+			self:autoLore()
+		end
+	end
+	
+	itemObject.getNBT = function(self)
+		return {["tag"] = self.tag,["id"] = self.itemID}
+	end
+	
+	itemObject.autoNBT = function(self)
+		self:auto()
+		return self:getNBT()
+	end
+	itemObject.isValid = function(self)
+		return (self.itemID ~= nil)
+	end
+	
+	return itemObject
+end
 
 function getEquipmentForChest(powerInput)
-	local itemDataTable,moreInfo = advitem.getEquipment((powerInput*2),nil,"player",1)
-	if(moreInfo~=false)then
+	local power = math.floor(powerInput/math.random(math.floor(powerInput/10)+1))
+	print(power)
+	local item = advitem.newItem{["itemType"] = "equipment",["itemLevel"] = power}
+	item:auto()
+	if(item:isValid())then
 		local returnData = {}
-		returnData["powerCost"] = math.floor(moreInfo["value"]*3)
+		returnData["powerCost"] = math.floor(item.value/100)
 		returnData["setItemCount"] = 1
-		returnData["item"] = itemDataTable
-		returnData["item"]["Damage"] = math.floor(((math.random(5)-1)/5)*items.getDurability(moreInfo["itemID"]))
+		local nbt = item:getNBT()
+		returnData["item"] = nbt
+		returnData["item"]["Damage"] = math.floor(((math.random(5)-1)/5)*items.getDurability(item.itemID))
+		--print(dcore.getNBTStringFromTable(returnData["item"]))
 		return returnData
 	else
 		return false
