@@ -1,15 +1,90 @@
 dcore.requireAPI("advitem")
 
--- LORE: some things destroy the world, difficulty gets increased!
+local function count(input)
+	local int = 0
+	for k,v in pairs(input) do
+		int = int+1
+	end
+	return int
+end
+local function overrideTable(_a,_b)
+	local c = _a
+	for k,v in pairs(_b) do
+		if(type(v)=="table")then
+			c[k] = overrideTable(_a[k],v)
+		else
+			c[k] = v
+		end
+	end
+	return c
+end
+
+function newMob(_mobName)
+	local mobObject = {}
+	mobObject.riding = nil
+	
+	
+	
+	
+	return mobObject
+end
+
+
+
+
+
+
+
+
+
+
+
+
+-- Equipment for mobs
+local equipment = {}
+equipment["zombie"] = {
+	{["chance"] = 0.8,["items"] = {268,272,283,267,276},["type"] = "Sword"}, -- HAND
+	{["chance"] = 0.3,["items"] = {301,305,317,309,313},["type"] = "Feet"}, -- FEET
+	{["chance"] = 0.3,["items"] = {300,304,316,308,312},["type"] = "Legs"}, -- LEGS
+	{["chance"] = 0.4,["items"] = {299,303,315,307,311},["type"] = "Chest"}, -- CHEST
+	{["chance"] = 0.6,["items"] = {298,302,314,306,310},["type"] = "Head"}, -- HEAD
+}
+equipment["melee_skeleton"] = equipment["zombie"]
+equipment["player"] = equipment["zombie"]
+equipment["ranged_skeleton"] = {
+	{["chance"] = 1,["items"] = {261,261,261,261,261},["type"] = "Bow"}, -- HAND
+	{["chance"] = 0.3,["items"] = {301,305,317,309,313},["type"] = "Feet"}, -- FEET
+	{["chance"] = 0.3,["items"] = {300,304,316,308,312},["type"] = "Legs"}, -- LEGS
+	{["chance"] = 0.4,["items"] = {299,303,315,307,311},["type"] = "Chest"}, -- CHEST
+	{["chance"] = 0.6,["items"] = {298,302,314,306,310},["type"] = "Head"}, -- HEAD
+}
+
+-- No equipment for those mobs (Cannot wear it)
+equipment["spider"] = {nil}
+equipment["caveSpider"] = {nil}
+equipment["blaze"] = {nil}
+equipment["creeper"] = {nil}
+equipment["slime"] = {nil}
+equipment["witch"] = {nil}
+equipment["wolf"] = {nil}
+equipment["enderman"] = {nil}
+equipment["endermite"] = {nil}
+
+
+
+
+
+
+
+
+
+
+
+
+
 -- TODO fähigkeiten-spawnsystem
 local mobData = {}
-local function count(input)
- local int = 0
- for k,v in pairs(input) do
-  int = int+1
- end
- return int
-end
+
 local function overrideTable(_a,_b)
  local c = _a
  for k,v in pairs(_b) do
@@ -69,20 +144,22 @@ end
 
 -- important mob builders
 function setEquipmentOfMob()
- local equipment = {}
- for i=1,5 do
-  local itemTable,info = advitem.getEquipment(getMobData("difficulty"),i,getMobData("mobType"))
-  if(type(info)=="table")then
-   itemTable["Count"] = 1
-   table.insert(equipment,itemTable)
-   addOnMobData("level",info["value"])
-  else
-   -- Ranged Skeleon w/o bow = melee skeleton!
-   if(getMobData("mobType") == "ranged_skeleton" and i==1)then setMobData("mobType","melee_skeleton") end
-   table.insert(equipment,{})
-  end
- end
- setMobData("equipmentTable",equipment)
+	local equipment = {}
+	for k,v in pairs{"weapon","boots","leggings","chestplate","helmet"} do
+		local item = advitem.newItem({itemType = v,itemLevel = getMobData("difficulty")})
+		item:auto()
+		local itemTable = item:getNBT()
+		if(itemTable.id)then
+			itemTable["Count"] = 1
+			table.insert(equipment,itemTable)
+			addOnMobData("level",math.floor(item.value/80+1))
+		else
+			-- Ranged Skeleon w/o bow = melee skeleton!
+			if(getMobData("mobType") == "ranged_skeleton" and k=="weapon")then setMobData("mobType","melee_skeleton") end
+			table.insert(equipment,{})
+		end
+	end
+	setMobData("equipmentTable",equipment)
 end
 function setPotionEffectsOfMob()
  -- Active Effects: --

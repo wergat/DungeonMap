@@ -1,5 +1,6 @@
 dcore.requireAPI("advitem")
 dcore.requireAPI("potion")
+dcore.requireAPI("villager")
 
 -- 
 
@@ -35,9 +36,10 @@ item_pool[1] = { -- Normal
   --{["id"] = ,["value"] = ,["max"] = },
 }
 item_pool[2] = { -- Equipment
- {["id"] = 260,["value"] = 1,["max"] = 18},-- coal
- {["id"] = 371,["value"] = 20,["max"] = 24}, -- golden nuggets
- {["id"] = 266,["value"] = 180,["max"] = 12}, -- golden ingot
+ {["id"] = 260,["value"] = 1,["max"] = 4},-- coal
+ {["id"] = 50,["value"] = 3,["max"] = 5},-- coal
+ {["id"] = 371,["value"] = 20,["max"] = 3}, -- golden nuggets
+ {["id"] = 266,["value"] = 180,["max"] = 2}, -- golden ingot
  {["id"] = 41,["value"] = 1620,["max"] = 6}, -- golden block
  {["id"] = 264,["value"] = 14580,["max"] = 3}, -- diamonds
   --{["id"] = ,["value"] = ,["max"] = },
@@ -123,6 +125,7 @@ function getChestData(_startDifficulty,_chestType)
 		if(timeout>10)then
 			remainingStoragePower = remainingStoragePower - 5
 			timeout = 0
+			if(remainingStoragePower<=0)then break end
 		end
 		
 		local itemIndex = math.random(#item_pool[_chestType])
@@ -179,9 +182,9 @@ function getChestData(_startDifficulty,_chestType)
 			-- Approve inputs
 			-- Ignore errors if the function returns false, then it knows there will no item spawn
 			if(customItemData~=false)then
-				if(not customItemData)then print("cutomItemData needs to be table!") validItem = false end
-				if(not type(customItemData)=="table")then print("cutomItemData needs to be table!") validItem = false end
-				if(not customItemData["item"])then print("cutomItemData needs to have a item table with data inside it!") validItem = false end
+				if(not customItemData)then dcore.Warning("cutomItemData needs to be table!") validItem = false end
+				if(not type(customItemData)=="table")then dcore.Warning("cutomItemData needs to be table!") validItem = false end
+				if(not customItemData["item"])then dcore.Warning("cutomItemData needs to have a item table with data inside it!") validItem = false end
 			else
 				validItem = false
 			end
@@ -230,7 +233,6 @@ function getChestData(_startDifficulty,_chestType)
 					timeout = timeout + 5
 				end
 			else
-				validItem = false
 				timeout = timeout + 1
 			end
 		end
@@ -273,7 +275,7 @@ function getChestData(_startDifficulty,_chestType)
 			break
 		end
 	 end
-	 dataTable["CustomName"] = (advitem.q_color[chestRarity]).."§"..firstToUpper(advitem.qualitys[chestRarity])..chest_types[_chestType].."ChestȲ"
+	 dataTable["CustomName"] = advitem.getRarityColor(chestRarity)..firstToUpper(advitem.getRarity(chestRarity))..chest_types[_chestType].."Chest"..SS("r")
 	 return dataTable
 end
 
@@ -324,7 +326,6 @@ function placeChest(...)
  end
 
  local datatag =  dcore.getNBTStringFromTable(chest.getChestData(startDifficulty,chestType))
- 
  a,e = commands.setblock(x,y,z,"minecraft:chest","1","replace",datatag)
  
  if(not a)then

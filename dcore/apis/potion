@@ -272,7 +272,7 @@ function generatePotionItem(power,seed)
 	local positiveText = ""
 	local visualGoodnessLevel = (goodc/#finalPotionTable)*100
 	
-	positiveText = "The effects of this potion are "..visualGoodnessLevel.."% positive"
+	positiveText = "The effects of this potion are "..(math.floor(visualGoodnessLevel*100)/100).."% positive"
 	
 	nbtTable["tag"]["display"]["Name"] = potionNameColor..potionName..SS("r")
 	nbtTable["tag"]["display"]["Lore"] = {

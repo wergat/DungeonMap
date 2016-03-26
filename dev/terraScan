@@ -1,7 +1,10 @@
 -- Load api stuff
-os.loadAPI(":dungeon/apis/dcore")
+os.loadAPI(":dungeon/dcore/apis/dcore")
 dcore.requireAPI("generation")
-
+if(not generation)then
+	error("Generation not loaded!",1)
+end
+generation.newRoom(0,2,0)
 term.clear()
 
 local screenW,screenH = term.getSize()
@@ -21,180 +24,182 @@ heightmap_color = {colors.blue,colors.lightBlue,colors.yellow,colors.lime,colors
 -- Color Display
 -- true = shows biome color
 -- false = shows height map color
-showBiomeColor = true
+local showBiomeColor = true
 
 -- Draw Height Number
-showHeightNumber = false
+local showHeightNumber = false
 
 -- Focus Height
 -- Shows the height to be focused on
 -- if >0, shows levels below that, but not levels above
 -- if <0, shows only this level
 -- if =0, shows all levels, like looking from above
-focusHeight = 0
+local focusHeight = 0
+
+local changedCam = false
+
 
 function ScanPillar(x,y)
- -- create table if not existing
- if(scanData[x]==nil)then scanData[x] = {} end
- if(scanData[x][y]==nil)then scanData[x][y] = {} end
- 
- -- load data into table
- local height = generation.getHeightByPosition(x,y)+1
- scanData[x][y]["height"] = height
- for i=1,height do
-  scanData[x][y][i] = generation.getBiomeByPosition(x,y,i)
- end
+	-- create table if not existing
+	if(scanData[x]==nil)then scanData[x] = {} end
+	if(scanData[x][y]==nil)then scanData[x][y] = {} end
+	-- load data into table
+	local height = generation.getHeightByPosition(x,y)+1
+	scanData[x][y]["height"] = height
+	for i=1,height do
+		scanData[x][y][i] = generation.getBiomeByPosition(x,y,i)
+	end
 end
 
+local screenData = {}
+
 function updateMap()
- for x=focusX,(screenW+focusX-4) do
-  for y=focusY,(screenH+focusY-4) do
-   if(scanData[x] == nil)then ScanPillar(x,y) end
-   if(scanData[x][y] == nil)then ScanPillar(x,y) end
-   
-   -- Adapt to screen view height (focusHeight)
-   local scan_height = focusHeight
-   -- Reverse number, if looking for only one layer
-   if(scan_height<0)then scan_height = -scan_height end
-   
-   
-   -- Display lower levels 
-   if(scanData[x][y][scan_height]==nil and focusHeight==0)then
-    scan_height = scanData[x][y]["height"]
-   end
-   
-   -- Fill empty spaces
-   
-   
-   -- Draw
-   term.setCursorPos(2+x-focusX,2+y-focusY)
-   
-   if(scanData[x][y][scan_height]~=nil)then
-    if(showBiomeColor)then
-     term.setBackgroundColor(biome_color[scanData[x][y][scan_height]] or colors.black)
-    else
-     term.setBackgroundColor(heightmap_color[scan_height] or colors.white)
-    end
-   else
-    if(focusHeight>0 and showBiomeColor)then
-	 local color = (biome_color[generation.getBiomeByPosition(x,y,focusHeight)] or colors.black)
-	 term.setBackgroundColor(color)
-	else
-     term.setBackgroundColor(colors.black)
+	for x=focusX,(screenW+focusX-4) do
+		for y=focusY,(screenH+focusY-4) do
+			if(scanData[x] == nil)then ScanPillar(x,y) end
+			if(scanData[x][y] == nil)then ScanPillar(x,y) end
+			-- Adapt to screen view height (focusHeight)
+			local scan_height = math.abs(focusHeight)
+			-- Display lower levels 
+			if(scanData[x][y][scan_height]==nil and focusHeight==0)then
+				scan_height = scanData[x][y]["height"]
+			end
+			-- Fill empty spaces
+			-- Draw
+			term.setCursorPos(2+x-focusX,2+y-focusY)
+			if(scanData[x][y][scan_height]~=nil)then
+				if(showBiomeColor)then
+					term.setBackgroundColor(biome_color[scanData[x][y][scan_height]] or colors.black)
+				else
+					term.setBackgroundColor(heightmap_color[scan_height] or colors.white)
+				end
+			else
+				if(focusHeight>0 and showBiomeColor)then
+					local color = (biome_color[generation.getBiomeByPosition(x,y,focusHeight)] or colors.black)
+					term.setBackgroundColor(color)
+				else
+					term.setBackgroundColor(colors.black)
+				end
+			end
+			if(showHeightNumber)then
+				write(scan_height)
+			else
+				write(" ")
+			end
+		end
 	end
-   end
-   
-   if(showHeightNumber)then
-    write(scan_height)
-   else
-    write(" ")
-   end
-   
-  end
- end
- term.setBackgroundColor(colors.black)
+	term.setBackgroundColor(colors.black)
 end
 
 function updateUI()
- term.setCursorPos(20,1)
- write("Layer: "..focusHeight.."  ")
- 
- term.setCursorPos(1,screenH-1)
- if(focusHeight==0)then
-  write("Showing all layers from above            ")
- elseif(focusHeight<0)then
-  write("Showing all rooms generated on that layer")
- else
-  write("Showing biome type of rooms on that layer")
- end
- 
- term.setCursorPos(1,screenH)
- if(showBiomeColor)then
-  write("[B] <Biome> Height map  ")
- else
-  write("[B] Biome <Height> map ")
- end
- term.setCursorPos(30,screenH)
- write("[H] Show Height")
- 
- updateMap()
+	term.setCursorPos(20,1)
+	write("Layer: "..focusHeight.."  ")
+	term.setCursorPos(1,screenH-1)
+	if(focusHeight==0)then
+		write("Showing all layers from above            ")
+	elseif(focusHeight<0)then
+		write("Showing all rooms generated on that layer")
+	else
+		write("Showing biome type of rooms on that layer")
+	end
+	
+	term.setCursorPos(1,screenH)
+	if(showBiomeColor)then
+		write("[B] <Biome> Height map  ")
+	else
+		write("[B] Biome <Height> map ")
+	end
+	term.setCursorPos(30,screenH)
+	write("[H] Show Height")
+	updateMap()
 end
 
+function UITracker()
+	while true do
+		if(changedCam)then
+			updateUI()
+			changedCam = false
+		end
+		sleep(.05)
+	end
+end
+
+local printWord = {"p","r","i","n","t"}
 function inputTracker()
- local printWord = {"p","r","i","n","t"}
- local printTracker = 1
- while true do
-  local event, key = os.pullEvent("key")
-  term.setCursorPos(1,1)
-  write(keys.getName(key))
-  
-  if(keys.getName(key) == printWord[printTracker])then
-   printTracker = printTracker + 1
-   if(printTracker==6)then
-    term.setCursorPos(10,1)
-    write("Printing Map in 3D...")
-    sleep(1)
-	term.clearLine()
-	updateUI()
-   end
-  else
-   printTracker = 1
-  end
-  
-  if(keys.getName( key ) == "right" or keys.getName( key ) == "d")then
-   focusX = focusX + 1
-   updateUI()
-  elseif(keys.getName( key ) == "left" or keys.getName( key ) == "a")then
-   focusX = focusX - 1
-   updateUI()
-  elseif(keys.getName( key ) == "down" or keys.getName( key ) == "s")then
-   focusY = focusY + 1
-   updateUI()
-  elseif(keys.getName( key ) == "up" or keys.getName( key ) == "w")then
-   focusY = focusY - 1
-   updateUI()
-  elseif(keys.getName( key ) == "q")then
-   focusHeight = focusHeight + 1
-   updateUI()
-  elseif(keys.getName( key ) == "y" or keys.getName( key ) == "z")then
-   focusHeight = focusHeight - 1
-   updateUI()
-  elseif(keys.getName( key ) == "l")then
-   focusHeight = 0
-   updateUI()
-  elseif(keys.getName( key ) == "b")then
-   showBiomeColor = not showBiomeColor
-   updateUI()
-  elseif(keys.getName( key ) == "h")then
-   showHeightNumber = not showHeightNumber
-   updateUI()
-  end
-  term.setCursorPos(1,1)
-  write("                ")
- end
+	local printTracker = 1
+	while true do
+		local event, key = os.pullEvent("key")
+		term.setCursorPos(1,1)
+		write(keys.getName(key))
+		
+		if(keys.getName(key) == printWord[printTracker])then
+			printTracker = printTracker + 1
+			if(printTracker==6)then
+				term.setCursorPos(10,1)
+				write("Printing Map in 3D...")
+				sleep(1)
+				term.clearLine()
+				updateUI()
+			end
+		else
+			printTracker = 1
+		end
+		
+		if(keys.getName( key ) == "right" or keys.getName( key ) == "d")then
+			focusX = focusX + 1
+			changedCam = true
+		elseif(keys.getName( key ) == "left" or keys.getName( key ) == "a")then
+			focusX = focusX - 1
+			changedCam = true
+		elseif(keys.getName( key ) == "down" or keys.getName( key ) == "s")then
+			focusY = focusY + 1
+			changedCam = true
+		elseif(keys.getName( key ) == "up" or keys.getName( key ) == "w")then
+			focusY = focusY - 1
+			changedCam = true
+		elseif(keys.getName( key ) == "q")then
+			focusHeight = focusHeight + 1
+			changedCam = true
+		elseif(keys.getName( key ) == "y" or keys.getName( key ) == "z")then
+			focusHeight = focusHeight - 1
+			changedCam = true
+		elseif(keys.getName( key ) == "l")then
+			focusHeight = 0
+			changedCam = true
+		elseif(keys.getName( key ) == "b")then
+			showBiomeColor = not showBiomeColor
+			changedCam = true
+		elseif(keys.getName( key ) == "h")then
+			showHeightNumber = not showHeightNumber
+			changedCam = true
+		end
+		term.setCursorPos(1,1)
+		write("                ")
+	end
 end
 
 function init()
- term.setCursorPos(1,1)
- write("Loading...")
- for x=focusX,(screenW+focusX-4) do
-  for y=focusY,(screenH+focusY-4) do
-   if(scanData[x] == nil)then ScanPillar(x,y) end
-   if(scanData[x][y] == nil)then ScanPillar(x,y) end
-  end
-  sleep(.05)
-  term.setCursorPos(10,1)
-  write(math.floor(x/(screenW-4)*100).."%  ")
- end
- term.setCursorPos(1,1)
- write("Loading...done!        ")
- sleep(.05)
+	term.setCursorPos(1,1)
+	write("Loading...")
+	for x=focusX,(screenW+focusX-4) do
+		for y=focusY,(screenH+focusY-4) do
+			if(scanData[x] == nil)then ScanPillar(x,y) end
+			if(scanData[x][y] == nil)then ScanPillar(x,y) end
+		end
+		sleep(.05)
+		term.setCursorPos(10,1)
+		write(math.floor(x/(screenW-4)*100).."%  ")
+	end
+	term.setCursorPos(1,1)
+	write("Loading...done!        ")
+	sleep(.05)
 end
-
 
 init()
 updateUI()
-inputTracker()
+parallel.waitForAny(inputTracker,UITracker)
+
+
 
 print("")
 --[[

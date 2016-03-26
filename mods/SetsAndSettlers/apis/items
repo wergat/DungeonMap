@@ -59,9 +59,10 @@ function getSetByID(_setId)
 end
 
 function getRandomSetIDByItem(_itemId)
- local setsToChooseFrom = #getItem(_itemId)["sets"]
- if(setsToChooseFrom<1 or getItem(_itemId)["sets"]==nil)then return nil else
-  local choosenSet = math.random(setsToChooseFrom)
-  return getItem(_itemId)["sets"][choosenSet]
- end
+	local item = items.getItem(_itemId)
+	local setsToChooseFrom = #item["sets"]
+	if(setsToChooseFrom<1 or items.getItem(_itemId)["sets"]==nil)then return nil else
+		local choosenSet = math.random(setsToChooseFrom)
+		return items.getItem(_itemId)["sets"][choosenSet]
+	end
 end

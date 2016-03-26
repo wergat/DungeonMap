@@ -1,43 +1,43 @@
 local items = {}
 
  -- Weapons
- items[261] = {["type"] = "weapon",["id"] = "minecraft:bow",["name"] = "Bow",["sets"] = {5},["durability"] = 385,["stack_size"] = 1}
- items[267] = {["type"] = "weapon",["id"] = "minecraft:iron_sword",["name"] = "Iron Sword",["sets"] = {3,101},["durability"] = 251,["stack_size"] = 1}
- items[268] = {["type"] = "weapon",["id"] = "minecraft:wooden_sword",["name"] = "Wooden Sword",["sets"] = {1},["durability"] = 60,["stack_size"] = 1}
- items[272] = {["type"] = "weapon",["id"] = "minecraft:wooden_sword",["name"] = "Stone Sword",["sets"] = {2},["durability"] = 132,["stack_size"] = 1}
- items[276] = {["type"] = "weapon",["id"] = "minecraft:diamond_sword",["name"] = "Diamond Sword",["sets"] = {},["durability"] = 1562,["stack_size"] = 1}
- items[283] = {["type"] = "weapon",["id"] = "minecraft:golden_sword",["name"] = "Golden Sword",["sets"] = {4},["durability"] = 33,["stack_size"] = 1}
+ items[261] = {["types"] = {"weapon","ranged","bow","no_tier"},["id"] = "minecraft:bow",["name"] = "Bow",["sets"] = {5},["durability"] = 385,["stack_size"] = 1,["damage"] = nil}
+ items[267] = {["types"] = {"weapon","melee","sword","iron_tier"},["id"] = "minecraft:iron_sword",["name"] = "Iron Sword",["sets"] = {3,101},["durability"] = 251,["stack_size"] = 1,["damage"] = 6}
+ items[268] = {["types"] = {"weapon","melee","sword","leather_tier"},["id"] = "minecraft:wooden_sword",["name"] = "Wooden Sword",["sets"] = {1},["durability"] = 60,["stack_size"] = 1,["damage"] = 4}
+ items[272] = {["types"] = {"weapon","melee","sword","chain_tier"},["id"] = "minecraft:stone_sword",["name"] = "Stone Sword",["sets"] = {2},["durability"] = 132,["stack_size"] = 1,["damage"] = 5}
+ items[276] = {["types"] = {"weapon","melee","sword","diamond_tier"},["id"] = "minecraft:diamond_sword",["name"] = "Diamond Sword",["sets"] = {},["durability"] = 1562,["stack_size"] = 1,["damage"] = 7}
+ items[283] = {["types"] = {"weapon","melee","sword","gold_tier"},["id"] = "minecraft:golden_sword",["name"] = "Golden Sword",["sets"] = {4},["durability"] = 33,["stack_size"] = 1,["damage"] = 4}
  
  -- Armor
- items[298] = {["type"] = "armor",["id"] = "minecraft:leather_helmet",["name"] = "Leather Cap",["sets"] = {1},["durability"] = 56,["stack_size"] = 1}
- items[299] = {["type"] = "armor",["id"] = "minecraft:leather_chestplate",["name"] = "Leather Tunic",["sets"] = {1},["durability"] = 80,["stack_size"] = 1}
- items[300] = {["type"] = "armor",["id"] = "minecraft:leather_leggings",["name"] = "Leather Pants",["sets"] = {1,101},["durability"] = 76,["stack_size"] = 1}
- items[301] = {["type"] = "armor",["id"] = "minecraft:leather_boots",["name"] = "Leather Boots",["sets"] = {1},["durability"] = 66,["stack_size"] = 1}
- items[302] = {["type"] = "armor",["id"] = "minecraft:chainmail_helmet",["name"] = "Chain Helmet",["sets"] = {2},["durability"] = 166,["stack_size"] = 1}
- items[303] = {["type"] = "armor",["id"] = "minecraft:chainmail_chestplate",["name"] = "Chain Chestplate",["sets"] = {2},["durability"] = 241,["stack_size"] = 1}
- items[304] = {["type"] = "armor",["id"] = "minecraft:chainmail_leggings",["name"] = "Chain Leggings",["sets"] = {2},["durability"] = 226,["stack_size"] = 1}
- items[305] = {["type"] = "armor",["id"] = "minecraft:chainmail_boots",["name"] = "Chain Boots",["sets"] = {2},["durability"] = 196,["stack_size"] = 1}
- items[306] = {["type"] = "armor",["id"] = "minecraft:iron_helmet",["name"] = "Iron Helmet",["sets"] = {3,101},["durability"] = 166,["stack_size"] = 1}
- items[307] = {["type"] = "armor",["id"] = "minecraft:iron_chestplate",["name"] = "Iron Chestplate",["sets"] = {3,101},["durability"] = 241,["stack_size"] = 1}
- items[308] = {["type"] = "armor",["id"] = "minecraft:iron_leggings",["name"] = "Iron Leggings",["sets"] = {3},["durability"] = 226,["stack_size"] = 1}
- items[309] = {["type"] = "armor",["id"] = "minecraft:iron_boots",["name"] = "Iron Boots",["sets"] = {3,101},["durability"] = 196,["stack_size"] = 1}
- items[310] = {["type"] = "armor",["id"] = "minecraft:diamond_helmet",["name"] = "Diamond Helmet",["sets"] = {5},["durability"] = 363,["stack_size"] = 1}
- items[311] = {["type"] = "armor",["id"] = "minecraft:diamond_chestplate",["name"] = "Diamond Chestplate",["sets"] = {5},["durability"] = 529,["stack_size"] = 1}
- items[312] = {["type"] = "armor",["id"] = "minecraft:diamond_leggings",["name"] = "Diamond Leggings",["sets"] = {5},["durability"] = 496,["stack_size"] = 1}
- items[313] = {["type"] = "armor",["id"] = "minecraft:diamond_boots",["name"] = "Diamond Boots",["sets"] = {5},["durability"] = 430,["stack_size"] = 1}
- items[314] = {["type"] = "armor",["id"] = "minecraft:golden_helmet",["name"] = "Golden Helmet",["sets"] = {4},["durability"] = 78,["stack_size"] = 1}
- items[315] = {["type"] = "armor",["id"] = "minecraft:golden_chestplate",["name"] = "Golden Chestplate",["sets"] = {4},["durability"] = 113,["stack_size"] = 1}
- items[316] = {["type"] = "armor",["id"] = "minecraft:golden_leggings",["name"] = "Golden Leggings",["sets"] = {4},["durability"] = 106,["stack_size"] = 1}
- items[317] = {["type"] = "armor",["id"] = "minecraft:golden_boots",["name"] = "Golden Boots",["sets"] = {4},["durability"] = 92,["stack_size"] = 1}
+ items[298] = {["types"] = {"armor","leather_tier","dyeable","helmet"},["id"] = "minecraft:leather_helmet",["name"] = "Leather Cap",["sets"] = {1},["durability"] = 56,["stack_size"] = 1,["armorPoints"] = 1}
+ items[299] = {["types"] = {"armor","leather_tier","dyeable","chestplate"},["id"] = "minecraft:leather_chestplate",["name"] = "Leather Tunic",["sets"] = {1},["durability"] = 80,["stack_size"] = 1,["armorPoints"] = 3}
+ items[300] = {["types"] = {"armor","leather_tier","dyeable","leggings"},["id"] = "minecraft:leather_leggings",["name"] = "Leather Pants",["sets"] = {1,101},["durability"] = 76,["stack_size"] = 1,["armorPoints"] = 2}
+ items[301] = {["types"] = {"armor","leather_tier","dyeable","boots"},["id"] = "minecraft:leather_boots",["name"] = "Leather Boots",["sets"] = {1},["durability"] = 66,["stack_size"] = 1,["armorPoints"] = 1}
+ items[302] = {["types"] = {"armor","chain_tier","helmet"},["id"] = "minecraft:chainmail_helmet",["name"] = "Chain Helmet",["sets"] = {2},["durability"] = 166,["stack_size"] = 1,["armorPoints"] = 2}
+ items[303] = {["types"] = {"armor","chain_tier","chestplate"},["id"] = "minecraft:chainmail_chestplate",["name"] = "Chain Chestplate",["sets"] = {2},["durability"] = 241,["stack_size"] = 1,["armorPoints"] = 5}
+ items[304] = {["types"] = {"armor","chain_tier","leggings"},["id"] = "minecraft:chainmail_leggings",["name"] = "Chain Leggings",["sets"] = {2},["durability"] = 226,["stack_size"] = 1,["armorPoints"] = 4}
+ items[305] = {["types"] = {"armor","chain_tier","boots"},["id"] = "minecraft:chainmail_boots",["name"] = "Chain Boots",["sets"] = {2},["durability"] = 196,["stack_size"] = 1,["armorPoints"] = 1}
+ items[306] = {["types"] = {"armor","iron_tier","helmet"},["id"] = "minecraft:iron_helmet",["name"] = "Iron Helmet",["sets"] = {3,101},["durability"] = 166,["stack_size"] = 1,["armorPoints"] = 2}
+ items[307] = {["types"] = {"armor","iron_tier","chestplate"},["id"] = "minecraft:iron_chestplate",["name"] = "Iron Chestplate",["sets"] = {3,101},["durability"] = 241,["stack_size"] = 1,["armorPoints"] = 6}
+ items[308] = {["types"] = {"armor","iron_tier","leggings"},["id"] = "minecraft:iron_leggings",["name"] = "Iron Leggings",["sets"] = {3},["durability"] = 226,["stack_size"] = 1,["armorPoints"] = 5}
+ items[309] = {["types"] = {"armor","iron_tier","boots"},["id"] = "minecraft:iron_boots",["name"] = "Iron Boots",["sets"] = {3,101},["durability"] = 196,["stack_size"] = 1,["armorPoints"] = 2}
+ items[310] = {["types"] = {"armor","diamond_tier","helmet"},["id"] = "minecraft:diamond_helmet",["name"] = "Diamond Helmet",["sets"] = {5},["durability"] = 363,["stack_size"] = 1,["armorPoints"] = 3}
+ items[311] = {["types"] = {"armor","diamond_tier","chestplate"},["id"] = "minecraft:diamond_chestplate",["name"] = "Diamond Chestplate",["sets"] = {5},["durability"] = 529,["stack_size"] = 1,["armorPoints"] = 8}
+ items[312] = {["types"] = {"armor","diamond_tier","leggings"},["id"] = "minecraft:diamond_leggings",["name"] = "Diamond Leggings",["sets"] = {5},["durability"] = 496,["stack_size"] = 1,["armorPoints"] = 6}
+ items[313] = {["types"] = {"armor","diamond_tier","boots"},["id"] = "minecraft:diamond_boots",["name"] = "Diamond Boots",["sets"] = {5},["durability"] = 430,["stack_size"] = 1,["armorPoints"] = 3}
+ items[314] = {["types"] = {"armor","gold_tier","helmet"},["id"] = "minecraft:golden_helmet",["name"] = "Golden Helmet",["sets"] = {4},["durability"] = 78,["stack_size"] = 1,["armorPoints"] = 2}
+ items[315] = {["types"] = {"armor","gold_tier","chestplate"},["id"] = "minecraft:golden_chestplate",["name"] = "Golden Chestplate",["sets"] = {4},["durability"] = 113,["stack_size"] = 1,["armorPoints"] = 5}
+ items[316] = {["types"] = {"armor","gold_tier","leggings"},["id"] = "minecraft:golden_leggings",["name"] = "Golden Leggings",["sets"] = {4},["durability"] = 106,["stack_size"] = 1,["armorPoints"] = 3}
+ items[317] = {["types"] = {"armor","gold_tier","boots"},["id"] = "minecraft:golden_boots",["name"] = "Golden Boots",["sets"] = {4},["durability"] = 92,["stack_size"] = 1,["armorPoints"] = 1}
  
- -- Food Stuff
- items[260] = {["type"] = "food",["id"] = "minecraft:apple",["name"] = "Apple",["foodPoints"] = 4,["saturation"] = 2.4,["stack_size"] = 64}
- items[282] = {["type"] = "food",["id"] = "minecraft:mushroom_stew",["name"] = "Mushroom Stew",["foodPoints"] = 6,["saturation"] = 7.2,["stack_size"] = 64}
- items[297] = {["type"] = "food",["id"] = "minecraft:bread",["name"] = "Bread",["foodPoints"] = 5,["saturation"] = 6,["stack_size"] = 64}
- items[319] = {["type"] = "food",["id"] = "minecraft:porkchop",["name"] = "Raw Porkchop",["foodPoints"] = 3,["saturation"] = 1.8,["stack_size"] = 64}
- items[320] = {["type"] = "food",["id"] = "minecraft:cooked_porkchop",["name"] = "Cooked Porkchop",["foodPoints"] = 8,["saturation"] = 12.8,["stack_size"] = 64}
- items[322] = {["type"] = "food",["id"] = "minecraft:golden_apple",["name"] = "Golden Apple",["foodPoints"] = 9.6,["saturation"] = 13.6,["stack_size"] = 64}
--- items[] = {["type"] = "food",["id"] = "",["name"] = "",["foodPoints"] = ,["saturation"] = ,["stack_size"] = }
+ -- {"food"} Stuff
+ items[260] = {["types"] = {"food"},["id"] = "minecraft:apple",["name"] = "Apple",["foodPoints"] = 4,["saturation"] = 2.4,["stack_size"] = 64}
+ items[282] = {["types"] = {"food"},["id"] = "minecraft:mushroom_stew",["name"] = "Mushroom Stew",["foodPoints"] = 6,["saturation"] = 7.2,["stack_size"] = 64}
+ items[297] = {["types"] = {"food"},["id"] = "minecraft:bread",["name"] = "Bread",["foodPoints"] = 5,["saturation"] = 6,["stack_size"] = 64}
+ items[319] = {["types"] = {"food"},["id"] = "minecraft:porkchop",["name"] = "Raw Porkchop",["foodPoints"] = 3,["saturation"] = 1.8,["stack_size"] = 64}
+ items[320] = {["types"] = {"food"},["id"] = "minecraft:cooked_porkchop",["name"] = "Cooked Porkchop",["foodPoints"] = 8,["saturation"] = 12.8,["stack_size"] = 64}
+ items[322] = {["types"] = {"food"},["id"] = "minecraft:golden_apple",["name"] = "Golden Apple",["foodPoints"] = 9.6,["saturation"] = 13.6,["stack_size"] = 64}
+-- items[] = {["types"] = {"food"},["id"] = "",["name"] = "",["{"food"}Points"] = ,["saturation"] = ,["stack_size"] = }
 
 
 
@@ -52,39 +52,84 @@ items[264] = {["id"] = "minecraft:diamond"}
 items[388] = {["id"] = "minecraft:emerald"}
 items[399] = {["id"] = "minecraft:nether_star"}
 
+items[373] = {["id"] = "minecraft:potion"}
 
+for k,v in pairs(items) do
+	local t = v.types or {}
+	local newTypes = {}
+	for _,typeName in pairs(t) do
+		newTypes[typeName] = true
+	end
+	items[k].types = newTypes
+end
 
 
 function getAllItemsOfType(searchType)
 	local t = {}
+	local isTable = (type(searchType) == "table")
+	local function check(k,v)
+		if(not isTable)then
+			if(k[searchType])then
+				table.insert(t,v)
+			end
+		else
+			local isTrue = true
+			for _,s in pairs(searchType)do
+				if(not k[s])then isTrue = false end
+			end
+			if(isTrue)then
+				table.insert(t,v)
+			end
+		end
+	end
 	for k,v in pairs(items) do
-		if(v["type"] == searchType)then
-			table.insert(t,k)
+		if(v["types"])then
+			check(v["types"],k)
 		end
 	end
 	return t
 end
 
+-- WTF?!?!??!?
+function getOneTypeOfTypesInItem(item,types)
+	if(type(types)~="table") then types = {types} end
+	for k,_ in pairs(item.types) do
+		for _,searchType in pairs(types) do
+			if(k == searchType)then
+				return k
+			end
+		end
+	end
+end
+
+
+function getOneItemWithTag(tag)
+	return getRAE(getAllItemsOfType(tag))
+end
 
 function getItem(itemID)
- return items[itemID]
+	if(type(itemID)=="number")then
+		return items[itemID]
+	else
+		dcore.Error(tostring(itemID).." is NaN!",2)
+	end
 end
-
 
 function setItem(itemID,data)
- if((tonumber(itemID) or 0) > 0)then
-  items[itemID] = data
- else
-  dcore.Error("Item ID "..tostring(itemID).." invalid",2)
- end
+	if((tonumber(itemID) or 0) > 0)then
+		items[itemID] = data
+	else
+		dcore.Error("Item ID "..tostring(itemID).." invalid",2)
+	end
 end
- 
+
 function getName(itemID)
- if(items[itemID]==nil)then
-  dcore.Error("Item ID "..tostring(itemID).." could not be found",2)
- else
-  return items[itemID]["name"]
- end
+	local id = getIDWithID(itemID)
+	if(items[id]==nil)then
+		dcore.Error("Item ID "..tostring(itemID).." could not be found",3)
+	else
+		return items[id]["name"]
+	end
 end
 
 function getIDWithName(name)
@@ -113,26 +158,48 @@ function getIDWithID(name)
 	end
 end
 
-
-function getDurability(itemID)
- if(items[itemID]==nil)then
-  dcore.Error("Item ID "..tostring(itemID).." could not be found",2)
- else
-  if((tonumber(items[itemID]["durability"]) or 0) > 0)then
-   return items[itemID]["durability"]
-  else
-   dcore.Error("Durability for Item ID "..tostring(itemID).." could not be found",2)
-  end
- end
+function getItemWithStringID(name)
+	if(type(name)=="string")then
+		for k,v in pairs(items) do
+			if(v["id"] == name)then
+				return v
+			end
+		end
+	end
 end
 
--- TODO: once 1.8 approaches, optimize this function for it!
-function useRightItemID(input)
-	local itemId = getIDWithID(input)
-	if(USE_STRING_FOR_ITEM_ID)then
-		return items[itemId]["id"]
+
+
+function getDurability(itemID)
+	if(items[itemID]==nil)then
+		local id
+		if(type(itemID)=="string")then id = getIDWithID(itemID) end
+		if(items[id] == nil)then
+			dcore.Error("Item ID "..tostring(itemID).." could not be found",3)
+		else
+			return getDurability(id)
+		end
 	else
-		return itemId
+		if((tonumber(items[itemID]["durability"]) or 0) > 0)then
+			return items[itemID]["durability"]
+		else
+			dcore.Error("Durability for Item ID "..tostring(itemID).." could not be found",2)
+		end
+	end
+end
+
+function useRightItemID(input)
+	local id = getIDWithID(input)
+	if(id>0)then
+		if(not items[id])then error("Item id \""..tostring(id).."\" not registered! Cannot parse an item we do not have any informations about!",2) end
+		local itemId = items[id]["id"]
+		if(itemId)then
+			return itemId
+		else
+			error("Invalid input! ("..tostring(input)..")",2)
+		end
+	else
+		error("Invalid input! ("..tostring(input)..")",2)
 	end
 end
 
@@ -141,3 +208,140 @@ function useRightItemIDForVillager(input)
 	if(not itemId)then error("Item id "..input.." not found!") end
 	return itemId
 end
+
+-- ///// Item family registration
+local itemTypes = {}
+function registerItemType(parent,child)
+	if(not itemTypes[parent])then itemTypes[parent] = {} end
+	if(type(child) ~= "table")then
+		table.insert(itemTypes[parent],child)
+	else
+		for _,t in pairs(child) do
+			table.insert(itemTypes[parent],t)
+		end
+	end
+end
+function getItemTypesOfParent(parent)
+	return itemTypes[parent]
+end
+function isItemType(str)
+	if(itemTypes[str])then
+		return true
+	else
+		return false
+	end
+end
+function getAllChildren(parent)
+	local t = {}
+	if(isItemType(parent))then
+		local children = itemTypes[parent]
+		for k,v in pairs(children) do
+			local r = getAllChildren(v)
+			for _,ch in pairs(r) do
+				table.insert(t,ch)
+			end
+		end
+	else
+		table.insert(t,parent)
+	end
+	return t
+end
+function getRandomChild(parent)
+	if(isItemType(parent))then
+		local child = getRAE(itemTypes[parent])
+		return getRandomChild(child)
+	else
+		return parent
+	end
+end
+
+
+
+local function lv100BCalc(input)
+	return (11.7813597135246596*(input+20)/20-3)
+end
+local function lv0BCalc(input)
+	return (1.66371661213556761*(input+20)/20-3)
+end
+
+-- Item tiers
+local tiers = {}
+local sortedTiers = {}
+function addItemTier(tag)
+	local tierValue = 0
+	local itemsInTier = 0
+	for _,v in pairs(getAllItemsOfType(tag))do
+		local item = getItem(v)
+		itemsInTier = itemsInTier + 1
+		tierValue = tierValue + (item["durability"] * (item["armorPoints"] or item["damage"] or 1))
+	end
+	if(value)then dcore.Warning("Item Tier level for tier \""..tag.."\" is above recommended limitations, its factor should be set manually!") end
+	local value = (math.floor((tierValue)/itemsInTier-.5)/10)
+	tiers[tag] = {["value"] = value}
+	local i = 1
+	while ((sortedTiers[i]) and (sortedTiers[i]["value"] > value)) do i = i + 1 end
+	table.insert(sortedTiers,i,{["value"] = value,["name"] = tag})
+end
+
+local chanceOfTierCache = {}
+function getChanceOfTier(dif,tier)
+	if(chanceOfTierCache[dif])then
+		return chanceOfTierCache[dif][tier]
+	else
+		chanceOfTierCache[dif] = {}
+		for k,v in pairs(getTiers()) do
+			if(dif >= lv100BCalc(v.value))then
+				chanceOfTierCache[dif][k] = 100
+			elseif(dif<=lv0BCalc(v.value))then
+				chanceOfTierCache[dif][k] = 0
+			else
+				chanceOfTierCache[dif][k] = 101-(1/(1+2^((dif+3)/(1+v.value/20)-5)))*111
+			end
+		end
+		return chanceOfTierCache[dif][tier]
+	end
+end
+
+function getTiers()
+	return tiers
+end
+
+function getSortedTiers()
+	return sortedTiers
+end
+
+
+addItemTier("leather_tier")
+addItemTier("iron_tier")
+addItemTier("chain_tier")
+addItemTier("gold_tier")
+addItemTier("diamond_tier")
+
+for k,v in pairs(getTiers())do print(k..":"..v.value) end
+
+-- // Equipment
+registerItemType("equipment",{"armor","weapon"})
+-- Armor
+registerItemType("armor",{"helmet","chestplate","leggings","boots"})
+-- Weapon
+registerItemType("weapon",{"melee","ranged"})
+registerItemType("melee",{"sword"}) -- ADD: AXE
+registerItemType("ranged",{"bow"})
+
+
+-- RAW TIER FORMULAR [Z=TIER LEVEL]: 101-\frac{1}{1+2^{\left(\frac{\left(x+3\right)}{1+\left(\frac{z}{20}\right)}-5\right)}}\cdot 111
+-- (lg(3520)/lg(2))*(z+20)/20-3
+-- 100: 11.78136*(z+20)/20-3
+-- 11.781359713524659604069682476215183134568062918706348
+-- 0:   1.663716*(z+20)/20-3
+-- 1.663716612135567610698660315999080676069979854056663347789107
+
+
+
+
+
+
+
+
+
+

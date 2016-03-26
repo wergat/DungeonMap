@@ -115,7 +115,7 @@ function Error(text,level)
 end
 
 function Warning(text)
-	print_log("error","[WARNING] "..text)
+	print_log("error","[WARNING] "..tostring(text))
 end
 
 function loadSimilarApis(_forceName)
@@ -445,7 +445,10 @@ if(not dcore)then
 		end
 	end
 
-	_G["getRAE"] = function(a) return a[math.random(#a)] end
+	_G["getRAE"] = function(a)
+		if(not a)then error("Nil is not a valid input",1) end
+		if(#a>0)then return a[math.random(#a)] end
+	end
 	
 	-- DEVELOPER MODE ACTIVATED
 	if(config.ENABLE_DEVELOPER_MODE)then
