@@ -40,6 +40,7 @@ if(tArgs[1] == "disable")then
 		file.write(textutils.serialize(modinfo))
 	end
 	file.close()
+	print("Mod disabled!")
 end
 -- /////    enable
 if(tArgs[1] == "enable")then
@@ -58,8 +59,9 @@ if(tArgs[1] == "enable")then
 	file = fs.open(":dungeon/mods/"..modName.."/mod.info", "w")
 	if(file)then
 		file.write(textutils.serialize(modinfo))
-		file.close()
 	end
+	file.close()
+	print("Mod enabled!")
 end
 -- /////    status
 if(tArgs[1] == "status")then
@@ -73,7 +75,16 @@ if(tArgs[1] == "status")then
 		status = (modinfo["active"] or false)
 		file.close()
 	end
-	print("The mod \""..modName.."\" is "..(status and "active" or "not active"))
+	write("The mod \""..modName.."\" ")
+	if(modinfo["active"])then
+		write("is ")
+		term.setTextColor(colors.green)
+	else
+		write("is ")
+		term.setTextColor(colors.red)
+	end
+	print((status and "active" or "deactivated"))
+	term.setTextColor(colors.white)
 end
 -- /////    info
 if(tArgs[1] == "info")then
@@ -124,9 +135,18 @@ if(tArgs[1] == "info")then
 	end
 end
 
+if(not tArgs[1] or tArgs[1] == "help" or tArgs[1] == "?")then
+	term.setTextColor(colors.orange)
+	print("Commands you can use:")
+	term.setTextColor(colors.white)
+	print(" modman list")
+	print(" modman disable [ModName]")
+	print(" modman enable [ModName]")
+	print(" modman status [ModName]")
+	print(" modman info [ModName]")
+end
 
---local parameters = { ["you "] = { ["please "] = { ["listen"] = {}, ["look "] = { ["up"] = {}, ["down"] = {} },["eat"] = {} }, ["give "] = { ["up"] = {}, ["blood"] = {}, }, ["kindly"] = {} } }
-local parameters = {["list"] = {}}
+local parameters = {["list"] = {},["help"] = {},["?"] = {}}
 local function tabCompletionFunction(shell, parNumber, curText, lastText)
 	-- Check that the parameters entered so far are valid:
 	local curParam = parameters

@@ -1,0 +1,53 @@
+local enchData = {}
+function getEnchByID(id)
+	return enchData[id+1]
+end
+function addEnchByID(id,data)
+	enchData[id+1] = data
+end
+function getEnchData()
+	return enchData
+end
+function getMaxLvWithID(id)
+	if(not id)then error("ID MUST BE NUMBER!",2) end
+	return enchData[id+1]["maxlv"]
+end
+
+-- Armor
+addEnchByID(0,{["maxlv"] = 4,["name"] = "Protection",["primary"] = {"armor"},["secondary"] = {}})
+addEnchByID(1,{["maxlv"] = 4,["name"] = "Fire Protection",["primary"] = {"armor"},["secondary"] = {}})
+addEnchByID(2,{["maxlv"] = 4,["name"] = "Feather Falling",["primary"] = {"boots"},["secondary"] = {}})
+addEnchByID(3,{["maxlv"] = 4,["name"] = "Blast Protection",["primary"] = {"armor"},["secondary"] = {}})
+addEnchByID(4,{["maxlv"] = 4,["name"] = "Projectile Protection",["primary"] = {"armor"},["secondary"] = {}})
+addEnchByID(5,{["maxlv"] = 3,["name"] = "Respiration",["primary"] = {"helmet"},["secondary"] = {}})
+addEnchByID(6,{["maxlv"] = 1,["name"] = "Aqua Affinity",["primary"] = {"helmet"},["secondary"] = {}})
+addEnchByID(7,{["maxlv"] = 3,["name"] = "Thorns",["primary"] = {"chestplate"},["secondary"] = {"helmet","leggings","boots"}})
+addEnchByID(8,{["maxlv"] = 3,["name"] = "Depth Strider",["primary"] = {"boots"},["secondary"] = {}})
+--[1.9]addEnchByID(9,{["maxlv"] = 2,["name"] = "Frost Walker",["primary"] = {},["secondary"] = {"boots"}})
+
+-- Sword
+addEnchByID(16,{["maxlv"] = 5,["name"] = "Sharpness",["primary"] = {"sword"},["secondary"] = {"axe"}})
+addEnchByID(17,{["maxlv"] = 5,["name"] = "smite",["primary"] = {"sword"},["secondary"] = {"axe"}})
+addEnchByID(18,{["maxlv"] = 5,["name"] = "Bane of Arthropods",["primary"] = {"sword"},["secondary"] = {"axe"}})
+addEnchByID(19,{["maxlv"] = 2,["name"] = "Knockback",["primary"] = {"sword"},["secondary"] = {}})
+addEnchByID(20,{["maxlv"] = 2,["name"] = "Fire Aspect",["primary"] = {"sword"},["secondary"] = {}})
+addEnchByID(21,{["maxlv"] = 3,["name"] = "Looting",["primary"] = {"sword"},["secondary"] = {}})
+
+-- Tools
+addEnchByID(32,{["maxlv"] = 5,["name"] = "Efficiency",["primary"] = {"pickaxe","axe","shovel"},["secondary"] = {"shear"}})
+addEnchByID(33,{["maxlv"] = 1,["name"] = "Silk Touch",["primary"] = {"pickaxe","axe","shovel"},["secondary"] = {"shear"}})
+addEnchByID(34,{["maxlv"] = 3,["name"] = "Unbreaking",["primary"] = {"equipment"},["secondary"] = {}})
+addEnchByID(35,{["maxlv"] = 3,["name"] = "Fortune",["primary"] = {"pickaxe","axe","shovel"},["secondary"] = {}})
+
+-- Bows
+addEnchByID(48,{["maxlv"] = 5,["name"] = "Power",["primary"] = {"bow"},["secondary"] = {}})
+addEnchByID(49,{["maxlv"] = 2,["name"] = "Punch",["primary"] = {"bow"},["secondary"] = {}})
+addEnchByID(50,{["maxlv"] = 1,["name"] = "Flame",["primary"] = {"bow"},["secondary"] = {}})
+addEnchByID(51,{["maxlv"] = 1,["name"] = "Infinity",["primary"] = {"bow"},["secondary"] = {}})
+
+-- Fishing rod
+addEnchByID(61,{["maxlv"] = 3,["name"] = "Luck of the Sea",["primary"] = {"fishing_rod"},["secondary"] = {}})
+addEnchByID(62,{["maxlv"] = 3,["name"] = "Lure",["primary"] = {"fishing_rod"},["secondary"] = {}})
+
+-- New Enchantments
+--[1.9]addEnchByID(,{["maxlv"] = 1,["name"] = "Mending",["primary"] = {},["secondary"] = {"equipment"}})

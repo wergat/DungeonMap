@@ -1,16 +1,78 @@
-dcore.requireAPI("mob")
-dcore.requireAPI("chest")
-
--- remove later
-local x_size = 10
-local y_size = 10
-
--- Room Size: 15x9x15
--- Flat Size: 15x3x15
-
-
--- Todo: move most of the functions in here to generation
 -- Todo: load dual wall thing
+
+-- Define type of rooms
+
+local roomTypes = {}
+function registerRoomType(roomType,data)
+	data.typ = roomType
+	roomTypes[#roomTypes+1] = data
+end
+
+
+function getRoomType(str)
+	for i=1,#roomTypes do
+		if(roomTypes[i].typ == str)then
+			return roomTypes[i]
+		end
+	end
+end
+
+
+local levels = {}
+local biomes = {}
+function registerBiome(biomeTable)
+	biomeTable.id = #biomes + 1
+	biomes[#biomes+1] = biomeTable
+	local l = biomeTable.levels
+	for i=1,#l do
+		if(not levels[l[i]])then levels[l[i]] = {} end
+		levels[l[i]][#levels[l[i]]+1] = biomeTable.id
+	end
+end
+function setBiome(id,biomeTable)
+	biomes[id] = biomeTable
+	biomes[id].id = id
+end
+function getBiomeByID(BID)
+	return biomes[BID]
+end
+
+
+-- Returns array with biome ID's
+function getBiomesOnLevel(level)
+	return levels[level]
+end
+
+function newBiome(name)
+	local biomeTable = {
+		name = name
+	}
+	return biomeTable
+end
+
+local nativeData = {
+	{["name"] = "Fortress",["color"] = colors.lightGray,["levels"] = {1,2}},
+	{["name"] = "Nether",["color"] = colors.red,["levels"] = {1,1}},
+	{["name"] = "Water Temple",["color"] = colors.blue,["levels"] = {2}},
+	{["name"] = "Desert Temple",["color"] = colors.yellow,["levels"] = {3}},
+	{["name"] = "Forest",["color"] = colors.lime,["levels"] = {3,4,5,6}},
+	{["name"] = "Dark Forest",["color"] = colors.gray,["levels"] = {2,2}},
+	{["name"] = "Mesa",["color"] = colors.green,["levels"] = {4,3}},
+	{["name"] = "Ice Cave",["color"] = colors.orange,["levels"] = {3}},
+	--{["name"] = "Ruins",["color"] = colors.lightBlue,["levels"] = {2}},
+	{["name"] = "Miner's Cave",["color"] = colors.cyan,["levels"] = {}},
+	{["name"] = "Abbondend",["color"] = colors.white,["levels"] = {}}
+}
+for i=1,#nativeData do
+	local b = newBiome(nativeData[i].name)
+	b.color = nativeData[i].color
+	b.levels = nativeData[i].levels
+	registerBiome(b)
+end
+
+--[[
+
+
 
 -- Data for the "first" room, all other rooms are seen relative to those coordinates
 roomData = {}
@@ -25,32 +87,6 @@ roomData["main"]["y2"] = 6
 roomData["main"]["z2"] = -178
 
 
--- Variables used by cmd-b. spawner
---
---           BIOME DATA
---
-
-
--- Store Informations about Biomes
-biomeData = {}
-biomeData[1] = {["name"] = "fortress",["dev_blockID"] = 0}
-biomeData[2] = {["name"] = "nether",["dev_blockID"] = 0}
-biomeData[3] = {["name"] = "forest",["dev_blockID"] = 0}
-biomeData[4] = {["name"] = "cave",["dev_blockID"] = 0}
-
--- returns biomeID for given name
--- returns number if successful, nil if not
-function getBiomeIDByName(_name)
- local result = nil
- for i=1,#biomeData do
-  if(biomeData[i]["name"]==_name)then
-   result = i
-  end
- end
- return result
-end
-
-
 --
 --           ROOM DATA
 --
@@ -58,9 +94,7 @@ end
 
 rooms = {}
 
--- Add Every biome to data
-for i=1,#biomeData do rooms[biomeData[i]["name"]] = {} end
-
+rooms["fortress"] = {}
 
 -- Generate coords of Rooms
 rooms["fortress"]["normal"] = {}
@@ -79,7 +113,7 @@ end
 connections = {}
 
 -- Add Every biome to data
-for i=1,#biomeData do connections[biomeData[i]["name"]] = {} end
+for i=1,#biomeData do connections[biomeData[i]["name"] = {} end
 
 -- Generate X and Z connections
 connections["fortress"]["normal"] = {["X"] = {},["Z"] = {}}
@@ -176,7 +210,7 @@ base["y"] = 30
 base["z"] = -180
 
 
-
+]]
 
 
 -- Generation-only things:

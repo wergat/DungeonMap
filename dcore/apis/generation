@@ -1,25 +1,237 @@
 os.loadAPI(":dungeon/dcore/apis/dcore")
 dcore.requireAPI("gendata")
 
-local settings = {}
-
 -- Set the Seed
-settings["seed"] = 12345
+SEED = 12345
 
 -- Set the Sub-Seed
-math.randomseed(settings["seed"])
-settings["subSeed"] = math.random(10000)
+math.randomseed(SEED)
+local SUBSEED = math.random(10000)
 
-settings["generationHeightMax"] = 5.6
-settings["generationBaseHeight"] = 1
-
-
--- Biomes: 0: Nothing    1:Fortress      ,2:Nether  ,3:Water Temple,4:Desert Temple,5:Forest,6:Cave,7:Dark Forest  ,8:Mesa       ,9:Ice Cave      ,10:Ruins   ,11:Miner's Cave,12: Abbondend
-settings["biomeLevels"] = {{2,1,2,6},{1,3,6,6,9},{4,5,7,8}}
+local chunkSizeX = math.random(15,25)
+local chunkSizeY = math.floor(375/chunkSizeX)
 
 
 
 
+
+
+
+function getBiomeByPosition(x,y,level)
+	local xinchunk = x%chunkSizeX -- X Position in 0/0 chunk
+	local yinchunk = y%chunkSizeY -- Y Position in 0/0 chunk
+	
+	local lowest_distance = 200
+	local lowest_distance_biome = 0
+	
+	local l = gendata.getBiomesOnLevel(level) or {}
+	for b=1,#l do
+		for xFactor=-1,1 do
+			for yFactor=-1,1 do
+				math.randomseed(getRandomSeedForBiome(x,y,xFactor,yFactor,b,level))
+				local biomecenterx = math.random(chunkSizeX)+(chunkSizeX*xFactor) -- X center of biome b in Chunk xfactor/yfactor relative to 0/0 chunk
+				local biomecentery = math.random(chunkSizeY)+(chunkSizeY*yFactor) -- Y center of biome b in Chunk xfactor/yfactor relative to 0/0 chunk
+				--local distance = math.abs(xinchunk - biomecenterx) + math.abs(yinchunk - biomecentery)
+				--
+				local distance = math.sqrt((xinchunk - biomecenterx)^2 + (yinchunk - biomecentery)^2)
+				if(distance < lowest_distance)then
+					lowest_distance = distance
+					lowest_distance_biome = b
+				end
+			end
+		end
+	end
+	return l[lowest_distance_biome]
+end
+
+local noiseCache = {}
+function getNoiseByPosition(x,y)
+	if(not noiseCache[x])then noiseCache[x] = {} end
+	if(not noiseCache[x][y])then
+		math.randomseed(SEED+((x+SUBSEED)*y)+(y*4))
+		local t = math.random(56)/10
+		noiseCache[x][y] = t
+		return t
+	else
+		return noiseCache[x][y]
+	end
+end
+
+local heightCache = {}
+function getHeightByPosition(x,y)
+	if(not heightCache[x])then heightCache[x] = {} end
+	if(not heightCache[x][y])then
+		local corners = (generation.getNoiseByPosition(x-1,y-1)+ generation.getNoiseByPosition(x+1, y-1)+ generation.getNoiseByPosition(x-1, y+1)+ generation.getNoiseByPosition(x+1, y+1) ) * 0.125
+		local sides   = (generation.getNoiseByPosition(x-1,y)  + generation.getNoiseByPosition(x+1, y)  + generation.getNoiseByPosition(x, y-1)  + generation.getNoiseByPosition(x, y+1) ) * 0.25
+		local center  =  generation.getNoiseByPosition(x, y) * 0.5
+		local noise = math.floor((corners + sides + center)*0.5)
+		heightCache[x][y] = noise
+		return noise
+	else
+		return heightCache[x][y]
+	end
+end
+function getEffectiveHeightOfPillar(x,y)
+	return getHeightByPosition(x,y) + 1
+end
+function getVerticalConnection(x,z)
+	local height = getEffectiveHeightOfPillar(x,z)
+	local conData = nil
+	math.randomseed(generation.giveSeed(x,z))
+	local bottom = 0
+	local top = 0
+	-- 1 in 6 chance for stairs/hole
+	if(math.random(6)==1)then
+		bottom = math.random(math.floor(height*0.5+0.5))
+		top = math.random(bottom,height)+1
+		-- 2 in 3 chance for stairs, all other are holes
+		if(math.random(3)>1)then
+			conData = "stairs"
+		else
+			conData = "hole"
+		end
+	end
+	return conData,bottom,top
+end
+
+function newRoom(x,y,z)
+	return {
+		biome = getBiomeByPosition(x,z,y),
+		roomData = {hasChest = false},
+		init = function(self)
+			self.roomType = math.random(4)
+		end,
+		spawn = function(self,x,y,z)
+			
+		end
+	}
+end
+
+function newPillar(x,y)
+	local pillarObject = {
+		height = getEffectiveHeightOfPillar(x,y),
+		rooms = {},
+		init = function(self)
+			local v,s,e = getVerticalConnection(x,y)
+			for i=1, self.height do
+				local room = newRoom(x,i,y)
+				if((v) and i >= s and i <= e)then
+					room.roomData.vCon = {
+						up = (i >= s and i < e),
+						down = (i <= e and i > s),
+						conType = v
+					}
+				end
+				room:init()
+				self.rooms[i] = room
+			end
+		end,
+		spawn = function(self,x,y,z)
+			
+		end
+	}
+	return pillarObject
+end
+
+function newTopping(x,y,z,conType)
+	return {
+		x = x,y = y,z = z,conType = conType,conPattern = 1,
+		biome = getBiomeByPosition(x,z,y),
+		conData = {hasChest = false},
+		init = function(self)
+			self.conPattern = math.random(3)
+		end,
+		spawn = function(self,x,y,z)
+			
+		end
+	}
+end
+
+
+-- Flat thing ontop of the pillar
+function isRoomSetup(a,h)
+	local returnValue = true
+	for i=1,#a do
+		local b = a[i]
+		if(b[1]==-1)then if(not (b[2]<=h))then returnValue = false end end
+		if(b[1]==0)then if(not (b[2]<h))then returnValue = false end end
+		if(b[1]==1)then if(not (b[2]==h))then returnValue = false end end
+		if(b[1]==2)then if(not (b[2]>h))then returnValue = false end end
+	end
+	return returnValue
+end
+local cornerData = {
+	["flat"] = {-1,-1,-1,-1},
+	["1se"] = {-1,-1,2,-1},
+	["1ne"] = {-1,2,-1,-1},
+	["1sw"] = {-1,-1,-1,2},
+	["1nw"] = {2,-1,-1,-1},
+	["2e"] = {-1,2,2,-1},
+	["2w"] = {2,-1,-1,2},
+	["2s"] = {-1,-1,2,2},
+	["2n"] = {2,2,-1,-1},
+	["2yb"] = {-1,2,-1,2},
+	["2ac"] = {2,-1,2,-1},
+	["3sw"] = {2,-1,2,2},
+	["3ne"] = {2,2,2,-1},
+	["3se"] = {-1,2,2,2},
+	["3nw"] = {2,2,-1,2}
+}
+function getRightCorner(y,a,b,c,h)
+	for k,v in pairs(cornerData) do
+		if(isRoomSetup({{v[1],y},{v[2],a+1},{v[3],b+1},{v[4],c+1}}))then
+			return k
+		end
+	end
+end
+local sideData = {
+	"wideX",
+	"wideZ",
+	"wideX",
+	"wideZ"
+}
+function getRightSide(a,y)
+	for i=1,4 do
+		if(a[i]<y)then
+			return sideData[i]
+		end
+	end
+end
+
+
+-- Egde:
+-- +  A | B 
+-- ^ -- + --
+-- X  Y | C
+-- - Z -> +
+
+function spawnToppings(x,y,z)
+	local tx = base["x"]+(x*20)-7
+	local ty = base["y"]+(y-1)*9
+	local tz = base["z"]+(z*20)-7
+	
+	local a_height = getEffectiveHeightOfPillar(x+1,z)
+	local b_height = getEffectiveHeightOfPillar(x+1,z+1)
+	local c_height = getEffectiveHeightOfPillar(x,z+1)
+	
+	local max_height = (math.max(a_height,b_height,c_height,(y-1))+1)
+	
+	local toppings = {}
+	for l = (math.min(a_height,b_height,c_height,(y-1))+1),max_height do
+		-- Corners
+		toppings[#toppings+1] = newTopping((tx+15),(base["y"]+(l-1)*9),(tz+15),getRightCorner(y,a_height,b_height,c_height,l))
+		-- Broad (flat) connections
+		toppings[#toppings+1] = newTopping((tx+15),(base["y"]+(l-1)*9),(tz+15),getRightSide({a_height,c_height,getEffectiveHeightOfPillar(x-1,z)+1,getEffectiveHeightOfPillar(x,z-1)+1},y))
+	end
+end
+
+
+
+
+
+
+
+--[[
 
 -- To be excluded later, GL HF WITH THAT ONE!
 settings["heightMax_ruins"] = 14
@@ -46,7 +258,7 @@ function getSetting(settingName)
  return settings[settingName]
 end
 
-
+]]
 
 -- returns the start and ending POSITION of the vertical connection (aka Stairs and holes) as y coords
 -- requires the X and Z coordinates of the pillar you are looking at
@@ -60,25 +272,7 @@ end
 
 -- returns the TYPE of the vertical connection (aka Stairs and holes)
 -- requires the X and Z coordinates of the pillar you are looking at
-function getVerticalConnection(x,z)
- local height = generation.getEffectiveHeightOfPillar(x,z)
- local connectionType = nil
- math.randomseed(generation.giveSeed(x,z))
- local bottom = 0
- local top = 0
- -- 1 in 6 chance for stairs/hole
- if(math.random(6)==3)then
-  bottom = math.random(math.floor(height/2+0.5))
-  top = math.random(bottom+1,height)
-  -- 2 in 3 chance for stairs, all other are holes
-  if(math.random(3)>1)then
-   connectionType = "stairs"
-  else
-   connectionType = "hole"
-  end
- end
- return connectionType,bottom,top
-end
+
 
 
 -- Used for calculations and stuff!
@@ -87,47 +281,21 @@ local function positive(num) if(num<0)then return num*-1 else return num end end
 -- Confusing function used for the generation
 -- B is the biome ID,
 function getRandomSeedForBiome(x,y,xfactor,yfactor,b,level)
- local realXPos = x+(settings["chunkSizeX"]*xfactor)
- local realYPos = y+(settings["chunkSizeY"]*yfactor)
- local realXChunkPos = math.floor(realXPos/settings["chunkSizeX"])
- local realYChunkPos = math.floor(realYPos/settings["chunkSizeY"])
- 
- local partA = realXChunkPos*(settings["seed"]%(13+(level)))+(12*(settings["subSeed"]%34))
- local partB = realYChunkPos*(settings["seed"]%(17+(level)))+(34*(settings["subSeed"]%12))
- return (partA*b)+(partB*level)
+	local realXPos = x+(chunkSizeX*xfactor)
+	local realYPos = y+(chunkSizeY*yfactor)
+	local realXChunkPos = math.floor(realXPos/chunkSizeX)
+	local realYChunkPos = math.floor(realYPos/chunkSizeY)
+	
+	local partA = realXChunkPos*(SEED%(21)+(level))+(12*(SUBSEED%34))
+	local partB = realYChunkPos*(SEED%(17+(level)))+(34*(SUBSEED%12))
+	return (partA*b+level)+(partB*level)-realXChunkPos
 end 
 
 -- X = Height position
 -- Y = Width position
 -- level = height position (Minecraft-Y-coordinate)
 
-function getBiomeByPosition(x,y,level)
- if(level > 3)then level = 3 end
- local xinchunk = x%settings["chunkSizeX"] -- X Position in 0/0 chunk
- local yinchunk = y%settings["chunkSizeY"] -- Y Position in 0/0 chunk
- 
- local lowest_distance = 200
- local lowest_distance_biome = 0
- 
- for b=1,#settings["biomeLevels"][level] do
-  for xfactor=-1,1 do
-   for yfactor=-1,1 do
-    math.randomseed(generation.getRandomSeedForBiome(x,y,xfactor,yfactor,b,level))
-    	
-    local biomecenterx = math.random(settings["chunkSizeX"])+(settings["chunkSizeX"]*xfactor) -- X center of biome b in Chunk xfactor/yfactor relative to 0/0 chunk
-    local biomecentery = math.random(settings["chunkSizeY"])+(settings["chunkSizeY"]*yfactor) -- Y center of biome b in Chunk xfactor/yfactor relative to 0/0 chunk
-	local distance = positive(xinchunk - biomecenterx) + positive(yinchunk - biomecentery)
-	
-    if(distance<lowest_distance)then
-     lowest_distance = distance
-     lowest_distance_biome = b
-    end
-	
-   end
-  end
- end 
- return settings["biomeLevels"][level][lowest_distance_biome]
-end
+
 
 function setSeed(_seed)
  settings["seed"] = _seed
@@ -142,20 +310,9 @@ function getRoomsBiomeByPostion(x,y,z)
 end
 
 -- HEIGHT GENERATION
-function getNoiseByPosition(x,y) -- 
- math.randomseed(settings["seed"]+((x+settings["subSeed"])*y)+(y*4))
- return math.random(settings["generationHeightMax"]*10)/10
-end
-function getHeightByPosition(x,y)
- local corners = (generation.getNoiseByPosition(x-1,y-1)+ generation.getNoiseByPosition(x+1, y-1)+ generation.getNoiseByPosition(x-1, y+1)+ generation.getNoiseByPosition(x+1, y+1) ) / 8 -- 4
- local sides   = (generation.getNoiseByPosition(x-1,y)  + generation.getNoiseByPosition(x+1, y)  + generation.getNoiseByPosition(x, y-1)  + generation.getNoiseByPosition(x, y+1) ) /  4 -- 2
- local center  =  generation.getNoiseByPosition(x, y) / 2 -- 2
- local noise = math.floor((corners + sides + center)/(2))
- return noise
-end
-function getEffectiveHeightOfPillar(x,y)
- return generation.getHeightByPosition(x,y)+setting["generationBaseHeight"]
-end
+
+
+
 
 -- API functions
 function setSeed(_seed)
@@ -172,6 +329,7 @@ function getSeed()
  return settings["seed"]
 end
 -- returns a seed generated with the args given
+
 function giveSeed(...)
  local seed = settings["seed"]
  for k,v in ipairs(arg) do
@@ -182,7 +340,6 @@ function giveSeed(...)
  return seed
 end
 
-
 -- get random array element
 local function getRAE(_table)
  local t = {}
@@ -192,109 +349,6 @@ local function getRAE(_table)
 end
 
 
--- Flat thing ontop of the pillar
-function spawnBasePlate(x,y,z)
- local tx = base["x"]+(x*20)-7
- local ty = base["y"]+(y-1)*9
- local tz = base["z"]+(z*20)-7
- setCommandBlock("/clone "..getRAE(rooms["fortress"]["baseplate"]).." "..tx.." "..ty.." "..tz.."")
-
- -- Egde:
- -- + A | B 
- --  -- + --
- -- X Y | C
- -- - Z -> +
- 
- local a_height = generation.getEffectiveHeightOfPillar(x+1,z)
- local b_height = generation.getEffectiveHeightOfPillar(x+1,z+1)
- local c_height = generation.getEffectiveHeightOfPillar(x,z+1)
- 
- local max_height = (math.max(a_height,b_height,c_height,(y-1))+1)
- 
- function isRoomSetup(_y,_a,_b,_c,_h)
-  local returnValue = true
-  if(_y==-1)then if(not (y<=_h))then returnValue = false end end
-  if(_y==0)then if(not (y<_h))then returnValue = false end end
-  if(_y==1)then if(not (y==_h))then returnValue = false end end
-  if(_y==2)then if(not (y>_h))then returnValue = false end end
-  
-  if(_a==-1)then if(not ((a_height+1)<=_h))then returnValue = false end end
-  if(_a==0)then if(not ((a_height+1)<_h))then returnValue = false end end
-  if(_a==1)then if(not ((a_height+1)==_h))then returnValue = false end end
-  if(_a==2)then if(not ((a_height+1)>_h))then returnValue = false end end
-  
-  if(_b==-1)then if(not ((b_height+1)<=_h))then returnValue = false end end
-  if(_b==0)then if(not ((b_height+1)<_h))then returnValue = false end end
-  if(_b==1)then if(not ((b_height+1)==_h))then returnValue = false end end
-  if(_b==2)then if(not ((b_height+1)>_h))then returnValue = false end end
-  
-  if(_c==-1)then if(not ((c_height+1)<=_h))then returnValue = false end end
-  if(_c==0)then if(not ((c_height+1)<_h))then returnValue = false end end
-  if(_c==1)then if(not ((c_height+1)==_h))then returnValue = false end end
-  if(_c==2)then if(not ((c_height+1)>_h))then returnValue = false end end
-  
-  return returnValue
- end
- function getCornerName(l)
-  if(isRoomSetup(-1,-1,-1,-1,l))then  -- spawn simple plate
-   return ("flat")
-  elseif(isRoomSetup(-1,-1,2,-1,l))then
-   return ("1se")
-  elseif(isRoomSetup(-1,2,-1,-1,l))then
-   return ("1ne")
-  elseif(isRoomSetup(-1,-1,-1,2,l))then
-   return ("1sw")
-  elseif(isRoomSetup(2,-1,-1,-1,l))then
-   return ("1nw")
-  elseif(isRoomSetup(-1,2,2,-1,l))then
-   return ("2e")
-  elseif(isRoomSetup(2,-1,-1,2,l))then
-   return ("2w")
-  elseif(isRoomSetup(-1,-1,2,2,l))then
-   return ("2s")
-  elseif(isRoomSetup(2,2,-1,-1,l))then
-   return ("2n")
-  elseif(isRoomSetup(-1,2,-1,2,l))then
-   return ("2yb")
-  elseif(isRoomSetup(2,-1,2,-1,l))then
-   return ("2ac")
-  elseif(isRoomSetup(2,-1,2,2,l))then
-   return ("3sw")
-  elseif(isRoomSetup(2,2,2,-1,l))then
-   return ("3ne")
-  elseif(isRoomSetup(-1,2,2,2,l))then
-   return ("3se")
-  elseif(isRoomSetup(2,2,-1,2,l))then
-   return ("3nw")
-   --[[
-  elseif(a_height<l and b_height<l and c_height<l)then  -- spawn egde, 1nw
-   print("1nw")
-  elseif(b_height>a_height and b_height>c_height and b_height>(y-1) and l<max_height)then  -- spawn egde, 1se
-   print("1ne")
-  elseif(a_height>b_height and c_height>b_height and (y-1)>b_height and l<max_height)then -- spawn egde, 3nw
-  elseif(a_height>=y and b_height>=y and c_height>=y and l<max_height)then -- spawn egde, 3se
-  ]]
-  end
- end
- 
- for l = (math.min(a_height,b_height,c_height,(y-1))+1),max_height do 
-  setCommandBlock("/clone "..getRAE(connections["fortress"]["corner"][getCornerName(l)]).." "..(tx+15).." "..(base["y"]+(l-1)*9).." "..(tz+15).."")
- end
- 
- -- Connections to sides
- if(a_height<y)then
-  setCommandBlock("/clone -683 26 -72 -679 24 -86 "..(tx+15).." "..ty.." "..tz.."")
- end
- if(c_height<y)then
-  setCommandBlock("/clone -683 20 -94 -669 18 -90 "..tx.." "..ty.." "..(tz+15).."")
- end
- if(generation.getEffectiveHeightOfPillar(x-1,z)<(y-1))then
-  setCommandBlock("/clone -683 26 -72 -679 24 -86 "..(tx-5).." "..ty.." "..tz.."")
- end
- if(generation.getEffectiveHeightOfPillar(x,z-1)<(y-1))then
-  setCommandBlock("/clone -683 20 -94 -669 18 -90 "..tx.." "..ty.." "..(tz-5).."")
- end
-end
 
 
 

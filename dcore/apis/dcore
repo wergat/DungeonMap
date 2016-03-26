@@ -1,5 +1,5 @@
 -- Config, you can change this if you want
-_G["config"] = {
+config = {
 	-- General folder stuff, recommended to leave as it is
 	DIR_TOTAL = ":dungeon", -- Default: ":dungeon"
 	DIR_MODS = ":dungeon/mods", -- Default: ":dungeon/mods"
@@ -115,7 +115,7 @@ function Error(text,level)
 end
 
 function Warning(text)
-	print_log("error","[WARNING] "..text)
+	print_log("error","[WARNING] "..tostring(text))
 end
 
 function loadSimilarApis(_forceName)
@@ -373,103 +373,110 @@ end
 -- /////////////
 
 -- Custom type definitions for various stuff
-local customTypeRegister = {}
-local nativeType = type
+if(not dcore)then
+	local customTypeRegister = {}
+	local nativeType = type
 
-function getTypeOf(data)
-	if(nativeType(data)=="table")then
-		local meta = getmetatable(data)
-		if(meta)then
-			if(meta["type"])then
-				for k,v in pairs(customTypeRegister) do
-					if(v(data))then
-						return k
+	function getTypeOf(data)
+		if(nativeType(data)=="table")then
+			local meta = getmetatable(data)
+			if(meta)then
+				if(meta["type"])then
+					for k,v in pairs(customTypeRegister) do
+						if(v(data))then
+							return k
+						end
 					end
 				end
 			end
 		end
-	end
-	return nativeType(data)
-end
-
-_G["type"] = getTypeOf
-
-function registerCustomType(typeName,typeFunction)
-	if(typeFunction)then
-		customTypeRegister[typeName] = typeFunction
-	else
-		customTypeRegister[typeName] = function(t) if((getmetatable(t)["type"] or "") == typeName)then return true end end
-	end
-end
-
--- ASYNC Grabbing to prevent timeout's
-local nativeExecAsync = commands.execAsync
-local nativeAsyncCommands = {}
-local nativeSleep = sleep
-
-local asyncCounter = 0
-_G["sleep"] = function(...)
-	asyncCounter = 0
-	return nativeSleep(unpack(arg))
-end
-function checkForAsyncTimeout()
-	asyncCounter = asyncCounter + 1
-	if(asyncCounter>=config.ASYNC_TIMEOUT_MAXIMUM)then
-		sleep(0.05)
-	end
-end
-_G["commands"]["execAsync"] = function(...)
-	checkForAsyncTimeout()
-	return nativeExecAsync(unpack(arg))
-end
-for k,v in pairs(_G["commands"]["async"]) do
-	nativeAsyncCommands[k] = v
-	_G["commands"]["async"][k] = function(...)
-		checkForAsyncTimeout()
-		return nativeAsyncCommands[k](unpack(arg))
-	end
-end
-
-if(config.ENABLE_SHUTDOWN_TRIGGERS)then
-	local nativeShutdown = os.shutdown
-	_G["os"]["shutdown"] = function()
-		runFileInAllMods("shutdown")
-		nativeShutdown()
+		return nativeType(data)
 	end
 
-	local nativeReboot = os.reboot
-	_G["os"]["reboot"] = function()
-		runFileInAllMods("shutdown")
-		nativeReboot()
-	end
-end
+	_G["type"] = getTypeOf
 
--- DEVELOPER MODE ACTIVATED
-if(config.ENABLE_DEVELOPER_MODE)then
-	-- Custom Error output to ingame chat with fuse to be sure the computer does not go crazy on us
-	local fuse = true
-	local nativeError = error
-	local customError = function(...)
-		local text = ""
-		if(fuse)then
-			for i=1,#arg-2 do
-				text = text.."\""..(tostring(arg[i]) or "").."\","
-			end
-			if(arg[#arg-1])then
-				text = text.."\""..(tostring(arg[#arg-1]) or "").."\""
-			end
-			commands.execAsync("/say An error happened! "..text.."")
-		
-			_G["error"] = nativeError			
-			local nativeWrite = write
-		
-			fuse = false
+	function registerCustomType(typeName,typeFunction)
+		if(typeFunction)then
+			customTypeRegister[typeName] = typeFunction
+		else
+			customTypeRegister[typeName] = function(t) if((getmetatable(t)["type"] or "") == typeName)then return true end end
 		end
-		return nativeError(unpack(arg))
 	end
-	_G["error"] = customError
-end
 
+	-- ASYNC Grabbing to prevent timeout's
+	local nativeExecAsync = commands.execAsync
+	local nativeAsyncCommands = {}
+	local nativeSleep = sleep
+
+	local asyncCounter = 0
+	_G["sleep"] = function(...)
+		asyncCounter = 0
+		return nativeSleep(unpack(arg))
+	end
+	function checkForAsyncTimeout()
+		asyncCounter = asyncCounter + 1
+		if(asyncCounter>=config.ASYNC_TIMEOUT_MAXIMUM)then
+			sleep(0.05)
+		end
+	end
+	_G["commands"]["execAsync"] = function(...)
+		checkForAsyncTimeout()
+		return nativeExecAsync(unpack(arg))
+	end
+	for k,v in pairs(_G["commands"]["async"]) do
+		nativeAsyncCommands[k] = v
+		_G["commands"]["async"][k] = function(...)
+			checkForAsyncTimeout()
+			return nativeAsyncCommands[k](unpack(arg))
+		end
+	end
+
+	if(config.ENABLE_SHUTDOWN_TRIGGERS)then
+		local nativeShutdown = os.shutdown
+		_G["os"]["shutdown"] = function()
+			runFileInAllMods("shutdown")
+			nativeShutdown()
+		end
+
+		local nativeReboot = os.reboot
+		_G["os"]["reboot"] = function()
+			runFileInAllMods("shutdown")
+			nativeReboot()
+		end
+	end
+
+	_G["getRAE"] = function(a)
+		if(not a)then error("Nil is not a valid input",1) end
+		if(#a>0)then return a[math.random(#a)] end
+	end
+	
+	-- DEVELOPER MODE ACTIVATED
+	if(config.ENABLE_DEVELOPER_MODE)then
+		-- Custom Error output to ingame chat with fuse to be sure the computer does not go crazy on us
+		local fuse = true
+		local nativeError = error
+		local customError = function(...)
+			local text = ""
+			if(fuse)then
+				for i=1,#arg-2 do
+					text = text.."\""..(tostring(arg[i]) or "").."\","
+				end
+				if(arg[#arg-1])then
+					text = text.."\""..(tostring(arg[#arg-1]) or "").."\""
+				end
+				commands.execAsync("/say An error happened! "..text.."")
+			
+				_G["error"] = nativeError			
+				local nativeWrite = write
+			
+				fuse = false
+			end
+			return nativeError(unpack(arg))
+		end
+		_G["error"] = customError
+	end
+	runFileInAllMods("boot")
+end
 
 -- maybe grab commands executed, and but them in table to print when system shuts down unexpected
 
@@ -477,7 +484,3 @@ end
 print_log("dcore","[API][DCORE] Loaded dcore ?")
 print_log("error","This is where the Errors can be found")
 print_log("command","This is where the executed Commands can be found")
-
-if(not dcore)then
-	runFileInAllMods("boot")
-end

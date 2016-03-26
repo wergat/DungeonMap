@@ -1,4 +1,6 @@
--- player:castSpell(spell) ???
+dcore.requireAPI("entity")
+
+-- Possible addition from MagicAndMages: player:castSpell(spell) ???
 function getPlayerByName(_playerName)
 	local playerObject = {}
 	playerObject.name = _playerName
@@ -8,6 +10,11 @@ function getPlayerByName(_playerName)
 	-- Returns the player name
 	playerObject.getName = function(self)
 		return self.name
+	end
+	
+	playerObject.isOnline = function(self)
+		local r,_ = commands.testfor(entity.newSel("a"):add("name",self.name):toString())
+		return r
 	end
 	
 	-- You can now add xp to the player
@@ -54,7 +61,7 @@ function getPlayerByName(_playerName)
 	
 	-- Teleports a player to a location or other player
 	playerObject.teleportTo = function(self,...)
-		if(#arg==1)then -- Teleport to a player
+		if(#arg==1)then -- Teleport to a player/entity
 			local s,e = commands.exec("/tp "..self.name.." "..arg[1])
 			if(not s) then print(e[1]) end
 		elseif(#arg==3)then -- Teleport to a location
@@ -73,15 +80,21 @@ function getPlayerByName(_playerName)
 	end
 	
 	playerObject.updateLocation = function(self)
-		local s,d = commands.exec("/tp @e[name="..self.name..",type=ArmorStand] "..self.name.."")
-		local s,e = commands.exec("/entitydata @e[name="..self.name..",type=ArmorStand] {}")
+		local entitySelector = entity.newSel():add("name",self.name):add("type","ArmorStand"):toString()
+		local s,d = commands.tp(entitySelector,self.name)
+		local s,e = commands.entitydata(entitySelector,"{}")
 		local data = dcore.convertNBTtoTable(string.sub(e[1],30,-1))
 		self.position = {["x"] = data["Pos"]["0"] or 0,["y"] = data["Pos"]["1"] or 0,["z"] = data["Pos"]["2"] or 0}
 		self.rotation = {["rX"] = data["Rotation"]["0"] or 0,["rY"] = data["Rotation"]["1"] or 0}
-		local s,d = commands.exec("/tp @e[name="..self.name..",type=ArmorStand] 0 10 0")
+		local s,d = commands.tp(entitySelector,0,10,0)
 	end
 	
-	
+	-- Checking for player's armorStand
+	local armorStandExists,_ = commands.testfor(entity.newSel():add("name",_playerName):add("type","ArmorStand"):toString())
+	if(not armorStandExists)then 
+		commands.exec("/summon ArmorStand ~ ~1 ~ {CustomName:".._playerName..",ShowArms:1,Invisible:1,NoGravity:1,DisabledSlots:1973790}")
+		print("Summoned new ArmorStand!")
+	end
 	
 	-- Set semi-important Metadata for player object
 	local metaTable = {}
@@ -91,6 +104,16 @@ function getPlayerByName(_playerName)
 	
 	playerObject = setmetatable(playerObject,metaTable)
 	return playerObject
+end
+
+function getPlayersBySelector(_selector)
+	local _,l = commands.testfor(tostring(_selector))
+	local playerNames = {}
+	local playerObjects = {}
+	for i=1,#l do
+		playerObjects[#playerObjects+1] = getPlayerByName(string.sub(l[i],7,-1))
+	end	
+	return setmetatable({},{ __index = function(t,key) return function(t,...) local r={} for i=1,#playerObjects do r[playerObjects[i]:getName()] = playerObjects[i][key](playerObjects[i],unpack(arg)) end return r end end })
 end
 
 -- Register the type "PlayerObject" we just used
