@@ -197,3 +197,8 @@ function newMob(args)
 	return mobObject
 end
 
+-- Fixing compatibility with old versions
+function summonMob(x,y,z,mobName,difficulty)
+	printError("The function summonMob got updates, please fix the functions you use!")
+	return mob.newMob{difficulty = difficulty,type = mobName}:auto():summon(x,y,z)
+end
