@@ -67,6 +67,6 @@ function request(url, header)
 end
 
 function autoRequest(...)
-	print("WARNING: autoRequest is no longer supported! Use githubRequest instead.")
+	print("WARNING: autoRequest is no longer supported! Use request instead.")
 	return githubRequest(unpack({...}))
 end
