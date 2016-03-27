@@ -61,6 +61,12 @@ function getRequestAsTable(url, header, key)
 	return JSON:decode(x) --parses JSON
 end
 
-function autoRequest(url)
-	return getRequestAsTable(url,{},pickWorkingKey(keylist))
+function githubRequest(url, header)
+	local header = header or {}
+	return getRequestAsTable(url, header, pickWorkingKey(keylist))
+end
+
+function autoRequest(...)
+	print("WARNING: autoRequest is no longer supported! Use githubRequest instead.")
+	return githubRequest(unpack({...}))
 end
