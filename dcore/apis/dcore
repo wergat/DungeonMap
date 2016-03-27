@@ -1,37 +1,23 @@
--- Config, you can change this if you want
-config = {
-	-- General folder stuff, recommended to leave as it is
-	DIR_TOTAL = ":dungeon", -- Default: ":dungeon"
-	DIR_MODS = ":dungeon/mods", -- Default: ":dungeon/mods"
-	DIR_LOGS = ":dungeon/logs", -- Default: ":dungeon/logs"
-	DIR_APIS = ":dungeon/dcore/apis", -- Default: ":dungeon/dcore/apis"
-	
-	-- // Performance Settings	
-	-- The amount of commands the computer runs before sleeping
-	-- Higher values will make the computer run more commands, but might cause it to crash, too.
-	ASYNC_TIMEOUT_MAXIMUM = 20, -- Default: 20
-	
-	-- Experimental custom asnyc, might work better
-	ASYNC_USE_CUSTOM_ASYNC = false, -- Default: false
-	
-	-- 1.8 Compatibility, active if set to true
-	USE_STRING_FOR_ITEM_ID = false, -- Default: false
-		
-	-- Enable developer mode
-	ENABLE_DEVELOPER_MODE = true, -- Default: false
-	
-	-- Enable shut-down triggering files in each mod
-	-- Might cause some problems, but its a worthy feature!
-	ENABLE_SHUTDOWN_TRIGGERS = true;
-	
-	-- Disable certain logs, might prevent some issues with limited storage space on computer
-	-- Set to true if you want a log to be disabled
-	ENABLED_LOGS = {
-		["dcore"] = true,
-		["command"] = true,
-		["error"] = true,
-	},
-}
+-- General loading of configuration things.
+if(not config)then
+	print("Setting up the config!")
+	os.loadAPI(":dungeon/dcore/apis/config")
+	config = setmetatable(config,{__index = function(t,key) return t.get(key) end}) -- Making it easier to access config data
+	config.load() -- Loading previously saved configurations
+	--
+
+	-- Setting the default configurations
+	config.conditionalSet("DIR_TOTAL",":dungeon")
+	config.conditionalSet("DIR_MODS",":dungeon/mods")
+	config.conditionalSet("DIR_LOGS",":dungeon/logs")
+	config.conditionalSet("DIR_APIS",":dungeon/dcore/apis")
+	config.conditionalSet("ASYNC_TIMEOUT_MAXIMUM",20)
+	config.conditionalSet("ASYNC_USE_CUSTOM_ASYNC",false)
+	config.conditionalSet("ENABLE_DEVELOPER_MODE",true)
+	config.conditionalSet("ENABLE_SHUTDOWN_TRIGGERS",true)
+	config.conditionalSet("ENABLED_LOGS",{["dcore"] = true,["command"] = true,["error"] = true,["updater"] = true})
+	config.save() -- Saving the config for later usage!
+end
 
 -- Use native Globals
 if(not _G["cleanG"])then
@@ -60,7 +46,7 @@ function print_log(file,text)
 			local logfile = fs.open(config.DIR_LOGS.."/"..file, file_used[file] and "a" or "w")
 			file_used[file] = true
 			if(logfile)then
-				logfile.writeLine("This file was disabled in the dcore configurations!")
+				logfile.writeLine("This file was disabled in the configurations!")
 				logfile.close()
 			end
 		end
