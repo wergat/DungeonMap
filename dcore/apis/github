@@ -61,7 +61,7 @@ function getRequestAsTable(url, header, key)
 	return JSON:decode(x) --parses JSON
 end
 
-function githubRequest(url, header)
+function request(url, header)
 	local header = header or {}
 	return getRequestAsTable(url, header, pickWorkingKey(keylist))
 end
