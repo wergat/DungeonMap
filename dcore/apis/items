@@ -111,7 +111,7 @@ function getItem(itemID)
 	if(type(itemID)=="number")then
 		return items[itemID]
 	else
-		dcore.Error(tostring(itemID).." is NaN!",2)
+		dcore.Error("[items:114]: \""..tostring(itemID).." is NaN!\"",3)
 	end
 end
 
@@ -273,7 +273,7 @@ function addItemTier(tag)
 	for _,v in pairs(getAllItemsOfType(tag))do
 		local item = getItem(v)
 		itemsInTier = itemsInTier + 1
-		tierValue = tierValue + (item["durability"] * (item["armorPoints"] or item["damage"] or 1))
+		tierValue = tierValue + ((item["durability"]+1) * (((item["armorPoints"]) or (item["damage"]) or 0)+1))
 	end
 	if(value)then dcore.Warning("Item Tier level for tier \""..tag.."\" is above recommended limitations, its factor should be set manually!") end
 	local value = (math.floor((tierValue)/itemsInTier-.5)/10)
@@ -325,7 +325,7 @@ registerItemType("equipment",{"armor","weapon"})
 registerItemType("armor",{"helmet","chestplate","leggings","boots"})
 -- Weapon
 registerItemType("weapon",{"melee","ranged"})
-registerItemType("melee",{"sword"}) -- ADD: AXE
+registerItemType("melee",{"sword"}) -- TODO; ADD: AXE
 registerItemType("ranged",{"bow"})
 
 
@@ -335,7 +335,6 @@ registerItemType("ranged",{"bow"})
 -- 11.781359713524659604069682476215183134568062918706348
 -- 0:   1.663716*(z+20)/20-3
 -- 1.663716612135567610698660315999080676069979854056663347789107
-
 
 
 

@@ -22,11 +22,18 @@ end
 -- Calculates rarity level, optional input is minimum rarity level
 function getRarityLevelOfItem(_forceRarity)
 	local r = _forceRarity or 1
-	local chance = {0.25,0.3,0.35,0.4,0.4,0.4,0.4,0.4} --{1,1,1,1,1,0.75,0.1,0.1}
+	local chance = {0.25,0.3,0.35,0.4,0.4,0.4,0.4,0.4} -- {1,1,1,1,1,0.75,0.1,0.1}
 	while((math.random(20)/20)<=chance[r] and r<#chance)do r = r + 1 end
 	return r
 end
+--  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
 
+
+
+
+
+
+--  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
 -- ///// Enchantment Caching
 -- Gathers valid enchantments for an item
 local cachedEFI = {} -- Cached Enchantment for item
@@ -52,13 +59,14 @@ local function initcEFI()
 		end
 	end
 end
--- Initialize enchantment caching
+-- Initialize caching enchantment for items
 initcEFI()
 -- ///// 
+--  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
 
 
-
--- ///// Used functions
+--  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
+-- ///// Used functions, maybe`?
 -- Counts how many elements a table really has
 local function count(input) --Counts, I guess?
 	local int = 0           --Yes it does!
@@ -80,10 +88,11 @@ local function overrideTable(_a,_b)
 	return c
 end
 -- ///// 
+--  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
 
 
 
-
+--  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
 -- ///// Default weapon and armor registration
 -- // Weapon
 local weapons = {}
@@ -118,9 +127,11 @@ for _,t in pairs(items.getItemTypesOfParent("armor")) do
 		registerArmor{armorType = t,itemID = item["id"]}
 	end
 end
+--  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
 
 
 
+--  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
 -- ///// Attributes calculations, registration and attribute data
 local attributes = {}
 local attributeTypes = {}
@@ -190,7 +201,7 @@ registerAttributeType("enchantment",{trigger = function(self)
 		if(not self.tag.ench)then self.tag.ench = {} end
 		table.insert(self.tag.ench,{id = k,lvl = v})
 		self.price = math.floor(self.price + 20 + (v*40+((v^3-1)*60))*enchAmount^2)
-		self.value = math.floor(self.value + 8 + (v*4+((v-1)*1.5))) + enchAmount * 10
+		self.value = math.floor(self.value + 80 + (v*10+((v-1)*3))) + enchAmount * 25
 		enchAmount = enchAmount + 1
 		--table.insert(self.tag.display.Lore,"\""..ench.getEnchByID(k).name.." lv "..v.."\"")
 	end
@@ -237,7 +248,7 @@ registerAttributeType("attributeModifier",{trigger = function(self)
 		t["Amount"] = value
 		table.insert(self.tag.AttributeModifiers,t)
 		self.price = math.floor(self.price + 53 + (v*40+((v^2-1)*120)) * attributeAmount^2)
-		self.value = math.floor(self.value + 15 + (v*4+((v-1)*2)) + attributeAmount * 12)
+		self.value = math.floor(self.value + 10 + (v*10+((v-1)*6)) + attributeAmount * 20)
 		attributeAmount = attributeAmount + 1
 	end
 	if(self.itemID)then
@@ -258,12 +269,9 @@ registerAttributeType("attributeModifier",{trigger = function(self)
 	return self
 end})
 
--- Other stuff
-local stats = {}
-
-
-
-
+--  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
+--  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
+--  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
 
 
 
@@ -361,7 +369,11 @@ function newItem(args)
 	
 	itemObject.autoPrice = function(self)
 		self.price = math.floor(self.price * (1+self.rarity/10) * (1+math.sqrt(items.getDurability(self.itemID))/100))
-		self.value = math.floor(self.value * (1+math.sqrt(items.getDurability(self.itemID))/100))
+		self.value = math.floor(self.value * (1+math.sqrt(items.getDurability(self.itemID))/20))
+		if(items.getItemWithStringID(self.itemID)["types"]["no_tier"])then
+			self.value = self.value*2+1300
+		end
+		self.value = self.value - 800
 	end
 	
 	itemObject.auto = function(self)
@@ -389,6 +401,7 @@ function newItem(args)
 			self:autoPrice()
 			self:autoLore()
 		end
+		return self
 	end
 	
 	itemObject.getNBT = function(self)
@@ -405,6 +418,12 @@ function newItem(args)
 	
 	return itemObject
 end
+
+
+--  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
+--  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
+--  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
+
 
 function getEquipmentForChest(powerInput)
 	local power = math.floor(powerInput/math.random(math.floor(powerInput/10)+1))

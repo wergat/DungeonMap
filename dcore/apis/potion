@@ -1,5 +1,5 @@
 dcore.requireAPI("items")
-dcore.requireAPI("farben")
+--dcore.requireAPI("farben")
 
 local effects = {}
 effects[1] = {["name"] = "Speed",["potion"] = "Swiftness",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true,["colorID"] = 2}
@@ -12,7 +12,7 @@ effects[7] = {["name"] = "Instant Damage",["potion"] = "Harming",["corrupt"] = f
 effects[8] = {["name"] = "Jump Boost",["potion"] = "Leaping",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true,["colorID"] = 11}
 effects[9] = {["name"] = "Nausea",["potion"] = "Nausea",["corrupt"] = false,["good"] = false,["max"] = 1,["allowDuration"] = true}
 effects[10] = {["name"] = "Regeneration",["potion"] = "Regeneration",["corrupt"] = false,["good"] = true,["max"] = -1,["allowDuration"] = true,["colorID"] = 1}
-effects[11] = {["name"] = "Resistance",["potion"] = "Resistance",["corrupt"] = true,["good"] = true,["max"] = 4,["allowDuration"] = true}
+effects[11] = {["name"] = "Resistance",["potion"] = "Resistance",["corrupt"] = true,["good"] = true,["max"] = 3,["allowDuration"] = true}
 effects[12] = {["name"] = "Fire Resistance",["potion"] = "Fire Resistance",["corrupt"] = false,["good"] = true,["max"] = 1,["allowDuration"] = true,["colorID"] = 3}
 effects[13] = {["name"] = "Water Breathing",["potion"] = "Water Breathing",["corrupt"] = false,["good"] = true,["max"] = 1,["allowDuration"] = true,["colorID"] = 13}
 effects[14] = {["name"] = "Invisibility",["potion"] = "Invisibility",["corrupt"] = false,["good"] = true,["max"] = 1,["allowDuration"] = true,["colorID"] = 14}
@@ -25,6 +25,10 @@ effects[20] = {["name"] = "Wither",["potion"] = "Decay",["corrupt"] = false,["go
 effects[21] = {["name"] = "Health Boost",["potion"] = "Health Boost",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true}
 effects[22] = {["name"] = "Absorption",["potion"] = "Absorption",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true}
 effects[23] = {["name"] = "Saturation",["potion"] = "Saturation",["corrupt"] = true,["good"] = true,["max"] = -1,["allowDuration"] = true}
+
+function getPotionTableByID(id)
+	return effects[id]
+end
 
 function getRandomPotionColor()
 	local v = {1,2,3,4,5,6,8,9,10,11,12,13,14}
