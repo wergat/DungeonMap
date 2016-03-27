@@ -1,8 +1,15 @@
-os.loadAPI(":dungeon/dcore/apis/dcore")
-dcore.requireAPI("github")
-
-JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
 print("Welcome to the Dungeon Map updater!")
+
+os.loadAPI(":dungeon/dcore/apis/dcore")
+JSON = nil
+if(fs.exists(":dungeon/dcore/apis/JSON.lua"))then
+	JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
+	print("Native JSON-API found!")
+else
+	printError("Could not find JSON parsing file; need to download a new one! Suspecting a fresh install or corrupted API directory!")
+end
+
+
 
 -- /// Engine Check
 -- Check if HTTP API is enabled
@@ -11,20 +18,53 @@ if not http then
 	error()
 end
 -- Check if there is an internet connection and if github is whitlisted
-if not http.get("https://api.github.com/") then
+if not http.get("https://api.github.com/rate_limit") then
 	if not http.get("http://pastebin.com/") then
 		printError("We need an internet connection to update our files!")
 	else
-		printError("If you have internet, please check your Computercraft mod config and allow api.github.com to be used, so we are allowed to download out files!")
+		printError("If you have internet, please check your Computercraft mod config and allow api.github.com to be used, so we are allowed to download files!")
 	end
 	error()
 end
+print("Connection: checked!")
 
+if(not JSON)then
+	print("JSON Parser not found. Downloading a new one!")
+	local downloadedJSONFile = http.get("http://pastebin.com/raw/ALx63iW4").readAll()
+	if(not downloadedJSONFile)then error("could not download the new JSON Parser - it is required for the updater!") end
+	local newJSONFile = fs.open(":dungeon/dcore/apis/JSON.lua","w")
+	newJSONFile.writeLine(downloadedJSONFile)
+	newJSONFile.close()
+	JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
+	if(not JSON)then error("Could not write the new JSON Parser into a file - it is required for the updater!") end
+end
+print("JSON parser actually exists!")
+
+if(dcore)then dcore.requireAPI("github") else printError("DCORE API WAS NOT FOUND!") end
 if(not github)then
-	printError("Github API is not installed!")
-	error("Github API is not installed!")
+	printError("Github API is not installed, using http as alternative to install it.")
+	github = {get = http.get}
+else
+	if(github.setKey)then
+		print("Loading Downloading Capacity Increaser Fix")
+		github.setKey(github.pickWorkingKey(github.keylist))
+	end
 end
 
+print("Web-APIs should work beyond this point!")
+
+print("It looks like your system is good to go!")
+print("What would you like to update?")
+print("[1] System Files")
+print("[2] Everything")
+print("[3] Update All Official Mods")
+print("[4] Force to update Everything")
+
+local logfile = fs.open(":dungeon/logs/updater","w")
+logfile.writeLine("Log file for the updater!")
+local startRemaining = (JSON:decode(http.get("https://api.github.com/rate_limit").readAll())["resources"]["core"]["remaining"])
+logfile.writeLine("API Calls remaining: "..(startRemaining))
+logfile.writeLine("==========================================")
 
 local SHACodes = {}
 if fs.exists(":dungeon/hashes") then
@@ -34,62 +74,22 @@ if fs.exists(":dungeon/hashes") then
 	SHACodes = textutils.unserialize(SHACodes)
 end
 
-print("It looks like your system is good to go!")
-print("What would you like to update?")
-print("[1] System Files")
-print("[2] The Updater")
-print("[3] Dev Tools")
-print("[4] Everything")
-
-local a
-repeat
-	a = read()
-until type(tonumber(a)) == "number"
-
-if(a==1)then
-	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/dcore")
-elseif(a==2)then
-	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/dcore")
-elseif(a==3)then
-	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/dev")
-	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/indev")
-	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/old")
-elseif(a==4)then
-	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/")
-end
-
-local githubKey = github.pickWorkingKey(github.keylist)
-github.setKey(githubKey)
-
-
-
-
-
-
-
-
-
-
-
-local logfile = fs.open(":dungeon/logs/updater","w")
-local githubRateTable = JSON:decode(http.get("https://api.github.com/rate_limit").readAll())
-logfile.writeLine("Log file for the updater!")
-logfile.writeLine("API Calls remaining: "..githubRateTable["resources"]["core"]["remaining"])
-
-
 
 local files_updated = 0
 local files_not_updated = 0
 
 local function getCurrentTimeAsUNIXTimespamp()
-	return http.get("http://currentmillis.com/api/v2/seconds-since-unix-epoch.php").readAll()
+	return http.get("http://currentmillis.com/time/seconds-since-unix-epoch.php").readAll()
 end
 
-local cancle
+local cancle = false
 
+-- DOWNLOAD FUNCTION
 local function downloadFromDir(url)
 	if(cancle)then return end
 	local x = github.get(url)
+	
+	-- Checking for the API limitations
 	if x then
 		x = x.readAll()
 	else
@@ -105,22 +105,24 @@ local function downloadFromDir(url)
 		cancle = true
 		return
 	end
+	
 	x = JSON:decode(x)
+	logfile.writeLine("Found #"..tonumber(#x).." files inside "..url)
 	for i = 1, #x do
 		local f = x[i]
 		local path = f["path"]
 		if (f["sha"] == SHACodes[path] and f["type"] ~= "dir") then
 			files_not_updated = files_not_updated + 1
-			logfile.writeLine("Not updated: "..path)
+			logfile.writeLine(" x Not updated: "..path)
 		elseif f["type"] == "dir" then
 			print("Scanning directory: " .. path)
 			logfile.writeLine("Downloading directory: " .. path)
 			SHACodes[path] = f["sha"]
 			downloadFromDir(f["url"])
 		else
-			for k,v in pairs(BLACKLIST) do if(v==path)then return end end
-			print(" Downloading file: " .. path)
-			logfile.writeLine("Downloading file: " .. path)
+			--for k,v in pairs(BLACKLIST) do if(v==path)then return end end
+			print(" > Downloading file: " .. path)
+			logfile.writeLine(" > Downloading file: " .. path)
 			local xt = github.get(f["download_url"]).readAll()
 			local open = fs.open("dungeon/" .. path, "w")
 			open.write(xt)
@@ -132,6 +134,34 @@ local function downloadFromDir(url)
 end
 
 --downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/")
+
+
+-- USER INPUT
+local a
+repeat
+	a = tonumber(read())
+until (a>0 and a<=4)
+
+if(a==1)then
+	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/dcore")
+elseif(a==2)then
+	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/")
+elseif(a==3)then
+	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/mods")
+	printError("You have to update non-official mods manually, or via the mod-manager!")
+elseif(a==4)then
+	fs.delete(":dungeon/hashes") 
+	downloadFromDir("https://api.github.com/repos/wergat/DungeonMap/contents/")
+else
+	print("WTF WTF WTF")
+end
+
+
+
+-- 
+
+
+
 
 if(not cancle)then
 	print("Finished updating!")
@@ -145,6 +175,8 @@ local open = fs.open(":dungeon/hashes", "w")
 open.write(textutils.serialize(SHACodes))
 open.close()
 
-local githubRateTable = JSON:decode(http.get("https://api.github.com/rate_limit").readAll())
-logfile.writeLine("API Calls remaining: "..githubRateTable["resources"]["core"]["remaining"])
+local endingRemaining = JSON:decode(http.get("https://api.github.com/rate_limit").readAll())["resources"]["core"]["remaining"]
+logfile.writeLine("==========================================")
+logfile.writeLine("API Calls remaining: "..endingRemaining)
+logfile.writeLine("API Calls used during update: "..(startRemaining-endingRemaining))
 logfile.close()
