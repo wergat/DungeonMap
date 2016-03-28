@@ -282,9 +282,11 @@ end})
 -- //////////////////
 
 function newItem(args)
-	local args = args or "equipment"
+	local args = args or {}
 	local itemObject = {}
-	itemObject.itemType = args.itemType or args -- (Armor|Weapon|...)
+	itemObject.itemType = args.itemType -- (Armor|Weapon|...)
+	if(not itemObject.itemType)then itemObject.itemType = "equipment" end
+	
 	itemObject.rarity = args.rarity or getRarityLevelOfItem(args.rarityMinLevel)
 	itemObject.attributes = args.attributes or {}
 	itemObject.itemLevel = args.itemLevel or 5
@@ -329,7 +331,6 @@ function newItem(args)
 	
 	itemObject.autoItemID = function(self)
 		local item = items.getItem(items.getOneItemWithTag(self.itemType))
-		if(not item)then print(self.itemType) end
 		self.itemID = item["id"]
 	end
 	
