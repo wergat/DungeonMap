@@ -1,33 +1,4 @@
--- gets All player names
--- customSearch is usually @a, can be changed to something like "@r" or "@a[10,50,53,rm=40]" or else
-function newSelector(...)
-	local selector = {}
-	selector.args = {}
-	selector.type = "a"
-	
-	if(#arg == 1)then
-		if(type(arg[1]) == "table")then
-			arg[1]
-		else
-		
-		end
-	else
-	
-	end
-
-	selector.getAsString = function(self)
-		local s = "@"..self.type.."["
-		if(#self.data > 1)then
-			for i=1,(#self.data-1) do
-				s = s..(self.data[i])..","
-			end
-		else
-			s = s..(self.data[#self.data]).."]"
-		end
-	end
-	return setmetatable(selector,{["type"] = "SelectorObject"})
-end
-dcore.registerCustomType("SelectorObject")
+-- This API might get removed at some point, just wait for it...
 
 function getAllPlayerNames(customSearch)
 	local r,t = commands.xp(0,(customSearch or "@a"))
