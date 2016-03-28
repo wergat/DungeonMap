@@ -174,11 +174,13 @@ function summon(...)
 		for i = 1,amountOfTrades do
 			math.randomseed(i+yPos*difficulty+amountOfTrades)
 			repeat
-			local itemTable,info = advitem.getEquipment(difficulty,nil,"player",1)
-				if(info)then -- If we got an item
+			--local itemTable,info = advitem.getEquipment(difficulty,nil,"player",1)
+			local item = advitem.newItem({itemLevel = difficulty+5})
+			local itemTable = item:autoNBT()
+				if(item:isValid())then -- If we got an item
 					local trade = {}				
-					local itemPrice = getShopPrice(tonumber(info["price"]))
-					tradeLevel = tradeLevel + info["value"]		
+					local itemPrice = getShopPrice(tonumber(item.price))
+					tradeLevel = tradeLevel + item.value
 					local buy,buyB = getCurrencyTradeTablesByPrice(itemPrice,2)
 					trade["buy"] = buy
 					if(buyB)then trade["buyB"] = buyB end
@@ -189,7 +191,7 @@ function summon(...)
 				else
 					difficulty = difficulty + 1
 				end
-			until (info)
+			until item:isValid()
 		end
 		villagerName = 'Level '..math.floor((tradeLevel/amountOfTrades)+0.5)..' Trader'
 	elseif(villagerType == "currency")then
