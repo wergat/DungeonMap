@@ -16,7 +16,7 @@ end
 local name1 = {"chel", "pr", "aer", "cat", "lu", "f", "cr", "o", "ali", "exan", "at", "we"}
 local name2 = {"est", "y", "ul", "in", "cr", "am", "im", "rd", "en", "imi", "ene", "rg"}
 local name3 = {"ra", "an", "us", "itus", "um", "es", "son", "o", "is", "s", "fyr", "at"}
-local function boss_name(units,seed)
+function boss_name(units,seed)
 	if seed then
 		math.randomseed(seed)
 	end
@@ -29,23 +29,21 @@ local function boss_name(units,seed)
 end
 
 
---Gets the plural form of a mob name.
---@name: Internal mob name.
-local exceptions = {["Zombie Pigman"] = "Zombie Pigmen"}
-local function pluralname(name)
-	name = mob.getMobList()[name]
-	if exceptions[name] then
-		return exceptions[name]
-	else
-		return (name or "Mob") .. "s"
-	end
-end
-
 local ranks = {"High Prelan", "Ruler", "Right-Hand Man", "King", "Leader"}
 --Summons a boss.
 --@x,@y,@z: X, Y, and Z coordinates.
 --@mobType: Type of mob.
 --@difficulty: Mob level.
+function summonBoss(x,y,z,mobType,difficulty)
+	local boss = mob.newMob({difficulty = difficulty, type = mobType})
+	boss:auto()
+	boss.name = boss_name(math.random(10)) .. ", " .. ranks[math.random(#ranks)] .. " of the Mobs"
+	boss.dropChances = {"1.0f","1.0f","1.0f","1.0f","1.0f"}
+	boss:summon(x,y,z)
+end
+
+--Old function, for reference in case stuff needs to be modified
+--[[
 function summonBoss(x,y,z,mobType,difficulty)
 	mob.initializeMob(x,y,z,mobType,difficulty)
 	mob.setEquipmentOfMob()
@@ -65,11 +63,11 @@ function summonBoss(x,y,z,mobType,difficulty)
 	data["PersistenceRequired"] = "1b"
 
 	local dataTag = dcore.getNBTStringFromTable(data)
-	local cmd = "summon "..mob.getEntityName(mob.getMobData("mobType")).." "..mob.getMobData("xCoord").." "..mob.getMobData("yCoord").." "..mob.getMobData("zCoord").." "..dataTag
+	local cmd = "/summon "..mob.getEntityName(mob.getMobData("mobType")).." "..mob.getMobData("xCoord").." "..mob.getMobData("yCoord").." "..mob.getMobData("zCoord").." "..dataTag
 	local success,answer = commands.exec(cmd)
 
 	if(not answer)then
 		print_log("command","[error] Failed to execute Command: "..cmd.."; Error message:"..answer[1]..(answer[2] or "").."")
 	end
 end
-
+]]
