@@ -1,0 +1,234 @@
+os.loadAPI("apis/dcore")
+os.loadAPI(":dungeon/dcore/apis/dcore")
+dcore.requireAPI("player")
+
+local playerName = "Wergat"
+local SCAN_RANGE = 100
+
+
+local modem = peripheral.wrap("top")
+modem.open(1)
+
+local scanData = {x = 10,y = 50,z = 0,r = 300}
+
+
+function getHitBoxOfEntity(entity)
+	return {x1 = 1, y1 = 2, z1 = 1, x2 = -1, y2 = -1, z2 = -1}
+end
+
+function getTypeOfEntityWithNBTTable(nbtTable)
+	local typ = "Unknown Entity"	
+	if(nbtTable["Health"] ~= nil)then typ = "Unknown Mob" end
+	
+	if(nbtTable["InLove"] ~= nil)then
+		typ = "Breed-able mob"
+		if(nbtTable["OwnerUUID"] ~= nil)then
+			typ = "Tame-able mob"
+		end
+	end
+	if(nbtTable["xTile"] ~= nil)then
+		typ = "projectile"
+		if(nbtTable["power"] ~= nil)then
+			typ = "Exploflamable projectile"
+		end
+	end
+	if(nbtTable["Saddle"] ~= nil)then typ = "Rideable mob" end
+	
+	-- Armor Stands
+	if(nbtTable["DisabledSlots"])then typ = "ArmorStand" end
+	
+	-- Mobs
+	if(nbtTable["BatFlags"] ~= nil)then typ = "Bat" end
+	if(nbtTable["EggLayTime"] ~= nil)then typ = "Chicken" end
+	if(nbtTable["ignited"] ~= nil)then typ = "Creeper" end
+	if(nbtTable["carried"] ~= nil)then typ = "Enderman" end
+	if(nbtTable["Lifetime"] ~= nil)then typ = "Endermite" end
+	if(nbtTable["Temper"] ~= nil)then typ = "Horse" end
+	if(nbtTable["ExplosionPower"] ~= nil and typ == "Unknown Mob")then typ = "Ghast" end
+	if(nbtTable["Elder"] ~= nil)then typ = "Guardian" end
+	if(nbtTable["Size"] ~= nil)then typ = "Slime" end
+	if(nbtTable["CatType"] ~= nil)then typ = "Ozelot" end
+	if(nbtTable["Saddle"] ~= nil and typ ~= "Horse")then typ = "Pig" end
+	if(nbtTable["Anger"] ~= nil)then typ = "PigZombie" end
+	if(nbtTable["RabbitType"] ~= nil)then typ = "Rabbit" end
+	if(nbtTable["Color"] ~= nil)then typ = "Sheep" end
+	if(nbtTable["SkeletonType"] ~= nil)then typ = "Skeleton" end
+	if(nbtTable["CareerLevel"] ~= nil)then typ = "Villager" end
+	if(nbtTable["PlayerCreated"] ~= nil)then typ = "VillagerGolem" end
+	if(nbtTable["Invul"] ~= nil)then typ = "WitherBoss" end
+	
+	if(nbtTable["CollarColor"] ~= nil)then typ = "Wolf" end
+	if(nbtTable["CanBreakDoors"] ~= nil)then typ = "Zombie" end
+	
+	-- Projectiles
+	if(nbtTable["Potion"] ~= nil)then typ = "Potion" end
+	if(nbtTable["pickup"] ~= nil)then typ = "Arrow" end
+	
+	-- Items and XP Orbs
+	if(nbtTable["Thrower"] ~= nil)then typ = "Item" end
+	if(nbtTable["Value"] ~= nil)then typ = "XPOrb" end
+	
+	return typ
+end
+
+local currentScanData = {}
+function saveCurrentScanData(data)
+	currentScanData = data
+end
+function getCurrentScanData()
+	return currentScanData
+end
+
+function scan()
+	local cmd = "/entitydata @e {}" --["..scanData.x..","..scanData.y..","..scanData.z..","..scanData.r.."]
+	local s,d = commands.exec(cmd)
+	
+	if(#d == 0)then
+		print("Scan failed! Zero entities in that area!")
+	else
+		local useableScanResults = {}
+		for i=1,#d do
+			if(string.sub(d[i],1,12) == "The data tag")then
+				useableScanResults[(#useableScanResults+1)] = dcore.convertNBTtoTable(string.sub(d[i],30,-1))
+			end
+		end
+		
+		if(#useableScanResults == 0)then
+			print("Scan failed! Zero useable results in the area! Tried to scan at least one unscan-able Entities!")
+		else
+			print()
+			for i=1,#useableScanResults do
+				local t = useableScanResults[i]
+				write("#"..i.." "..(getTypeOfEntityWithNBTTable(t)).." (")
+				for k,v in pairs(t["Pos"]) do
+					write((math.floor(v*10)/10)..",")
+				end
+				write(")  \""..(t["CustomName"] or "").."\"")
+				print()
+			end
+			saveCurrentScanData(useableScanResults)
+		end
+	end
+end
+
+
+
+
+-- http://www.3dkingdoms.com/weekly/weekly.php?a=3
+function checkLineBox(B1,B2,L1,L2)
+	local Hit = vector.new(0,0,0)
+	local function GetIntersection(n1,n2,p1,p2)
+		if((n1*n2) >= 0)then return false end
+		if(n1 == n2)then return false end
+		Hit = p1 + (p2-p1) * (-n1/(n2-n1))
+		return true
+	end
+	local function InBox(B1,B2,Axis)
+		if ( Axis==1 and Hit.z > B1.z and Hit.z < B2.z and Hit.y > B1.y and Hit.y < B2.y)then return true end
+		if ( Axis==2 and Hit.z > B1.z and Hit.z < B2.z and Hit.x > B1.x and Hit.x < B2.x)then return true end
+		if ( Axis==3 and Hit.x > B1.x and Hit.x < B2.x and Hit.y > B1.y and Hit.y < B2.y)then return true end
+		return false
+	end
+	if (L2.x < B1.x and L1.x < B1.x) then return false end
+	if (L2.x > B2.x and L1.x > B2.x) then return false end
+	if (L2.y < B1.y and L1.y < B1.y) then return false end
+	if (L2.y > B2.y and L1.y > B2.y) then return false end
+	if (L2.z < B1.z and L1.z < B1.z) then return false end
+	if (L2.z > B2.z and L1.z > B2.z) then return false end
+	if (L1.x > B1.x and L1.x < B2.x and	L1.y > B1.y and L1.y < B2.y and	L1.z > B1.z and L1.z < B2.z)then Hit = L1 return Hit end
+	if ((GetIntersection( L1.x-B1.x, L2.x-B1.x, L1, L2) and InBox(B1, B2, 1 ))
+	  or (GetIntersection( L1.y-B1.y, L2.y-B1.y, L1, L2) and InBox(B1, B2, 2 )) 
+	  or (GetIntersection( L1.z-B1.z, L2.z-B1.z, L1, L2) and InBox(B1, B2, 3 )) 
+	  or (GetIntersection( L1.x-B2.x, L2.x-B2.x, L1, L2) and InBox(B1, B2, 1 )) 
+	  or (GetIntersection( L1.y-B2.y, L2.y-B2.y, L1, L2) and InBox(B1, B2, 2 )) 
+	  or (GetIntersection( L1.z-B2.z, L2.z-B2.z, L1, L2) and InBox(B1, B2, 3 )))then return Hit end
+	return false
+end
+
+
+local selected_entity = nil
+while true do
+	repeat
+		local event, side, frequency, replyFrequency, message, distance = os.pullEvent("modem_message")
+		print(message)
+    until message == "scan_start"
+	scan()
+	modem.transmit(1,1,"scan_done")
+	-- Player position
+	local playerObject = player.getPlayerByName(playerName)
+	playerObject:updateLocation()
+	local x,y,z = playerObject:getPosition()
+	local xR,yR = playerObject:getRotation()
+	local sinxR = math.sin(xR/180*math.pi)
+	local cosxR = math.cos(xR/180*math.pi)
+	local sinyR = math.sin(yR/180*math.pi)
+	local cosyR = math.cos(yR/180*math.pi)
+	commands.execAsync("/particle reddust "..(x+-sinxR*cosyR*SCAN_RANGE).." "..(y+sinyR*-SCAN_RANGE+1.8).." "..(z+cosxR*cosyR*SCAN_RANGE).." -1 1 0 1")	
+	local lineV1 = vector.new(x,y+1.8,z)
+	local lineV2 = vector.new((x+-sinxR*cosyR*SCAN_RANGE),(y+sinyR*-SCAN_RANGE+1.8),(z+cosxR*cosyR*SCAN_RANGE))
+	
+	-- Calculations
+	modem.transmit(1,1,"calc_start")
+	local data = getCurrentScanData()
+	local relativEntityPosData = {}
+	for i=1,#data do
+		relativEntityPosData[i] = {}
+		relativEntityPosData[i].x = data[i]["Pos"]["0"]
+		relativEntityPosData[i].y = data[i]["Pos"]["1"]
+		relativEntityPosData[i].z = data[i]["Pos"]["2"]
+	end
+	modem.transmit(1,1,"calc_done")
+	
+	local scanResults = {}
+	
+	local xL,yL,zL,xM,yM,zM
+	for i=1,#relativEntityPosData do
+		local hitboxData = getHitBoxOfEntity(getTypeOfEntityWithNBTTable(data[i]))
+		--( >= ((relativEntityPosData[i].z + hitboxData.z1) * sinxR) and ((relativEntityPosData[i].z + hitboxData.z2) * sinxR) >= (relativEntityPosData[i].x + hitboxData.x2)) or ((relativEntityPosData[i].x + hitboxData.x1) >= ((relativEntityPosData[i].z + hitboxData.z1) * sinxR) and ((relativEntityPosData[i].z + hitboxData.z2) * sinxR) >= (relativEntityPosData[i].x + hitboxData.x2))
+		
+		-- Hitbox Calculations
+		xL = math.min((relativEntityPosData[i].x + hitboxData.x1),(relativEntityPosData[i].x + hitboxData.x2))
+		yL = math.min((relativEntityPosData[i].y + hitboxData.y1),(relativEntityPosData[i].y + hitboxData.y2))
+		zL = math.min((relativEntityPosData[i].z + hitboxData.z1),(relativEntityPosData[i].z + hitboxData.z2))
+	
+		xM = math.max((relativEntityPosData[i].x + hitboxData.x1),(relativEntityPosData[i].x + hitboxData.x2))
+		yM = math.max((relativEntityPosData[i].y + hitboxData.y1),(relativEntityPosData[i].y + hitboxData.y2))
+		zM = math.max((relativEntityPosData[i].z + hitboxData.z1),(relativEntityPosData[i].z + hitboxData.z2))
+		
+		-- Hitbox Vector
+		local bLowV = vector.new(xL,yL,zL)
+		local bHighV = vector.new(xM,yM,zM)
+		
+		local check = checkLineBox(bLowV,bHighV,lineV1,lineV2)
+		if(check)then
+			scanResults[#scanResults+1] = data[i]
+		end
+	end
+	modem.transmit(1,1,"data_incoming")
+	modem.transmit(1,1,textutils.serialize(scanResults))
+end
+
+--[[
+	print("Do:   [scan|select]")
+	local input = io.read()
+	if(input == "scan")then
+		print("Scanning...")
+		selected_entity = nil
+		saveCurrentScanData(nil)
+		scan()
+	elseif(input == "select")then
+		print("Entry to load:")
+		selected_entity = tonumber(io.read())
+		local data = getCurrentScanData()
+		if(not data)then
+			print("No scan data found!")
+		else
+			local d = data[selected_entity]
+			if(not d)then
+				print("Selected data invalid!")
+			else
+				textutils.pagedPrint(show(d),5)
+			end
+		end
+	end
+]]

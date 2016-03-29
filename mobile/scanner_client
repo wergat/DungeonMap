@@ -1,0 +1,231 @@
+local modem = peripheral.wrap("back")
+
+local scannedNBTData = {}
+local tX,tY = term.getSize()
+local selectedNBTData = 0
+local scrolledNBTData = 0
+local scrolledNBTTags = 0
+local showNBTTree = false
+local openedTable = {}
+
+
+modem.open(1)
+print("Press any key to start scanning for entities!")
+
+
+function showTable(t,l)
+	local r = ""
+	if(not l)then l = 1 end
+	for k,v in pairs(t) do
+		if(type(v) == "table")then
+			local a = showTable(v,l+1)
+			if(a == "")then 
+				r = r..(string.rep(" ",l)..tostring(k))..": {},\n"
+			else
+				r = r..(string.rep(" ",l)..tostring(k))..": {\n"..a..string.rep(" ",l).."},\n"
+			end
+		else
+			r = r..(string.rep(" ",l)..tostring(k)..":"..tostring(v))..",\n"
+		end
+	end
+	return r
+end
+
+function scan()
+	term.setCursorPos(1,1)
+	term.clearLine()
+	write("Scanning.")
+	modem.transmit(1,1,"scan_start")
+	write(".")
+	repeat
+		local event, side, frequency, replyFrequency, message, distance = os.pullEvent("modem_message")
+		if(message == "scan_done" or message == "calc_start" or message == "calc_done")then
+			write(".")
+		end
+    until message == "data_incoming"
+	local event, side, frequency, replyFrequency, message, distance = os.pullEvent("modem_message")
+	local data = textutils.unserialize(message) 
+	scannedNBTData = data
+end
+
+
+while true do
+	term.clear()
+	term.setCursorPos(1,1)
+	print("[ SCAN ]")
+	
+	-- GUI Drawing
+	if(#scannedNBTData>0)then
+		term.setCursorPos(1,3)
+		if(selectedNBTData==0 or not showNBTTree)then
+			write(string.rep("-",tX))
+		else
+			write("-[^|v]-")
+			if(openedTable.parent)then
+				write(string.rep("-",tX-12))
+				write("-[^]-")
+			else
+				write(string.rep("-",tX-7))
+			end
+		end
+		term.setCursorPos(1,2)
+		if(selectedNBTData==0)then
+			write("Entries in Database: "..#scannedNBTData)
+			term.setCursorPos(1,4)
+		end
+		if(scrolledNBTData == 0)then
+			term.setTextColor(colors.gray)
+		end
+		write("<")
+		term.setTextColor(colors.white)
+		write("|")
+		
+		for i=(scrolledNBTData+1),(math.min(#scannedNBTData,math.floor((tX-2)/4))+scrolledNBTData) do
+			if(i == selectedNBTData)then
+				term.setTextColor(colors.lime)
+				write(" "..string.sub(i.."  ",1,2))
+				term.setTextColor(colors.white)
+				write("|")
+			else
+				if(selectedNBTData>0)then
+					term.setTextColor(colors.gray)
+					write(" "..string.sub(i.."  ",1,2))
+					term.setTextColor(colors.white)
+					write("|")
+				else
+					write(" "..string.sub(i.."  ",1,2).."|")
+				end
+			end
+		end
+			
+		if(#scannedNBTData <= math.floor((tX-2)/4) or (scrolledNBTData >= (#scannedNBTData-math.floor((tX-2)/4))))then
+			term.setTextColor(colors.gray)
+		end
+		
+		term.setCursorPos(tX,(selectedNBTData>0 and 2 or 4))
+		write(">")
+		term.setTextColor(colors.white)
+			
+		-- NBT Tree
+		if(showNBTTree)then
+			if(selectedNBTData>0)then
+				local t = openedTable.data
+				local k = {}
+				if(scrolledNBTTags==0 or type(t) ~= "table")then
+					term.setCursorPos(1,4)
+					local path = " root/"
+					if(openedTable.key)then	
+						if(openedTable.parent.key)then
+							if(openedTable.parent.parent.key)then
+								path = "../"
+							end
+							path = path..(openedTable.parent.key.."/")
+						end
+						path = path..(openedTable.key)
+					end
+					term.setBackgroundColor(colors.gray)
+					write(string.sub(path.."                        ",1,tX))
+					term.setBackgroundColor(colors.black)
+				end
+				
+				if(type(t) == "table")then
+					for nk,_ in pairs(t)do
+						k[#k+1] = nk
+					end
+					if(scrolledNBTTags==0)then
+						term.setCursorPos(tX-(string.len(#k)+2),4)
+						term.setBackgroundColor(colors.gray)
+						write("{"..#k.."}")
+						term.setBackgroundColor(colors.black)
+					end
+					for i=(scrolledNBTTags+(openedTable.parent~=nil and 1 or 0)),(math.min(#k,tY-3)+scrolledNBTTags) do
+						if(k[i])then
+							term.setCursorPos(1,i+4-scrolledNBTTags)
+							local v = " "..k[i]..": "
+							if(type(t[k[i]]) == "table")then
+								v = ">"..v.."{}"
+							else
+								v = " "..v..tostring(t[k[i]])
+							end
+							if(string.len(v) >= tX)then
+								v = string.sub(v,1,(tX-3)).."..."
+							end
+							write(v)
+						end
+					end
+				else
+					term.setCursorPos(3,5)
+					write(tostring(t))
+				end
+			end
+			if(selectedNBTData>0)then
+				term.setCursorPos(tX-9,1)
+				write("[Open GUI]")
+			end
+		else
+			if(selectedNBTData>0)then
+				term.setCursorPos(tX-9,tY)
+				write("[Open NBT]")
+			end
+		end
+	end
+	
+	-- Event handleling
+	local event, button, x, y = os.pullEvent()
+	if(event == "mouse_click")then
+		if(showNBTTree)then
+			if(selectedNBTData>0)then
+				if(x==3 and y==3 and scrolledNBTTags>0)then scrolledNBTTags = scrolledNBTTags - 1 end
+				if(x==5 and y==3)then scrolledNBTTags = scrolledNBTTags + 1 end
+				if(y==3 and x==(tX-2) and openedTable.parent~=nil)then
+					local t = openedTable.parent
+					openedTable = nil
+					openedTable = {}
+					openedTable.data = t.data
+					openedTable.parent = t.parent
+					openedTable.key = t.key
+				end
+				if(y>3 and type(openedTable.data)=="table")then
+					local k = {}
+					local t = {data = openedTable.data,parent = openedTable.parent,key = openedTable.key}
+					for nk,_ in pairs(t.data)do
+						k[#k+1] = nk
+					end
+					if(k[(y+scrolledNBTTags-4)]~=nil)then
+						openedTable = nil
+						openedTable = {}
+						openedTable.data = t["data"][k[(y+scrolledNBTTags-4)]]
+						openedTable.parent = t
+						openedTable.key = k[(y+scrolledNBTTags-4)]
+						scrolledNBTTags = 0
+					end
+				end
+			end
+		else
+			term.setCursorPos(2,6)
+			write("????")
+		end
+		
+		if((y==4 and selectedNBTData==0) or (selectedNBTData>0 and y==2))then
+			if((x==tX) and (#scannedNBTData > math.floor((tX-2)/4)) and (scrolledNBTData < (#scannedNBTData-math.floor((tX-2)/4))))then scrolledNBTData = scrolledNBTData + 1
+			elseif((x==1) and scrolledNBTData>0)then scrolledNBTData = scrolledNBTData - 1 
+			elseif(x>2 and x<tX)then
+				local tmp = math.floor((x+1)/4+scrolledNBTData)
+				if(tmp<=#scannedNBTData)then
+					selectedNBTData = tmp
+					openedTable.parent = nil
+					openedTable.key = nil
+					openedTable.data = scannedNBTData[selectedNBTData]
+				end
+			end
+		end
+			
+		if(x>=1 and x<=9 and y==1)then scan() scrolledNBTData = 0 selectedNBTData = 0 end
+		if(x<tX and x>=(tX-9) and y==tY and not showNBTTree)then showNBTTree = true end
+		if(x<tX and x>=(tX-9) and y==1 and showNBTTree)then showNBTTree = false end
+	elseif(event == "mouse_scroll")then
+		if(button == -1 and scrolledNBTTags>0)then scrolledNBTTags = scrolledNBTTags - 1 end
+		if(button == 1)then scrolledNBTTags = scrolledNBTTags + 1 end
+	end	
+end
+textutils.pagedPrint(showTable(scannedNBTData))
