@@ -186,6 +186,7 @@ function summon(...)
 					if(buyB)then trade["buyB"] = buyB end
 					trade["maxUses"] = 9999999
 					trade["rewardExp"] = "false"
+					itemTable["Count"] = 1
 					trade["sell"] = itemTable
 					table.insert(trades,trade)
 				else
