@@ -120,9 +120,23 @@ local function get_v(id)
 	end
 end
 write(".")
-if get_v("cm") == nil then
+commands.execd = function(...)
+	if get_v("db") then
+		return commands.exec(unpack({...}))
+	else
+		return false
+	end
+end
+write(".")
+if not get_v("stage") then
+	commands.exec("/clear @a")
+end
+if get_v("has_setup") == nil then
 	set("Do you want to be able to play copyrighted music?", "cm")
 	set("Do you want a limited amount of lives, with extra lives being purchaseable?", "lv")
+	--set("Should tools have durability, or be unbreakable?", "ub")
+	set("Enable debug mode?", "db")
+	set_v("has_setup", true)
 	os.reboot()
 end
 write(".")
@@ -131,6 +145,7 @@ local w = 0
 multishell.launch({}, "/dungeon/mods/DungeonArena/live")
 multishell.launch({}, "/dungeon/mods/DungeonArena/rednet_receiver")
 multishell.launch({}, "/dungeon/mods/DungeonArena/blacklist")
+multishell.launch({}, "/dungeon/mods/DungeonArena/misc")
 if get_v("wave") then
 	wave = tonumber(get_v("wave"))
 	level = 1
@@ -148,68 +163,48 @@ if get_v("cm") and get_v("wave") == nil then
 end
 --TP in Arena
 if not get_v("stage") then
-	--commands.exec("/tp @a 45 28 14")
+	commands.exec("/tp @a 93 19 14")
 	commands.exec("/spawnpoint @a -7 4 8")
 	commands.exec("/gamerule keepInventory true")
+	commands.exec("/gamerule mobGriefing false")
 	--Give starter equipment
-	commands.exec("/clear @a")
-	commands.exec("/give @a 364 10")
+	commands.exec("/give @a cooked_beef 10")
 	for i=1,10 do
 	commands.exec("/give @r torch")
 	end
 	write(".")
 	sleep(1)
 	local t = _G["plist"]
+	local typelist = {"weapon","boots","leggings","chestplate","helmet"}
 	for i=1,#t do
 		for j=1,5 do
 			local tagtable, more
+			local type = typelist[j]
 			if(j==1)then
-				tagtable, more = advitem.getEquipment(math.floor(level*20+6),j,"zombie")
+				tagtable = advitem.newItem({itemLevel = math.floor(level*20+6), itemType = type}):autoNBT()
+				--tagtable, more = advitem.getEquipment(math.floor(level*20+6),j,"zombie")
 			else
-				tagtable, more = advitem.getEquipment(math.floor(level*20+0.5),j,"zombie")
+				tagtable = advitem.newItem({itemLevel = math.floor(level*20+0.5), itemType = type}):autoNBT()
+				--tagtable, more = advitem.getEquipment(math.floor(level*20+0.5),j,"zombie")
 			end
 		
 			if tagtable.tag then
 				local command = "/give "..t[i].." " .. tagtable.id .. " 1 0 "
 				command = command .. dcore.getNBTStringFromTable(tagtable.tag)
-				commands.execA(command)
+				commands.exec(command)
 			end
+			sleep(0.1)
 		end
 	end
 	commands.exec('/give @a computercraft:pocketComputer 1 1 {display:{Name:"Options"},computerID:2,upgrade:1}')
 end
 write(".")
 function killVillagers()
-	print("Killing villagers")
-	--commands.exec('/tellraw @a "Killing Villagers"')
-	for j = 1, 10 do
-		for i = 1, #villager_areas do
-			local coords = villager_areas[i][1].. " " .. villager_areas[i][2] .. " " .. villager_areas[i][3]
-			s,e = commands.exec("/summon ThrownPotion " .. coords .. " {Potion:{id:373,Damage:16428,Count:1}}")
-			if(not s) then print(e[1]) end
-		end
-		for i = 1, #high_level_villager_areas do
-			local coords = high_level_villager_areas[i][1].. " " .. high_level_villager_areas[i][2] .. " " .. high_level_villager_areas[i][3]
-			s,e = commands.exec("/summon ThrownPotion " .. coords .. " {Potion:{id:373,Damage:16428,Count:1}}")
-			if(not s) then print(e[1]) end
-		end
-		sleep(.01)
-	end
-	print("Killing more villagers")
-	for j = 1, 10 do
-		commands.exec("/summon ThrownPotion 82 26 35 {Potion:{id:373,Damage:16428,Count:1}}")
-		commands.exec("/summon ThrownPotion 77 26 38 {Potion:{id:373,Damage:16428,Count:1}}")
-		commands.exec("/summon ThrownPotion 80 26 38 {Potion:{id:373,Damage:16428,Count:1}}")
-		commands.exec("/summon ThrownPotion 77 26 31 {Potion:{id:373,Damage:16428,Count:1}}")
-		commands.exec("/summon ThrownPotion 62 26 28 {Potion:{id:373,Damage:16428,Count:1}}")
-		commands.exec("/summon ThrownPotion 67 26 28 {Potion:{id:373,Damage:16428,Count:1}}")
-		sleep(.01)
-	end
-	--commands.exec('/tellraw @a "The killing stopped!"')
+	commands.exec("/tp @e[type=Villager] ~ -1000 ~")
 end
 write(".")
 function summonVillagers()
-	--commands.exec('/tellraw @a "Summoning Villagers"')
+	--commands.execd('/tellraw @a "Summoning Villagers"')
 	print("Summoning villagers")
 	villager.summon_drug(82,26,35,level,nil,get_v("lv"))
 	if get_v("cm") then
@@ -262,7 +257,7 @@ local function summonChests()
 		local coords = getChest(past)
 		past[coords] = true
 		chosen[#chosen+1] = coords
-		--commands.exec("/say " .. textutils.serialize(coords))
+		commands.execd("/tellraw @a \"Chest coords: " .. textutils.serialize(coords) .. "\"")
 		chest.placeChest(level,coords[1],coords[2],coords[3])
 	end
 	print("Done summoning chests")
@@ -272,7 +267,7 @@ local function summonChests()
 	local coords = getChest(past)
 	past[coords] = true
 	chosen[#chosen+1] = coords
-	--commands.exec("/say " .. textutils.serialize(coords))
+	commands.execd("/tellraw @a \"Anvil coords: " .. textutils.serialize(coords) .. "\"")
 	sleep(0.1)
 	commands.setblock(coords[1],coords[2],coords[3],"anvil")
 	print("Done summoning anvil")
@@ -293,7 +288,7 @@ _G["removeChests"] = function()
 	local chests = textutils.unserialize(get_v("chest_coords"))
 	for i = 1, #chests do
 		local coords = chests[i]
-		commands.setblock(coords[1], coords[2], coords[3], "lava")
+		commands.blockdata(coords[1], coords[2], coords[3], "{Items:[]}")
 		sleep(1)
 		commands.setblock(coords[1], coords[2], coords[3], "air")
 	end
@@ -337,17 +332,13 @@ removeChests()
 --Begin waves
 if get_v("stage") ~= nil and get_v("stage") ~= "start" then
 	print("\nSkipping to stage " .. stage)
-	commands.exec('/tellraw @a "Skipping to stage ' .. stage .. '!"')
+	commands.execd('/tellraw @a "Skipping to stage ' .. stage .. '!"')
 end
 
-local messages = {"Words of encouragement!", "I'd say you're doing great, but I don't know.", "You're doing great!", "Meow meow meow!", "Blank.", "Please put that into the Creator's jokebox.", "#WergatYouFool", "Punchline!", "Splash!", "Help! I'm trapped in a splash factory!", "H2O, too!"}
+local messages = {"Words of encouragement!", "I'd say you're doing great, but I don't know.", "You're doing great!", "Meow meow meow!", "Blank.", "Please put that into the Creator's jokebox.", "#WergatYouFool", "Punchline!", "Splash!", "Help! I'm trapped in a splash factory!", "H2O, too!", "fml fml fml", "TEM OUTTA TEM", "Don't ask me, ask yourself. Maybe they know."}
 while true do
 	if stage == "start" then
-		if http.get("http://www.random.org") then
-			math.randomseed(http.get("https://www.random.org/integers/?num=1&min=1&max=" .. #messages .. "&col=1&base=10&format=plain&rnd=new").readAll())
-		else
-			math.randomseed(os.time())
-		end
+		math.randomseed((wave+level)/2) --seed is the average of the wave # and the level
 		commands.exec("/setblock -6 5 -2 air")
 		commands.exec('/title @a title ["",{"text":"Wave ","color":"gold"},{"text":"' .. wave .. '","color":"blue"}]')
 		commands.exec('/title @a subtitle ["",{"text":"' .. messages[math.random(#messages)] .. '","color":"blue"}]')
@@ -384,12 +375,12 @@ while true do
 	end
 	if stage == "waiting_shop" then
 		-- Wait for all players being done with looting the chest
-		--commands.exec('/tellraw @a "Waiting for players infront of the shop"')
+		commands.execd('/tellraw @a "Waiting for players infront of the shop"')
 		repeat
 			local _, aaa = commands.exec("/xp 0 @a[72,26,40,rm=5]")
 			sleep(0.3)
 		until #aaa == 0
-		--commands.exec('/tellraw @a "Welcome to Death's Shop!"')
+		--commands.execd('/tellraw @a "Welcome to Death's Shop!"')
 	
 		-- Close Key Gate
 		commands.exec("/setblock 64 19 45 iron_bars")
@@ -442,11 +433,11 @@ while true do
 			if month == "Oct" then --Pumpkin Pie: 50% discount during October!
 				commands.exec('/setblock 75 27 32 wall_sign 3 replace {Text1:"50% DISCOUNT", Text2:"ON PUMPKIN PIE", Text3:"ONLY IN OCTOBER!"}')
 				commands.exec('/setblock 80 27 32 wall_sign 3 replace {Text1:"50% DISCOUNT", Text2:"ON PUMPKIN PIE", Text3:"ONLY IN OCTOBER!"}')
-				--commands.exec('/tellraw @a "We might have some sales!"')
+				commands.execd('/tellraw @a "We might have some sales!"')
 			elseif month == "Apr" and day == "01" then --This was added on October 24th, 2015. I like to think ahead of time, okay? -Atenefyr
 				commands.exec('/setblock 75 27 32 wall_sign 3 replace {Text1:"ALL FOODS", Text2:"ARE NOW FREE!"}')
 				commands.exec('/setblock 80 27 32 wall_sign 3 replace {Text1:"ALL FOODS", Text2:"ARE NOW FREE!"}')
-				commands.exec('/tellraw @a "The food store has a great announcement!"')
+				commands.execd('/tellraw @a "The food store has a great announcement!"')
 			else
 				commands.exec('/setblock 75 27 32 wall_sign 3 replace {Text1:"BUY YOUR FOODS", Text2:"HERE!"}')
 				commands.exec('/setblock 80 27 32 wall_sign 3 replace {Text1:"BUY YOUR FOODS", Text2:"HERE!"}')
@@ -458,8 +449,8 @@ while true do
 			end
 			month = ""
 			day = ""
-			commands.exec('/setblock 75 27 32 wall_sign 3 replace {Text1:"BUY YOUR FOODS", Text2:"HERE!"}')
-			commands.exec('/setblock 80 27 32 wall_sign 3 replace {Text1:"BUY YOUR FOODS", Text2:"HERE!"}')
+			commands.exec('/setblock 75 27 32 wall_sign 3 replace {Text1:"BUY YOUR FOODS", Text2:"HERE, PLEB!"}')
+			commands.exec('/setblock 80 27 32 wall_sign 3 replace {Text1:"BUY YOUR FOODS", Text2:"HERE, PLEB!"}')
 		end
 		
 		stage = "shop"
@@ -468,11 +459,12 @@ while true do
 	
 	if stage == "shop" then
 		--Wait until shopping is over, then clean up everything
+		commands.execd('/tellraw @a "Waiting for everyone to finish"')
 		repeat
 			local _, aaa = commands.exec("/xp 0 @a[84,28,26,rm=5]")
 			sleep(0.3)
 		until #aaa == 0
-		commands.exec('/tellraw @a "Good luck!"')
+		commands.execd('/tellraw @a "Good luck!"')
 	
 		-- Close up going back gate
 		commands.exec("/setblock 78 31 26 iron_bars")
@@ -490,7 +482,7 @@ while true do
 		end
 	
 		-- Destroy Loot chests with items inside
-		commands.exec("/setblock 64 20 53 lava")
+		commands.exec("/blockdata 64 20 53 {Items:[]}")
 		sleep(1)
 		commands.exec("/setblock 64 20 53 chest")
 		
@@ -504,7 +496,7 @@ while true do
 		-- Close shop gate
 		commands.exec("/setblock 72 26 37 iron_bars")
 		commands.exec("/setblock 72 27 37 iron_bars")
-		--commands.exec('/tellraw @a "#ARENA_REMINDER_2"')
+		--commands.execd('/tellraw @a "#ARENA_REMINDER_2"')
 		
 		stage = "start"
 		set_v("stage", stage)
