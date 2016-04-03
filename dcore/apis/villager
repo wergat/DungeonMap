@@ -259,9 +259,11 @@ function summon(...)
 		until i == #weapons
 	elseif(villagerType == "music")then
 		coat = 5
-		table.insert(trades,{["buy"] = getCurrencyTradeTablesByPrice(25000,2),["maxUses"] = 9999999,["sell"] = {["id"] = 2265,["Count"] = 1},["rewardExp"] = false})
-		table.insert(trades,{["buy"] = getCurrencyTradeTablesByPrice(12000,2),["maxUses"] = 9999999,["sell"] = {["id"] = 2258,["Count"] = 1},["rewardExp"] = false})
-		table.insert(trades,{["buy"] = getCurrencyTradeTablesByPrice(37213,2),["maxUses"] = 9999999,["sell"] = {["id"] = 2259,["Count"] = 1},["rewardExp"] = false})
+		table.insert(trades,{["buy"] = getCurrencyTradeTablesByPrice(10000,2),["maxUses"] = 9999999,["sell"] = {["id"] = 2265,["Count"] = 1},["rewardExp"] = false})
+		table.insert(trades,{["buy"] = getCurrencyTradeTablesByPrice(5000,2),["maxUses"] = 9999999,["sell"] = {["id"] = 2258,["Count"] = 1},["rewardExp"] = false})
+		table.insert(trades,{["buy"] = getCurrencyTradeTablesByPrice(10000,2),["maxUses"] = 9999999,["sell"] = {["id"] = 2259,["Count"] = 1},["rewardExp"] = false})
+		table.insert(trades,{["buy"] = getCurrencyTradeTablesByPrice(10000,2),["maxUses"] = 9999999,["sell"] = {["id"] = 84,["Count"] = 1,["tag"] = {["CanPlaceOn"] = {"minecraft:planks", "minecraft:stonebrick", "minecraft:dirt", "minecraft:cobblestone"}}},["rewardExp"] = false})
+		table.insert(trades,{["buy"] = getCurrencyTradeTablesByPrice(10000,2),["maxUses"] = 9999999,["sell"] = {["id"] = 258,["Count"] = 1,["tag"] = {["display"] = {["Name"] = "Jukebox Breaker", ["Lore"] = {"Destroys any placed jukeboxes."}}, ["CanDestroy"] = {"minecraft:jukebox"}}},["rewardExp"] = false})
 		villagerName = "Music Trader"
 	elseif(villagerType == "food")then
 		math.randomseed(yPos*difficulty+amountOfTrades)
