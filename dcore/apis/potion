@@ -281,7 +281,7 @@ function generatePotionItem(power,seed)
 	nbtTable["tag"]["display"]["Name"] = potionNameColor..potionName..SS("r")
 	nbtTable["tag"]["display"]["Lore"] = {
 		"It's a "..eName.." potion!",
-		"This potion is worth "..SS(6)..tonumber(cost*23)..SS(5).." gold",
+		"This potion is worth "..SS(6)..tonumber(cost*23)..SS(5).." quaz",
 		positiveText,
 		"Might contain "..potion_name(3,seed+21).."!"
 	}
@@ -309,7 +309,7 @@ function generateDropPotion(power,seed)
 	name = eName.." Potion of "..pName
 	t["Price"] = cost
 	t["Seed"] = seed
-	t["Lore"] = {"Price is about " .. cost .. " gold"}
+	t["Lore"] = {"Price is about " .. cost .. " quaz"}
 	return t,pName,damage
 end
 
