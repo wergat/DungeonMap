@@ -47,6 +47,7 @@ end
 
 
 
-
-dcore.registerCustomType("EntityObject")
-dcore.registerCustomType("SelectorObject")
+if(dcore.registerCustomType)then
+	dcore.registerCustomType("EntityObject")
+	dcore.registerCustomType("SelectorObject")
+end

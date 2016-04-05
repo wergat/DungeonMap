@@ -218,6 +218,12 @@ function getNBTStringFromTable(t)
 						if(type(v) == "boolean")then
 							nbt = nbt..k..":"..tostring(v)..","
 						else
+							if(type(v) == "function")then -- ERROR condition
+								for key,val in pairs(t) do
+									print(key..":"..tostring(val))
+								end
+								error("[apis/dcore:222]: "..tostring(v).." got a function!")
+							end
 							nbt = nbt..k..":"..v..","
 						end
 					else
