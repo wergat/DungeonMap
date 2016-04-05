@@ -1,3 +1,4 @@
+os.loadAPI(":dungeon/dcore/apis/dcore")
 dcore.requireAPI("entity")
 
 -- Possible addition from MagicAndMages: player:castSpell(spell) ???
@@ -118,4 +119,6 @@ end
 
 -- Register the type "PlayerObject" we just used
 -- TODO: maybe improve the testing for this?
-dcore.registerCustomType("PlayerObject",function(t) if((getmetatable(t)["type"] or "") == "PlayerObject")then return true end end)
+if(dcore.registerCustomType)then
+	dcore.registerCustomType("PlayerObject",function(t) if((getmetatable(t)["type"] or "") == "PlayerObject")then return true end end)
+end

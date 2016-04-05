@@ -183,7 +183,7 @@ for _,itemType in pairs(items.getAllChildren("equipment"))do
 		if(#enchs.primary > 0 and (math.random(3) > 1 or not choosenEnch))then
 			choosenEnch = getRAE(enchs.primary)
 		end
-		local level = math.random(ench.getMaxLvWithID(choosenEnch))
+		local level = math.random(math.floor(ench.getMaxLvWithID(choosenEnch)/2+1))
 		return {ench = choosenEnch,lv = level,["type"] = "enchantment"}
 	end
 	attribute.type = "enchantment"
@@ -194,16 +194,16 @@ registerAttributeType("enchantment",{trigger = function(self)
 	for k,v in pairs(self.attributes) do
 		if(v.type == "enchantment")then
 			allEnchData[v["ench"]] = math.min(((allEnchData[v["ench"]] or 0) + v["lv"]),ench.getMaxLvWithID(v["ench"]))
+			table.insert(self.tag.display.Lore,"\" Ench: "..ench.getEnchByID(v["ench"]).name.." lv "..v["lv"].."\"")
 		end
 	end
 	local enchAmount = 1
 	for k,v in pairs(allEnchData)do
 		if(not self.tag.ench)then self.tag.ench = {} end
 		table.insert(self.tag.ench,{id = k,lvl = v})
-		self.price = math.floor(self.price + 20 + (v*40+((v^3-1)*60))*enchAmount^2)
+		self.price = math.floor(self.price + 70 + (v*40+((v-1)*60))*enchAmount^2)
 		self.value = math.floor(self.value + 80 + (v*10+((v-1)*3))) + enchAmount * 25
 		enchAmount = enchAmount + 1
-		--table.insert(self.tag.display.Lore,"\""..ench.getEnchByID(k).name.." lv "..v.."\"")
 	end
 	return self
 end})
@@ -247,7 +247,7 @@ registerAttributeType("attributeModifier",{trigger = function(self)
 		end
 		t["Amount"] = value
 		table.insert(self.tag.AttributeModifiers,t)
-		self.price = math.floor(self.price + 53 + (v*40+((v^2-1)*120)) * attributeAmount^2)
+		self.price = math.floor(self.price + 53 + (v*40+((v-1)*120)) * attributeAmount * 5)
 		self.value = math.floor(self.value + 10 + (v*10+((v-1)*6)) + attributeAmount * 20)
 		attributeAmount = attributeAmount + 1
 	end
@@ -325,8 +325,8 @@ function newItem(args)
 	end
 	
 	itemObject.autoLore = function(self)
-		 table.insert(self.tag.display.Lore,"\"Rarity is "..getRarityColor(self.rarity)..SS("o")..getRarity(self.rarity)..SS(5)..SS("o").."\"")
-		 table.insert(self.tag.display.Lore,"\"Price is about "..self.price.." quaz\"")
+		table.insert(self.tag.display.Lore,"\"Rarity is "..getRarityColor(self.rarity)..SS("o")..getRarity(self.rarity)..SS(5)..SS("o").."\"")
+		table.insert(self.tag.display.Lore,"\"Price is about "..self.price.." quaz\"")
 	end
 	
 	itemObject.autoItemID = function(self)
@@ -369,10 +369,16 @@ function newItem(args)
 	end
 	
 	itemObject.autoPrice = function(self)
-		self.price = math.floor(self.price * (1+self.rarity/10) * (1+math.sqrt(items.getDurability(self.itemID))/100))
+		self.price = math.floor(self.price * (1+self.rarity/10) * (1+math.sqrt(items.getDurability(self.itemID))/100) + (items.getDurability(self.itemID)))
 		self.value = math.floor(self.value * (1+math.sqrt(items.getDurability(self.itemID))/20))
 		if(items.getItemWithStringID(self.itemID)["types"]["no_tier"])then
 			self.value = self.value*2+1300
+		end
+		if(self.itemID)then
+			local item = items.getItemWithStringID(self.itemID)
+			if(item.types["armor"] and item.armorPoints)then
+				self.value = math.floor(self.value * ((10+item.armorPoints)/10))
+			end
 		end
 		self.value = self.value - 800
 	end
@@ -388,8 +394,8 @@ function newItem(args)
 					local seed = math.random(10000000)
 					math.randomseed(seed)
 					table.insert(self.attributes,self:getNewAttribute())
-					--table.insert(self.tag.display.Lore,"\""..tostring(#self.attributes).." is a "..tostring(self.attributes[#self.attributes]["type"]).."\"")
-					table.insert(self.tag.cc.rolls,seed)
+					table.insert(self.tag.display.Lore,"\""..tostring(#self.attributes).." is a "..tostring(self.attributes[#self.attributes]["type"]).."\"")
+					self.tag.cc.rolls[#self.tag.cc.rolls+1] = {["seed"] = seed}
 				else c = c - 1 end
 			end
 			for k,v in pairs(getAttributeTypes()) do
