@@ -2,8 +2,6 @@ os.loadAPI(":dungeon/dcore/apis/dcore")
 dcore.requireAPI("advitem")
 dcore.requireAPI("items")
 
--- Hello Github!
-
 -- Returns Table with currency data
 function getCurrencyTable()
 	local cur = {
