@@ -1,6 +1,7 @@
 dcore.requireAPI("advitem")
 dcore.requireAPI("potion")
 
+trades = {}
 registerCustomVillagerType("drug",function(self,argLevel)
 	local level = argLevel or 1
 	local amountOfTrades = math.random(3,5)
@@ -10,6 +11,10 @@ registerCustomVillagerType("drug",function(self,argLevel)
 		itemTable["Count"] = 1
 		trade:setSell(itemTable)
 		self:addTrade(trade)
+	end
+	for i = 1, #trades do
+		tr = trades[i]
+		self:addTrade(newTrade():setBuyToMoney(tr[1]):setSell(tr[2]))
 	end
 	self:addBlocker()
 	self.name = 'Drug Dealer'
