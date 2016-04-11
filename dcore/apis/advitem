@@ -299,6 +299,7 @@ function newItem(args)
 	itemObject.price = 20
 	itemObject.value = 10
 	itemObject.itemID = nil
+	itemObject.unbreakable = args.unbreakable or false
 	
 		
 	-- Returns the color and color rarity for leather armor
@@ -407,6 +408,9 @@ function newItem(args)
 			self.tag.display.Name = getRarityColor(self.rarity)..items.getName(self.itemID)
 			self:autoPrice()
 			self:autoLore()
+		end
+		if self.unbreakable then
+			self.tag["Unbreakable"] = true
 		end
 		return self
 	end
