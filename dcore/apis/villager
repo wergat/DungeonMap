@@ -2,6 +2,8 @@ os.loadAPI(":dungeon/dcore/apis/dcore")
 dcore.requireAPI("advitem")
 dcore.requireAPI("items")
 
+-- Hello Github!
+
 -- Returns Table with currency data
 function getCurrencyTable()
 	local cur = {
@@ -64,7 +66,7 @@ function getCurrencyTradeTablesByPrice(price,tradeSlots)
 			local tag = {}
 			tag["display"] = {
 				["Name"] = cur[resourceIndex]["name"],
-				["Lore"] = {"This item is part of the currency","It is worth exactly "..SS(2)..comma_value(cur[resourceIndex]["value"])..SS("r").." Quaz!"}
+				["Lore"] = {"This item is part of the currency","It is worth exactly "..SS(2)..comma_value(cur[resourceIndex]["value"])..SS("r")..SS("5")..SS("o").." quaz!"}
 			}
 			
 			trade[tradeIndex] = {["id"] = id,["Count"] = amount,["tag"] = tag}
@@ -838,4 +840,3 @@ function summon_sell(x, y, z)
 end
 
 ]]
-
