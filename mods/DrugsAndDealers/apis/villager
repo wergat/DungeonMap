@@ -13,5 +13,6 @@ registerCustomVillagerType("drug",function(self,argLevel)
 	end
 	self:addBlocker()
 	self.name = 'Drug Dealer'
+	self.profession = 2
 	return self
 end)
