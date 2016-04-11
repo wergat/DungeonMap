@@ -250,11 +250,11 @@ registerCustomVillagerType("food",function(self)
 	return self
 end)
 registerCustomVillagerType("music",function(self)
-	self:addTrade(newTrade():setBuyToMoney(25000):setSell({["id"] = "minecraft:record_ward",["Count"] = 1}))
-	self:addTrade(newTrade():setBuyToMoney(12000):setSell({["id"] = "minecraft:record_blocks",["Count"] = 1}))
-	self:addTrade(newTrade():setBuyToMoney(37213):setSell({["id"] = "minecraft:record_chirp",["Count"] = 1}))
-	self:addTrade(newTrade():setBuyToMoney(1184):setSell({["id"] = "minecraft:jukebox",["Count"] = 1}))
-			
+	self:addTrade(newTrade():setBuyToMoney(10000):setSell({["id"] = "minecraft:record_ward",["Count"] = 1}))
+	self:addTrade(newTrade():setBuyToMoney(10000):setSell({["id"] = "minecraft:record_blocks",["Count"] = 1}))
+	self:addTrade(newTrade():setBuyToMoney(10000):setSell({["id"] = "minecraft:record_chirp",["Count"] = 1}))
+	self:addTrade(newTrade():setBuyToMoney(1000):setSell({["id"] = "minecraft:jukebox",["Count"] = 1,["tag"] = {["display"] = {["Lore"] = {"Plays music."}}, ["CanPlaceOn"] = {"minecraft:dirt", "minecraft:stone", "minecraft:stonebrick", "minecraft:planks"}}}))
+	self:addTrade(newTrade():setBuyToMoney(1000):setSell({["id"] = "minecraft:iron_axe",["Count"] = 1,["tag"] = {["display"] = {["Name"] = "Jukebox Breaker", ["Lore"] = {"Destroys placed jukeboxes"}}, ["CanDestroy"] = {"minecraft:jukebox"}}}))
 	self:addBlocker()
 	self.profession = 5
 	self.name = "Music Trader"
