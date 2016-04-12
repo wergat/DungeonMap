@@ -284,6 +284,7 @@ registerCustomVillagerType("trash",function(self)
 		{["id"] = "minecraft:bowl",["price"] = 10},
 		{["id"] = "minecraft:feather",["price"] = 3},
 		{["id"] = "minecraft:spider_eye",["price"] = 20},
+		{["id"] = "minecraft:gold_nugget",["price"] = 13},
 	}
 	for i=1,#trades do
 		self:addTrade(newTrade():setSellToMoney(trades[i]["price"]):setBuy({["id"] = trades[i]["id"],["Count"] = 1}))
