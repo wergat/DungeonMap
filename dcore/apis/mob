@@ -22,7 +22,7 @@ end
 local function getRandomNameWithMob(mob)
 	-- Gets a randomized name for that mob
 	if(mob.type=="Zombie")then
-		if((mob.isBaby and mob.isBaby == 1))then return getRAE{"Baby","Tiny","Small"}.." Zombie" end
+		if((mob.custom.IsBaby and mob.custom.IsBaby == 1))then return getRAE{"Baby","Tiny","Small"}.." Zombie" end
 		return getRAE{"Zombie","Undead Soldier","Undead Warrior"}
 	elseif(mob.type=="Skeleton")then
 		local prefix = ("Wither " and (mob.skeletonType and mob.skeletonType == 1) or "")
@@ -38,7 +38,7 @@ local function getRandomNameWithMob(mob)
 	elseif(mob.type=="Ozelot")then
 		return "Cat"
 	elseif(mob.type=="PigZombie")then
-		if((mob.isBaby and mob.isBaby == 1))then return getRAE{"Baby","Tiny","Small"}.." Pigmen" end
+		if((mob.custom.IsBaby and mob.custom.IsBaby == 1))then return getRAE{"Baby","Tiny","Small"}.." Pigmen" end
 		return getRAE{"Zombie Pigmen","Undead Pigmen","Undead Walking Pig"}
 	end
 end
@@ -51,38 +51,67 @@ local mobData = {}
 -- {{ID,CHANCE},{ID,CHANCE},...}
 -- Just to save some space
 local defaultEffects = {{1,0.4},{5,0.2},{8,0.1},{11,.3},{12,.3},{14,.02},{21,.03},{22,.02}}
-mobData["Zombie"] = {weapon = {"melee"},boots = {"boots"},leggings = {"leggings"},chestplate = {"chestplate"},helmet = {"helmet"},rideable = false,acceptableEffects = defaultEffects}
-mobData["PigZombie"] = {weapon = {"melee"},boots = {"boots"},leggings = {"leggings"},chestplate = {"chestplate"},helmet = {"helmet"},rideable = false,acceptableEffects = defaultEffects}
-mobData["Skeleton"] = {weapon = {"melee","ranged"},boots = {"boots"},leggings = {"leggings"},chestplate = {"chestplate"},helmet = {"helmet"},rideable = false,acceptableEffects = defaultEffects}
-mobData["Spider"] = {rideable = function(mob) return (mob.type == "Skeleton" and mob.equipment.weapon.id and items.getItemWithStringID(mob.equipment.weapon.id) and math.random(10) == 1) or (mob.type == "Creeper" and math.random(20) == 1) end,acceptableEffects = defaultEffects}
+mobData["Zombie"] = {weapon = {"melee"},boots = {"boots"},leggings = {"leggings"},chestplate = {"chestplate"},helmet = {"helmet"},acceptableEffects = defaultEffects,custom = function(self) self.custom.IsBaby = (math.random(5)==1) end}
+mobData["PigZombie"] = {weapon = {"melee"},boots = {"boots"},leggings = {"leggings"},chestplate = {"chestplate"},helmet = {"helmet"},acceptableEffects = defaultEffects}
+mobData["Skeleton"] = {weapon = {"ranged","melee"},boots = {"boots"},leggings = {"leggings"},chestplate = {"chestplate"},helmet = {"helmet"},acceptableEffects = defaultEffects,custom = function(self) self.custom.SkeletonType = (math.random(5)==1) end}
+mobData["Spider"] = {rideable = function(mob) if(mob.isCarryingSomething)then return false else if((mob.equipment.weapon.id) and (items.getItemWithStringID(mob.equipment.weapon.id)["types"]["ranged"]))then return (mob.type == "Skeleton" and math.random(10) == 1) else return (mob.type == "Creeper" and math.random(20) == 1) end end end,acceptableEffects = defaultEffects}
 mobData["Ozelot"] = {rideable = function() return false end,acceptableEffects = defaultEffects}
 mobData["Creeper"] = {rideable = false,acceptableEffects = defaultEffects}
 --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
 
+function getRandomMobType()
+	local r = math.random(10)
+	if(r<5)then
+		return "Zombie"
+	elseif(r<9)then
+		return "Skeleton"
+	else
+		if(math.random(2)==1)then
+			return "PigZombie"
+		else
+			return "Spider"
+		end
+	end
+end
+
 function newMob(args)
 	local args = args or {}
+	if(type(args) == "string")then
+		args = {["type"] = args}
+	end
+	
+	---
+	
 	local mobObject = {}
 	mobObject.riding = nil
+	mobObject.isCarryingSomething = false
 	mobObject.equipment = {weapon = {},boots = {},leggings = {},chestplate = {},helmet = {}}
-	mobObject.type = args.type or "Skeleton"
+	mobObject.type = args.type or getRandomMobType()
 	mobObject.potionEffects = {}
 	mobObject.name = ""
 	mobObject.dropChances = {"0.5f","0.5f","0.5f","0.5f","0.5f"}
-	mobObject.difficulty = args.difficulty
+	mobObject.difficulty = math.floor(args.difficulty or 1)
 	mobObject.level = 1
 	mobObject.doesDespawn = false
 	mobObject.customNameVisible = false
 	
+	-- Special NBT override table.
+	-- Used for special cases like wither skeletons or villager Zombies.
+	mobObject.custom = {}
+	
 	-- Insert argument validation and checking here
 	if(args.noAI)then mobObject.noAI = args.noAI end
-	
+	if(not mobData[mobObject.type])then
+		dcore.Warning("Mob Type \""..mobObject.type.."\" is not supported!")
+	end
+	if(mobObject.difficulty<1)then mobObject.difficulty = 1 end
 	
 	--
 	
 	-- Manual Property Setting
 	mobObject.setDifficulty = function(self,value) self.difficulty = value return self end
 	mobObject.setMobType = function(self,value) self.type = value return self end
-	mobObject.setDifficulty = function(self,value) self.difficulty = value return self end
+	mobObject.setDifficulty = function(self,value) self.difficulty = math.max(math.floor(value or 0),1) return self end
 	mobObject.setMount = function(self,value) self.riding = value return self end
 	mobObject.setDoespawning = function(self,value) self.doesDespawn = value return self end
 	mobObject.setDropChances = function(self,value) self.dropChances = value return self end
@@ -103,22 +132,46 @@ function newMob(args)
 	mobObject.autoEquipment = function(self)
 		local equipment = {}
 		for _,v in pairs{"weapon","boots","leggings","chestplate","helmet"} do
-			local item = advitem.newItem({itemType = getRAE(mobData[self.type][v]),itemLevel = self.difficulty}):auto()
-			local itemTable = item:getNBT()
-			if(itemTable.id)then
-				itemTable["Count"] = 1
-				self.equipment[v] = itemTable
-				self.level = self.level + (math.floor((item.value/50)+1.5)/10)
+			if(mobData[self.type][v])then
+				local item = advitem.newItem({itemType = getRAE(mobData[self.type][v]),itemLevel = self.difficulty}):auto()
+				local itemTable = item:getNBT()
+				if(itemTable.id)then
+					itemTable["Count"] = 1
+					self.equipment[v] = itemTable
+					self.level = self.level + (math.floor((item.value/50)+1.5)/10)
+				end
 			end
 		end
 		return self
 	end
 	--
 
+	-- Each type of mob can have its including function.
+	mobObject.callTypeFunction = function(self)
+		if(mobData[self.type].custom)then
+			mobData[self.type].custom(self)
+		end
+		return self
+	end
+	
+	mobObject.autoRiding = function(self)
+		for k,_ in pairs(mobData) do
+			if(mobData[k].rideable and type(mobData[k].rideable) == "function")then
+				if(mobData[k].rideable(self))then
+					self.riding = newMob(k)
+					self.riding.isCarryingSomething = true
+					self.riding:auto()
+					break
+				end
+			end
+		end
+		return self
+	end
+	
 	-- Potion Effect Handling
 	mobObject.autoPotions = function(self)
 		local mobsEffectTable = mobData[self.type].acceptableEffects
-		local difficultyOfMob = self.difficulty
+		local difficultyOfMob = math.floor(self.difficulty+1)
 		local active_effects = {}
 		local effectsApplied = 0 -- how many effects we have
 		
@@ -154,13 +207,7 @@ function newMob(args)
 		return self
 	end
 	--
-	
-	mobObject.autoType = function(self)
-		local t = {}
-		for k,_ in pairs(mobData) do t[#t+1] = k end
-		local cT = getRAE(t)
-		
-	end
+
 	mobObject.autoName = function(self)
 		self.name = "Lv. "..math.floor(self.level+0.5).." "..getRandomNameWithMob(self)
 		return self
@@ -168,7 +215,7 @@ function newMob(args)
 	
 	-- Wrapping things up
 	mobObject.auto = function(self)
-		return self:autoEquipment():autoPotions():autoName()
+		return self:callTypeFunction():autoEquipment():autoPotions():autoRiding():autoName()
 	end
 	
 	mobObject.getNBTTable = function(self)
@@ -178,12 +225,37 @@ function newMob(args)
 			["PersistenceRequired"] = "0b" and self.doesDespawn or "1b",
 			["DropChances"] = self.dropChances,
 			["CustomNameVisible"] = self.customNameVisible,
-			["CustomName"] = self.name,
-			["Riding"] = self.riding
+			["CustomName"] = self.name
 		}
+		if(self.riding)then	t["Riding"] = self.riding:getRidingNBTTable() end
 		if(self.noAI)then t["NoAI"] = true end
+		if(self.custom)then
+			for k,v in pairs(self.custom)do
+				t[k] = v
+			end
+		end
 		return t
 	end
+	
+	mobObject.getRidingNBTTable = function(self)
+		local t = {
+			["ActiveEffects"] = self.potionEffects,
+			["Equipment"] = {self.equipment.weapon,self.equipment.boots,self.equipment.leggings,self.equipment.chestplate,self.equipment.helmet},
+			["PersistenceRequired"] = "0b" and self.doesDespawn or "1b",
+			["DropChances"] = self.dropChances,
+			["CustomNameVisible"] = self.customNameVisible,
+			["CustomName"] = self.name,
+			["id"] = self.type
+		}
+		if(self.riding)then	t["Riding"] = self.riding:getRidingNBTTable() end
+		if(self.noAI)then t["NoAI"] = true end
+		if(self.custom)then
+			for k,v in pairs(self.custom)do
+				t[k] = v
+			end
+		end
+		return t
+	end	
 	
 	mobObject.getSummonCommand = function(self,x,y,z)
 		return "/summon "..self.type.." "..x.." "..y.." "..z.." "..dcore.getNBTStringFromTable(self:getNBTTable())
@@ -195,6 +267,9 @@ function newMob(args)
 	
 	
 	return mobObject
+end
+function new(args)
+	return newMob(args)
 end
 
 -- Fixing compatibility with old versions

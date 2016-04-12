@@ -256,6 +256,9 @@ function getNBTStringFromTable(t)
 		return ""
 	end
 end
+function convertTableToNBT(t)
+	return getNBTStringFromTable(t)
+end
 function convertNBTtoTable(startString)
 	local function getCharAtPos(str,pos) return string.sub(str,pos,pos)	end
 	local str = startString
@@ -358,7 +361,9 @@ function convertNBTtoTable(startString)
 	end
 	return t
 end
-
+function convertNBTToTable(s)
+	return convertNBTtoTable(s)
+end
 
 -- /////////////
 -- Grabbing system function and changing them for our use
@@ -438,7 +443,7 @@ if(not dcore)then
 	end
 
 	_G["getRAE"] = function(a)
-		if(not a)then error("Nil is not a valid input",1) end
+		if(not a)then error("Nil is not a valid input",2) end
 		if(#a>0)then return a[math.random(#a)] end
 	end
 	

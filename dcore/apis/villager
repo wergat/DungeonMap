@@ -370,6 +370,11 @@ function new(args)
 		return self
 	end
 	
+	villagerObject.setProfession = function(self,prof)
+		self.profession = prof
+		return self
+	end
+	
 	-- Adds a trade to the villager
 	villagerObject.addTrade = function(self,tradeObject)
 		if(tradeObject.isObject)then

@@ -2,6 +2,8 @@ dcore.requireAPI("items")
 dcore.requireAPI("farben")
 dcore.requireAPI("ench")
 
+config.conditionalSet("DISABLE_DURABILITY_ON_ITEMS",false)
+
 
 -- //////////////////
 --  Data calculation and initialization
@@ -447,7 +449,11 @@ function getEquipmentForChest(powerInput)
 		returnData["setItemCount"] = 1
 		local nbt = item:getNBT()
 		returnData["item"] = nbt
-		returnData["item"]["Damage"] = math.floor(((math.random(5)-1)/5)*items.getDurability(item.itemID))
+		if(config.DISABLE_DURABILITY_ON_ITEMS)then
+			returnData["item"]["Damage"] = 0
+		else
+			returnData["item"]["Damage"] = math.floor(((math.random(5)-1)/5)*items.getDurability(item.itemID))
+		end
 		--print(dcore.getNBTStringFromTable(returnData["item"]))
 		return returnData
 	else

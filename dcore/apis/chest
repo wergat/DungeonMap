@@ -1,6 +1,5 @@
 dcore.requireAPI("advitem")
 dcore.requireAPI("potion")
-dcore.requireAPI("villager")
 
 -- 
 

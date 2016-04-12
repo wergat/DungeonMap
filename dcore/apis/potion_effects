@@ -1,3 +1,4 @@
+-- Do we really need this table like three times?
 effects = {}
 effects[1] = {["name"] = "Speed",["potion"] = "Swiftness",["corrupt"] = true}
 effects[2] = {["name"] = "Slowness",["potion"] = "Slowness",["corrupt"] = true}
@@ -30,7 +31,6 @@ effects[23] = {["name"] = "Saturation",["potion"] = "Saturation",["corrupt"] = t
 --Jump Nerf		Rash		Dreaded		nil			Naive		Tanky						nil
 --Vulnerability	Spirited	Bold		Spirited	nil										nil
 --HP Decrease	Hasty		Determined	Greedy		Hardy		nil			Wicked			nil
-
 
 
 
