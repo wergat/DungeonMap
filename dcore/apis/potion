@@ -230,7 +230,7 @@ function generatePotionItem(power,seed)
 	potionNames[13] = {"Fish-Mode"}
 	potionNames[14] = {"Cloaking","Hiding",}
 	potionNames[15] = {"Blinding","Blending"}
-	potionNames[16] = {"Owl-Vision"}
+	potionNames[16] = {"Owl-Vision","Night-Vision"}
 	potionNames[17] = {"Hunger"}
 	potionNames[18] = {"Weakening"}
 	potionNames[19] = {"Damaging","Poisoning"}
