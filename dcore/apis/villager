@@ -285,7 +285,7 @@ registerCustomVillagerType("trash",function(self)
 		{["id"] = "minecraft:feather",["price"] = 3},
 		{["id"] = "minecraft:spider_eye",["price"] = 20},
 		{["id"] = "minecraft:gold_nugget",["price"] = 13},
-		{["id"] = "minecraft:skull",["price"] = 10000,["data"] = 1},
+		{["id"] = "minecraft:skull",["price"] = 25000,["data"] = 1},
 	}
 	for i=1,#trades do
 		trades[i]["data"] = trades[i]["data"] or 0
