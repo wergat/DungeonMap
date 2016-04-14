@@ -1,5 +1,4 @@
 rooms = {}
-rooms_forest = {}
 rooms[1] = {}
 rooms[1][1] = {{20,19,-50},{29,19,-48},{24,19,-39}}
 rooms[1][2] = {{20,19,-28},{26,20,-28},{24,19,-18}}
@@ -36,7 +35,7 @@ rooms[5][4] = {{108,19,15},{101,19,10},{99,19,20}}
 rooms[5][5] = {{99,19,30},{110,19,34},{99,19,40}}
 
 --Forest Biome
---[[
+rooms_forest = {}
 rooms_forest[1] = {}
 rooms_forest[1][1] = {{60,28,16},{68,28,15},{63,28,21}}
 rooms_forest[1][2] = {{84,28,15},{84,28,20},{91,28,15}}
@@ -48,7 +47,20 @@ rooms_forest[2] = {}
 rooms_forest[2][1] = {{44,28,-24},{38,28,-24},{47,30,-28}}
 rooms_forest[2][2] = {{48,28,-7},{49,28,-1},{37,28,-4}}
 rooms_forest[2][3] = {{48,28,11},{44,27,17},{50,29,19}}
-]]
+
+--Mines
+rooms_mines = {}
+rooms_mines[1] = {}
+rooms_mines[1][1] = {{81, 11, -11}, {85, 11, -5}, {81, 11, 1}}
+rooms_mines[1][2] = {{85, 11, -21}, {88, 11, -30}, {90, 12, -19}}
+rooms_mines[1][3] = {{62, 11, -32}, {64, 9, -24}, {60, 11, -20}}
+rooms_mines[1][4] = {{64, 11, -6}, {60, 11, 0}, {68, 11, 0}}
+rooms_mines[1][5] = {{63, 12, 15}, {71, 11, 16}, {59, 11, 10}}
+
+rooms_mines[2] = {}
+rooms_mines[2][1] = {{64, 11, 40}, {58, 11, 31}, {69, 11, 29}}
+rooms_mines[2][2] = {{82, 11, -32}, {90, 12, -19}, {83, 9, -22}}
+rooms_mines[2][3] = {{90, 11, -9}, {87, 12, -3}, {81, 13, -5}}
 
 function getChestPlaceTable()
 	t = {}
@@ -89,7 +101,7 @@ function getChestPlaceTable()
 	a(79,17,-19)
 
 	a(106,17,-25)
-	a(110,10,-19)
+	a(110,19,-19)
 	a(104,19,-28)
 
 	a(101,19,-44)
@@ -171,8 +183,22 @@ end
 function getRooms(x)
 	local picked_rooms = rooms or room.rooms
 	local picked_f_rooms = rooms_forest or room.rooms_forest
+	local picked_m_rooms = rooms_mines or room.rooms_mines
 	local roomsToSpawnIn = {}
-	for i=1,x do
+	local n1; local n2; local n3;
+	n1 = x/3
+	n2 = x/3
+	n3 = x/3
+	if x/3 ~= math.floor(x/3) then
+		n3 = math.floor(n3)
+		n2 = math.floor(n2)
+		n1 = x-n2-n3
+	end
+	n1 = 2*n1
+	n2 = 2*n2
+	n3 = 2*n3
+	commands.execd('/tellraw @a "d: ' .. n1 .. ' f: ' .. n2 .. ' m: ' .. n3 .. '"')
+	for i=1,n1 do
 		local rx = math.random(5)
 		local ry = math.random(5)
 		while not picked_rooms[rx][ry] do
@@ -183,5 +209,40 @@ function getRooms(x)
 		roomsToSpawnIn[i] = picked_rooms[rx][ry][math.random(#picked_rooms[rx][ry])]
 		picked_rooms[rx][ry] = nil
 	end
+	for i=1,n2 do
+		local x = true
+		while x do
+			rx = math.random(2)
+			ry = math.random(5)
+			if not picked_f_rooms[rx][ry] then
+				rx = math.random(2)
+				ry = math.random(5)
+			else
+				x = false
+			end
+		end
+		--print(rx, " ", ry)
+	
+		roomsToSpawnIn[n1+i] = picked_f_rooms[rx][ry][math.random(#picked_f_rooms[rx][ry])]
+		picked_f_rooms[rx][ry] = nil
+	end
+	for i=1,n3 do
+		local x = true
+		while x do
+			rx = math.random(2)
+			ry = math.random(5)
+			if not picked_m_rooms[rx][ry] then
+				rx = math.random(2)
+				ry = math.random(5)
+			else
+				x = false
+			end
+		end
+	
+		roomsToSpawnIn[n1+n2+i] = picked_m_rooms[rx][ry][math.random(#picked_m_rooms[rx][ry])]
+		picked_m_rooms[rx][ry] = nil
+	end
+	rx = nil
+	ry = nil
 	return roomsToSpawnIn
 end
