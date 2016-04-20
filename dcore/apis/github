@@ -6,7 +6,6 @@ function setKey(key)
 	usedKey = key
 end
 
-
 function testkeylist(t)
 	local rate_url = "https://api.github.com/rate_limit"
 	local res = {}
@@ -64,9 +63,4 @@ end
 function request(url, header)
 	local header = header or {}
 	return getRequestAsTable(url, header, pickWorkingKey(keylist))
-end
-
-function autoRequest(...)
-	print("WARNING: autoRequest is no longer supported! Use request instead.")
-	return githubRequest(unpack({...}))
 end
