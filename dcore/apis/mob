@@ -56,7 +56,7 @@ mobData["PigZombie"] = {weapon = {"melee"},boots = {"boots"},leggings = {"leggin
 mobData["Skeleton"] = {weapon = {"ranged","melee"},boots = {"boots"},leggings = {"leggings"},chestplate = {"chestplate"},helmet = {"helmet"},acceptableEffects = defaultEffects,custom = function(self) self.custom.SkeletonType = (math.random(5)==1) end}
 mobData["Spider"] = {rideable = function(mob) if(mob.isCarryingSomething)then return false else if((mob.equipment.weapon.id) and (items.getItemWithStringID(mob.equipment.weapon.id)["types"]["ranged"]))then return (mob.type == "Skeleton" and math.random(10) == 1) else return (mob.type == "Creeper" and math.random(20) == 1) end end end,acceptableEffects = defaultEffects}
 mobData["Ozelot"] = {rideable = function() return false end,acceptableEffects = defaultEffects}
-mobData["Creeper"] = {rideable = false,acceptableEffects = defaultEffects}
+mobData["Creeper"] = {acceptableEffects = defaultEffects}
 --  --  --  --  --  --  --  --  --  --  --  --  --  --  --  --
 
 function getRandomMobType()

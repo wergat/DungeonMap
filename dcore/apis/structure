@@ -1,36 +1,626 @@
-local function scan(x,y,z,basex,basey,basez,res)
-	local binf = commands.getBlockInfo(x,y,z)
-	if binf["name"] ~= "minecraft:air" then
-		res[#res+1] = {binf["name"], x-basex, y-basey, z-basez, binf["metadata"]}
+dcore.requireAPI("cmd")
+
+-- Byte Array functions, used for Wergat's Ergonomic Region Grid
+-- Might add some Asset Templates as basics with the install
+-- Byte Support functions
+local function convertIntToByteArray(int,bits)
+	if(not int)then error("AGAGAG",3) end
+	local byteArray = {}
+    for b = ((bits or 8)),1,-1 do
+        byteArray[b] = math.fmod(int,2)
+        int = (int-byteArray[b])/2
+    end
+    return byteArray
+end
+local function convertStringToByteArray(str)
+	local byteArray = newPointedByteArray()
+	local length = string.len(str)
+	local intArray = {string.byte(str,1,length)}
+	byteArray:addInt(length,8)
+	for i=1,length do
+		byteArray:addByteArray(convertIntToByteArray(intArray[i],8))
 	end
+	return byteArray:getByteArrray()
+end
+local function convertByteArrayToInt(array)
+	local int = 0
+	for i=1,#array do
+		int = int + array[i]*(2^(#array-i))
+	end
+	return int
 end
 
-
-saveFromFile = function(path, x1, y1, z1, x2, y2, z2)
-	local res = {}
-	local basex = math.min(x1, x2)
-	local basey = math.min(y1, y2)
-	local basez = math.min(z1, z2)
-	local sidex = math.max(x1, x2)-math.min(x1, x2)
-	local sidey = math.max(y1, y2)-math.min(y1, y2)
-	local sidez = math.max(z1, z2)-math.min(z1, z2)
-	for x = 0, sidex do
-		for y = 0, sidey do
-			for z = 0, sidez do
-				scan(basex+x, basey+y, basez+z, basex, basey, basez,res)
-			end
+-- Byte Array object
+-- Should be faster than the previous one!
+function newPointedByteArray(presetByteArray)
+	local byteArrayObject = {}
+	byteArrayObject.pointer = 1
+	byteArrayObject.bytes = {}
+	if(presetByteArray)then byteArrayObject.bytes = presetByteArray end
+	
+	-- Getting the byte array
+	byteArrayObject.getByteArrray = function(self) return self.bytes end
+	byteArrayObject.getByteArrrayAfterPointer = function(self)
+		local t = {}
+		for i=self.pointer,#self.bytes do
+			t[#t+1] = self.bytes[i]
+		end
+		return t
+	end
+	
+	-- Adding stuff to the byte Array
+	byteArrayObject.addBit = function(self,bit)
+		--if(type(bit) ~= "number" or bit < 0 or bit > 1)then error("NO GOOD VALUE!",2)end
+		self.bytes[(#self.bytes + 1)] = bit
+	end
+	byteArrayObject.addByteArray = function(self,byteArray)
+		for i=1,#byteArray do
+			self:addBit(byteArray[i])
 		end
 	end
-	local open = fs.open(path, "w")
-	open.write(textutils.serialize(res))
-	open.close()
+	byteArrayObject.addBool = function(self,bool)
+		if(type(bool) == "boolean")then
+			self:addBit(bool and 1 or 0)
+		else
+			self:addBit(bool)
+		end
+	end
+	byteArrayObject.addBytes = function(self,byteArray)
+		self:addByteArray(byteArray)
+	end
+	byteArrayObject.addInt = function(self,int,bits)
+		self:addByteArray(convertIntToByteArray(int,bits or 8))
+	end
+	byteArrayObject.addString = function(self,str)
+		self:addByteArray(convertStringToByteArray(str))
+	end
+	--
+	byteArrayObject.getBit = function(self)
+		local v = self.bytes[self.pointer]
+		self.pointer = self.pointer + 1
+		return v
+	end
+	byteArrayObject.getBits = function(self,bits)
+		local t = {}
+		for i=1,bits do	t[#t+1] = self:getBit()	end
+		return t
+	end
+	byteArrayObject.getBool = function(self)
+		return (self:getBit(1)==1 and true or false)
+	end
+	byteArrayObject.getInt = function(self,bits)
+		return convertByteArrayToInt(self:getBits(bits or 8))
+	end
+	byteArrayObject.getString = function(self)
+		local str = ""
+		local amountOfChars = self:getInt(8)
+		for i=1,amountOfChars do
+			str = str..string.char(convertByteArrayToInt(self:getBits(8)))
+		end
+		return str
+	end
+	byteArrayObject.print = function(self)
+		local array = self
+		local part = {}
+		local i=0
+		while(#array.bytes>0)do
+			part = array:getBits(4)
+			write(string.format("%x",((part[1] or 0)+(part[2] or 0)*2+(part[3] or 0)*4+(part[4] or 0)*8)))
+			i = i + 1
+			if((i%2==0))then write(" ") end
+		end
+	end
+	byteArrayObject.getSpace = function(self)
+		return #self.bytes
+	end
+	
+	return byteArrayObject
 end
 
-loadArea = function(file)
-	local open = fs.open(file, "r")
-	local table = textutils.unserialize(open.readAll())
-	open.close()
-	for k, v in pairs(table) do
-		commands.setblock("~" .. v[2]+1, "~" .. v[3]+1-1, "~" .. v[4]+1, v[1], v[5])
+--[[
+function newByteArray(presetByteArray)
+	local byteArrayObject = {}
+	
+	byteArrayObject.bytes = {}
+	if(presetByteArray)then byteArrayObject.bytes = presetByteArray end
+	
+	byteArrayObject.getByteArrray = function(self)
+		return self.bytes
 	end
+	byteArrayObject.addByteArray = function(self,byteArray)
+		for i=1,#byteArray do
+			self:addBit(byteArray[i])
+		end
+	end
+	byteArrayObject.addBit = function(self,bit)
+		table.insert(self.bytes,bit)
+	end
+	byteArrayObject.addBool = function(self,bool)
+		if(type(bool) == "boolean")then
+			table.insert(self.bytes,(bool and 1 or 0))
+		else
+			table.insert(self.bytes,bool)
+		end
+	end
+	byteArrayObject.addBytes = function(self,byteArray)
+		self:addByteArray(byteArray)
+	end
+	byteArrayObject.addInt = function(self,int,bits)
+		self:addByteArray(convertIntToByteArray(int,bits or 8))
+	end
+	byteArrayObject.addString = function(self,str)
+		self:addByteArray(convertStringToByteArray(str))
+	end
+	
+	byteArrayObject.getBits = function(self,bits)
+		local newArray = {}
+		local byteArray = {}
+		-- Get the requested bits
+		for i=1,bits do
+			byteArray[i] = self.bytes[i]
+		end
+		-- Remove them from the previous array
+		for i=1,#self.bytes-bits do
+			newArray[i] = self.bytes[bits+i]
+		end
+		self.bytes = newArray
+		return byteArray
+	end
+	byteArrayObject.getBit = function(self)
+		return self:getBits(1)[1]
+	end
+	byteArrayObject.getBool = function(self)
+		return (self:getBit(1)==1 and true or false)
+	end
+	byteArrayObject.getInt = function(self,bits)
+		return convertByteArrayToInt(self:getBits(bits or 8))
+	end
+	byteArrayObject.getString = function(self)
+		local str = ""
+		local amountOfChars = self:getInt(8)
+		for i=1,amountOfChars do
+			str = str..string.char(convertByteArrayToInt(self:getBits(8)))
+		end
+		return str
+	end
+
+	byteArrayObject.print = function(self)
+		local array = self
+		local part = {}
+		local i=0
+		while(#array.bytes>0)do
+			part = array:getBits(4)
+			write(string.format("%x",((part[1] or 0)+(part[2] or 0)*2+(part[3] or 0)*4+(part[4] or 0)*8)))
+			i = i + 1
+			if((i%2==0))then write(" ") end
+		end
+	end
+	
+	byteArrayObject.getSpace = function(self)
+		return #self.bytes
+	end
+	
+	
+	local metaTable = {}
+	-- Set type of this object
+	metaTable["type"] = "byteArray" 
+	byteArrayObject = setmetatable(byteArrayObject,metaTable)
+	return byteArrayObject
 end
+]]
+
+-- ////////////////////////////////////
+-- ////////////////////////////////////
+-- ////////////////////////////////////
+
+-- what does a:b.c() do?
+
+function new()
+	local structureObject = {}
+	structureObject.add = function(self)
+	
+	end
+	structureObject.areaData = {}
+	structureObject.rawBlockCounter = {}
+	structureObject.size = {}
+	
+	structureObject.setBlock = function(self,x,y,z,data)
+		if(not self.areaData[x])then self.areaData[x] = {} end
+		if(not self.areaData[x][y])then self.areaData[x][y] = {} end
+		if(self.areaData[x][y][z])then self.rawBlockCounter[self.areaData[x][y][z]["id"]] = (self.rawBlockCounter[self.areaData[x][y][z]["id"]]) - 1 end
+		self.areaData[x][y][z] = {}
+		self.areaData[x][y][z]["id"] = data["name"] or "minecraft:air"	
+		self.areaData[x][y][z]["damage"] = data["metadata"] or 0	
+		self.areaData[x][y][z]["state"] = data["state"] or nil
+		self.areaData[x][y][z]["tag"] = data["tag"] or {}
+		self.rawBlockCounter[data["name"]] = (self.rawBlockCounter[data["name"]] or 0) + 1
+		return self
+	end
+	
+	structureObject.loadFromArea = function(self,x1,y1,z1,x2,y2,z2)
+		-- Calculating size and base position
+		local basex = math.min(x1, x2)
+		local basey = math.min(y1, y2)
+		local basez = math.min(z1, z2)
+		local sidex = math.max(x1, x2) - basex + 1
+		local sidey = math.max(y1, y2) - basey + 1
+		local sidez = math.max(z1, z2) - basez + 1
+		
+		self.size = {sidex,sidey,sidez}
+		
+		-- Scanning the blocks and saving the data in a table
+		local s,e = commands.getBlockInfos(x1,y1,z1,x2,y2,z2)
+		for k,v in pairs(s) do
+			local x = ((k+(sidex-1))%sidex)
+			local y = (math.floor((k-1)/(sidex*sidez)))
+			local z = math.floor(((k-1)%(sidex*sidez))/sidex)
+			self:setBlock(x,y,z,v)
+		end
+		print(self.areaData[14][8][14].id)
+		return self
+	end
+	
+	structureObject.loadFromFile = function(self,sourceFile)
+		local array = newPointedByteArray() --74282
+		local fileHandle = fs.open(sourceFile,"rb")
+		local readData = 0
+		print("Started reading data")
+		repeat
+			readData = fileHandle.read()
+			if(readData)then
+				array:addInt(readData)
+			end
+		until not readData
+		fileHandle.close()
+		print("Loaded "..array:getSpace().." bits")
+		print("Done reading data, loading")
+		
+		local blockAreaArray = {}
+		-- Matrix/Block mode check
+		local part
+		local blockMode = false
+		if(array:getBool())then
+			blockMode = true
+			print("Mode: Block")
+		else print("Mode: Matrix") end
+		
+		-- Standart mod name
+		local standartModName = "minecraft"
+		if(array:getBool())then
+			standartModName = array:getString()
+			print("Default MOD name: \""..standartModName.."\"")
+		else print("Using minecraft as default mod") end
+		
+		-- Standart block name
+		local standartBlockName = "air"
+		if(array:getBool())then
+			standartBlockName = array:getString()
+			print("Default BLOCK name: \""..standartBlockName.."\"")
+		else print("Using air as default block") end
+		
+		local amountOfBlocks,xSize,ySize,zSize
+		if(blockMode)then
+			xSize = array:getInt(8)
+			ySize = array:getInt(8)
+			zSize = array:getInt(8)
+			print("Scanned size: "..xSize.."/"..ySize.."/"..zSize)
+		else
+			amountOfBlocks =  array:getInt(24)
+			print("Amount of blocks: "..amountOfBlocks)
+		end
+		
+		local clock = os.clock() + 4
+		local start = os.clock()
+		
+		-- BLOCKS
+		if(blockMode)then
+			for x=1,xSize do
+				blockAreaArray[x] = {}
+				for y=1,ySize do	
+					blockAreaArray[x][y] = {}
+					for z=1,zSize do
+						-- Damage Value check
+						local damage = 0
+						if(array:getBool())then	damage = array:getInt(4) end
+						local blockname = ""
+						
+						-- Mod name check
+						if(array:getBool())then
+							blockname = array:getString()..":"			
+						else
+							blockname = standartModName..":"
+						end
+
+						-- Block name check
+						if(array:getBool())then
+							blockname = blockname..array:getString()	
+						else
+							blockname = blockname..standartBlockName
+						end
+						--write(" "..blockname..",")
+						blockAreaArray[x][y][z] = {["damage"] = damage,["id"] = blockname}
+						if os.clock() >= clock then	os.queueEvent("") coroutine.yield()	clock = os.clock() + 4 end
+					end
+				end
+			end
+		else
+			for i=1,amountOfBlocks do
+				-- Damage Value check
+				local damage = 0
+				if(array:getBool())then	damage = array:getInt(4) end
+				local blockname = ""
+						
+				-- Mod name check
+				if(array:getBool())then
+					blockname = array:getString()..":"			
+				else
+					blockname = standartModName..":"
+				end
+
+				-- Block name check
+				if(array:getBool())then
+					blockname = blockname..array:getString()	
+				else
+					blockname = blockname..standartBlockName
+				end
+				
+				local x = array:getInt(8)
+				local y = array:getInt(8)
+				local z = array:getInt(8)
+				
+				blockAreaArray[x][y][z] = {["damage"] = damage,["id"] = blockName}
+				if os.clock() >= clock then	os.queueEvent("") coroutine.yield()	clock = os.clock() + 4 end
+			end
+		end
+		self.areaData = blockAreaArray
+		print("Time it took to load the file: "..(os.clock() - start).."s")
+		print(blockAreaArray[15][9][15].id)
+		return self
+	end
+	
+	structureObject.saveToFile = function(self,targetFile)
+		-- /////////////////
+		--  BASIC PROCESSING
+		-- /////////////////
+		
+		-- //////// Find default mod name and default block name
+		local blockNameCounter = {}
+		local modNameCounter = {}
+		
+		print(self.areaData[14][8][14].id)
+		
+		for k,v in pairs(self.rawBlockCounter)do
+			local modName = string.match(k,"(.+):")
+			local blockName = string.match(k,":(.+)")
+			blockNameCounter[blockName] = (blockNameCounter[blockName] or 0) + v
+			modNameCounter[modName] = (modNameCounter[modName] or 0) + v
+		end
+		
+		local blockNameWeight = {}
+		local modNameWeight = {}
+		
+		-- Counting block byte weight
+		for k,v in pairs(blockNameCounter)do
+			local requiredByte = 1 + string.len(k)
+			blockNameWeight[k] = v*requiredByte
+		end	
+		for k,v in pairs(modNameCounter)do
+			local requiredByte = 1 + string.len(k)
+			modNameWeight[k] = v*requiredByte
+		end
+		
+		-- Sorting block and mod names by byte weight
+		local sortedBlockNameWeight = {}
+		local sortedModNameWeight = {}
+		for k,v in pairs(blockNameWeight)do
+			local i = 1
+			local inserted = false
+			while i<=#sortedBlockNameWeight and not inserted do
+				if(v>blockNameWeight[sortedBlockNameWeight[i]])then
+					table.insert(sortedBlockNameWeight,i,k)
+					inserted = true
+				end
+				i = i + 1
+			end
+			if(not inserted)then table.insert(sortedBlockNameWeight,k) end
+		end
+		for k,v in pairs(modNameWeight)do
+			local i = 1
+			local inserted = false
+			while i<=#sortedModNameWeight and not inserted do
+				if(v>modNameWeight[sortedModNameWeight[i]])then
+					table.insert(sortedModNameWeight,i,k)
+					inserted = true
+				end
+				i = i + 1
+			end
+			if(not inserted)then table.insert(sortedModNameWeight,k) end
+		end
+		
+		-- Setting default mod/block names
+		local defaultBlockName = sortedBlockNameWeight[1]
+		local defaultModName = sortedModNameWeight[1]
+
+		
+		-- /////////////////
+		--  MATRIX MODE
+		-- /////////////////
+		
+		local MatrixByteArray = newPointedByteArray()
+		-- Set the read mode to matrix
+		MatrixByteArray:addBit(0)
+		
+		-- Check for default mod name
+		MatrixByteArray:addBool(defaultModName~="minecraft")
+		if(defaultModName~="minecraft")then
+			MatrixByteArray:addString(defaultModName)
+		end
+		
+		-- Check for default block name
+		MatrixByteArray:addBool(defaultBlockName~="air")
+		if(defaultBlockName~="air")then
+			MatrixByteArray:addString(defaultBlockName)
+		end
+		MatrixByteArray:addInt((self.size[1]*self.size[2]*self.size[3]),24)
+		for x = 0, self.size[1] - 1 do
+			for y = 0, self.size[2] - 1 do
+				for z = 0, self.size[3] - 1 do
+					local blockData = self.areaData[x][y][z]
+					if(not blockData)then print("MASSIVE ERRROR STUFF!") end
+					local modName = string.match(blockData["id"],"(.+):")
+					local blockName = string.match(blockData["id"],":(.+)")
+					if(modName == defaultModName and blockName == defaultBlockName and blockData["damage"] == 0)then else
+					
+					
+					-- Damage Value
+					if(blockData["damage"]~=0)then
+						MatrixByteArray:addBool(1)
+						MatrixByteArray:addInt(blockData["damage"],4)
+					else
+						MatrixByteArray:addBool(0)
+					end
+					-- Mod Name
+					if(modName ~= defaultModName)then
+						MatrixByteArray:addBool(1)
+						MatrixByteArray:addString(modName)
+					else
+						MatrixByteArray:addBool(0)
+					end	
+					-- Block Name
+					if(blockName ~= defaultBlockName)then
+						MatrixByteArray:addBool(1)
+						MatrixByteArray:addString(blockName)
+					else
+						MatrixByteArray:addBool(0)
+					end
+					
+					MatrixByteArray:addInt(x,8)
+					MatrixByteArray:addInt(y,8)
+					MatrixByteArray:addInt(z,8)
+					end
+				end
+			end
+		end
+		
+		-- /////////////////
+		--  BLOCK MODE
+		-- /////////////////
+		
+		local BlockByteArray = newPointedByteArray()
+		-- Set the read mode to Block
+		BlockByteArray:addBit(1)
+		-- Check for default mod name
+		BlockByteArray:addBool(defaultModName~="minecraft")
+		if(defaultModName~="minecraft")then
+			BlockByteArray:addString(defaultModName)
+		end
+		-- Check for default block name
+		BlockByteArray:addBool(defaultBlockName~="air")
+		if(defaultBlockName~="air")then
+			BlockByteArray:addString(defaultBlockName)
+		end
+		BlockByteArray:addInt(self.size[1],8)
+		BlockByteArray:addInt(self.size[2],8)
+		BlockByteArray:addInt(self.size[3],8)
+		for x = 0, self.size[1] - 1 do
+			for y = 0, self.size[2] - 1 do
+				for z = 0, self.size[3] - 1 do
+					local blockData = self.areaData[x][y][z]
+					local modName = string.match(blockData["id"],"(.+):")
+					local blockName = string.match(blockData["id"],":(.+)")
+					
+					-- Damage Value
+					if(blockData["damage"]~=0)then
+						BlockByteArray:addBool(1)
+						BlockByteArray:addInt(blockData["damage"],4)
+					else
+						BlockByteArray:addBool(0)
+					end
+					-- Mod Name
+					if(modName ~= defaultModName)then
+						BlockByteArray:addBool(1)
+						BlockByteArray:addString(modName)
+					else
+						BlockByteArray:addBool(0)
+					end	
+					-- Block Name
+					if(blockName ~= defaultBlockName)then
+						BlockByteArray:addBool(1)
+						BlockByteArray:addString(blockName)
+					else
+						BlockByteArray:addBool(0)
+					end
+				end
+			end
+		end
+		
+		local size = MatrixByteArray:getSpace()
+		local file = fs.open(targetFile,"wb")
+		local clock = os.clock() + 4
+		local start = os.clock()
+		print("Matrix: "..(MatrixByteArray:getSpace()))
+		print("Block:  "..(BlockByteArray:getSpace()))
+		local target = ((MatrixByteArray:getSpace() < BlockByteArray:getSpace()) and MatrixByteArray) or BlockByteArray
+		local byteArray = target:getByteArrray() 
+		
+		-- Fixing some EoF bugs, maybe? stond!
+		for i=1,8 do byteArray[#byteArray+1] = 1 end
+		while(#byteArray%8~=0)do byteArray[#byteArray+1] = 0 end
+		local bAMax = #byteArray-8
+		
+		--
+		local t = {}
+		local i = 1
+		local tCounter = 1
+		while (i <= bAMax) do
+			local u = {}
+			for j=0,7 do u[j+1] = byteArray[i+j] end
+			t[tCounter] = convertByteArrayToInt(u)
+			i = i + 8
+			tCounter = tCounter + 1
+			if os.clock() >= clock then	os.queueEvent("") coroutine.yield()	clock = os.clock() + 4 end
+		end
+		local u = {}
+		for j=i,bAMax do u[j+1] = byteArray[i+j] end
+		t[tCounter] = convertByteArrayToInt(u)
+		
+		print("Done Gathering Data")
+		
+		for i=1,#t do
+			file.write(t[i])
+			if os.clock() >= clock then	os.queueEvent("") coroutine.yield()	clock = os.clock() + 4 end
+		end
+		print("Done writing the data")
+		
+		--
+		--local str = table.concat(target:getByteArrray())
+		--file.write(str)
+		--print(str)
+		
+		file.close()
+		
+		print("ETA size: "..math.floor((size)/8+0.9).."b")
+		print("Time it took to load: "..(os.clock() - start).."s")
+		-- 
+		-- 
+		--print(table.concat(BlockByteArray:getByteArrray()))
+		return self
+	end
+	
+	structureObject.createAt = function(self,cx,cy,cz)
+		for x,a in pairs(self.areaData) do
+			for y,b in pairs(a) do
+				for z,c in pairs(b) do
+					local command = "/setblock "..(x+cx).." "..(y+cy).." "..(z+cz).." "..(c["id"] or "minecraft:bedrock").." "..(c["damage"] or 0).." replace "..(dcore.getNBTStringFromTable(c["tag"]) or "")
+					--print(command)
+					cmd.run(command)
+				end
+			end
+		end
+		return self
+	end
+	
+	
+	return structureObject
+end
+
