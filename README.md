@@ -4,7 +4,9 @@ Scripts and APIs used to control DungeonMap, a map created by Wergat and Atenefy
 Installer:
 pastebin run 4y97AbkV
 
-New Installer:
-pastebin run VWK5tmDw
-Iron Block below: cmd_slave
-Quartz Block below: dev
+
+
+New Installer:  
+pastebin run VWK5tmDw  
+Iron Block below: cmd_slave  
+Quartz Block below: dev  
