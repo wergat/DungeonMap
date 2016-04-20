@@ -1,10 +1,5 @@
 keylist = textutils.unserialize(http.get("http://pastebin.com/raw.php?i=JBAmmZ2x").readAll())
-local usedKey
 local JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
-
-function setKey(key)
-	usedKey = key
-end
 
 function testkeylist(t)
 	local rate_url = "https://api.github.com/rate_limit"
@@ -39,11 +34,7 @@ end
 
 function get(url, header, key)
 	if not key then
-		if not usedKey then
-			return http.get(url, header)
-		else
-			key = usedKey
-		end
+		return http.get(url, header)
 	end
 	header = header or {}
 	header["Authorization"] = "token " .. key
