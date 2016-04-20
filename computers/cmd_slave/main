@@ -1,0 +1,123 @@
+term.setTextColor(colors.orange)
+local tx,ty = term.getSize()
+local computersID = os.getComputerID()
+term.setCursorPos(15,1)
+term.clear()
+write("CmPU   -   GUI")
+term.setCursorPos(tx-3-tostring(computersID):len(),1)
+term.setTextColor(colors.lime)
+write("ID: "..computersID)
+term.setCursorPos(1,2)
+
+
+
+local modem = peripheral.wrap("top")
+modem.open(22)
+
+-- Input Visualization data
+local commandTimeCounter = {0}
+local asyncCommandTimeCounter = {0}
+local maximum = 0
+local maximumBoth = 0
+local timeFrameCounter = 1
+local commands_total = 0
+
+function run()
+	while true do
+		local event, modemSide, senderChannel,replyChannel, message, senderDistance = os.pullEvent("modem_message")
+		if(message and type(message) == "table")then if(message[1] and computersID == replyChannel)then
+				if(type(message[1]) == "string")then
+					modem.transmit(23,computersID,{message[2],{commands.exec(message[1])}})
+					commandTimeCounter[timeFrameCounter] = (commandTimeCounter[timeFrameCounter] or 0) + 1
+					commands_total = commands_total + 1
+				else
+					for i=1,#message[1] do
+						commands.execAsync(message[1][i])
+						asyncCommandTimeCounter[timeFrameCounter] = (asyncCommandTimeCounter[timeFrameCounter] or 0) + 1
+						commands_total = commands_total + 1
+					end
+					modem.transmit(23,computersID,{message[2]})
+				end
+		end	end
+	end
+end
+
+function updateUI()
+	while true do
+		-- Clearing the drawing area
+		for i=2,ty do
+			term.setCursorPos(1,i)
+			term.clearLine()
+		end
+	
+	
+		term.setCursorPos(1,2)
+		term.setTextColor(colors.white)
+		write("Total: "..commands_total)
+		term.setCursorPos(17,2)
+		write("Current: "..((commandTimeCounter[timeFrameCounter] or 0)+(asyncCommandTimeCounter[timeFrameCounter] or 0)))
+		term.setCursorPos(32,2)
+		write("Max: "..(maximumBoth).."Hz")
+		
+		
+		if((commandTimeCounter[timeFrameCounter] or 0)>maximum)then maximum = commandTimeCounter[timeFrameCounter] end
+		if((asyncCommandTimeCounter[timeFrameCounter] or 0)>maximum)then maximum = asyncCommandTimeCounter[timeFrameCounter] end
+		if(((asyncCommandTimeCounter[timeFrameCounter] or 0)+(commandTimeCounter[timeFrameCounter] or 0)) > maximumBoth)then maximumBoth = (asyncCommandTimeCounter[timeFrameCounter] or 0) + (commandTimeCounter[timeFrameCounter] or 0) end
+		
+		for i=tx,1,-1 do
+			term.setTextColor(colors.lime)
+			term.setCursorPos(i,ty)
+			if(i%5 == 1)then
+				write("^")
+			else write("=") end
+			local a = (commandTimeCounter[timeFrameCounter-i+1] or 0)*(ty-3)/maximum
+			local b = (asyncCommandTimeCounter[timeFrameCounter-i+1] or 0)*(ty-3)/maximum
+			if(a and b and a>0 and b>0)then
+				if(a<b)then
+					term.setTextColor(colors.blue)
+					for j=a,b do
+						term.setCursorPos(i,ty-j)
+						write("#")
+					end
+					term.setTextColor(colors.lightBlue)
+					for j=1,a do
+						term.setCursorPos(i,ty-j)
+						write("@")
+					end
+				else
+					term.setTextColor(colors.lightBlue)
+					for j=b,a do
+						term.setCursorPos(i,ty-j)
+						write("@")
+					end
+					term.setTextColor(colors.blue)
+					for j=1,b do
+						term.setCursorPos(i,ty-j)
+						write("#")
+					end
+				end
+			elseif(a and a>0)then
+				term.setTextColor(colors.lightBlue)
+				for j=1,a do
+					term.setCursorPos(i,ty-j)
+					write("@")
+				end	
+			elseif(b and b>0)then
+				term.setTextColor(colors.blue)
+				for j=1,b do
+					term.setCursorPos(i,ty-j)
+					write("#")
+				end
+			end
+		end
+	
+	
+		timeFrameCounter = timeFrameCounter + 1
+		term.setCursorPos(10,ty-1)
+		sleep(1)
+	end
+end
+
+parallel.waitForAll(run,updateUI)
+
+
