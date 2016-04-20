@@ -18,7 +18,7 @@ end
 
 -- cmd_salve
 if(block.name == "minecraft:iron_block")then
-	local update = shell.run("update","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/apis/github","https://api.github.com/repos/wergat/DungeonMap/contents/computers/all","https://api.github.com/repos/wergat/DungeonMap/contents/computers/cmd_slave","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/apis/dcore")
+	local update = shell.run("dungeon/computers/all/update","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/apis/github","https://api.github.com/repos/wergat/DungeonMap/contents/computers/all","https://api.github.com/repos/wergat/DungeonMap/contents/computers/cmd_slave","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/apis/dcore")
 	if(not update)then print("Update File not found!") end
-	shell.run("cmd_slave/main")
+	shell.run("dungeon/computers/cmd_slave/main")
 end
