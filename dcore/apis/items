@@ -8,6 +8,11 @@ local items = {}
  items[276] = {["types"] = {"weapon","melee","sword","diamond_tier"},["id"] = "minecraft:diamond_sword",["name"] = "Diamond Sword",["sets"] = {},["durability"] = 1562,["stack_size"] = 1,["damage"] = 7}
  items[283] = {["types"] = {"weapon","melee","sword","gold_tier"},["id"] = "minecraft:golden_sword",["name"] = "Golden Sword",["sets"] = {4},["durability"] = 33,["stack_size"] = 1,["damage"] = 4}
  
+ items[258] = {["types"] = {"weapon","melee","axe","iron_tier"},["id"] = "minecraft:iron_axe",["name"] = "Iron Axe",["sets"] = {},["durability"] = 251,["stack_size"] = 1,["damage"] = 5}
+ items[271] = {["types"] = {"weapon","melee","axe","leather_tier"},["id"] = "minecraft:wooden_axe",["name"] = "Wooden Axe",["sets"] = {},["durability"] = 60,["stack_size"] = 1,["damage"] = 3}
+ items[275] = {["types"] = {"weapon","melee","axe","chain_tier"},["id"] = "minecraft:stone_axe",["name"] = "Stone Axe",["sets"] = {},["durability"] = 132,["stack_size"] = 1,["damage"] = 4}
+ items[279] = {["types"] = {"weapon","melee","axe","diamond_tier"},["id"] = "minecraft:diamond_axe",["name"] = "Diamond Axe",["sets"] = {},["durability"] = 1562,["stack_size"] = 1,["damage"] = 6}
+ items[286] = {["types"] = {"weapon","melee","axe","gold_tier"},["id"] = "minecraft:golden_axe",["name"] = "Golden Axe",["sets"] = {},["durability"] = 33,["stack_size"] = 1,["damage"] = 3}
  -- Armor
  items[298] = {["types"] = {"armor","leather_tier","dyeable","helmet"},["id"] = "minecraft:leather_helmet",["name"] = "Leather Cap",["sets"] = {1},["durability"] = 56,["stack_size"] = 1,["armorPoints"] = 1}
  items[299] = {["types"] = {"armor","leather_tier","dyeable","chestplate"},["id"] = "minecraft:leather_chestplate",["name"] = "Leather Tunic",["sets"] = {1},["durability"] = 80,["stack_size"] = 1,["armorPoints"] = 3}
@@ -325,7 +330,7 @@ registerItemType("equipment",{"armor","weapon"})
 registerItemType("armor",{"helmet","chestplate","leggings","boots"})
 -- Weapon
 registerItemType("weapon",{"melee","ranged"})
-registerItemType("melee",{"sword"}) -- TODO; ADD: AXE
+registerItemType("melee",{"sword", "axe"})
 registerItemType("ranged",{"bow"})
 
 
@@ -335,12 +340,3 @@ registerItemType("ranged",{"bow"})
 -- 11.781359713524659604069682476215183134568062918706348
 -- 0:   1.663716*(z+20)/20-3
 -- 1.663716612135567610698660315999080676069979854056663347789107
-
-
-
-
-
-
-
-
-
