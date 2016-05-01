@@ -1,0 +1,565 @@
+local tx,ty = term.getSize()
+
+local selected = "Gameplay Settings"
+local scrolled = 1
+local selectedOption = nil
+local somethingChanged = false
+local blink = false
+
+local optionChanged = false
+
+local applyClicked = false
+local cancleClicked = false
+
+
+local options = {
+	["Gameplay Settings"] = {
+		["Item Drops"] = {
+			["Item Drop Rate"] = {["options"] = {"None","Few","Normal","High","All"},["text"] = "The chance of mobs to drop items.",["value"] = "Normal"},
+		},
+		["Difficulty"] = {
+			["Minecraft Difficulty"] = {["options"] = {"Easy","Normal","Hard"},["text"] = "This option changes the default Minecraft Difficulty",["value"] = "Normal"},
+			["Natural Regeneration"] = {["options"] = {"On","Off"},["text"] = "Disables natural ingame generation",["value"] = "On"},
+		},
+		["Lives"] = {
+			["Enable Lives"] = {["options"] = {"On","Off"},["text"] = "Enable Disables lives. If disabled, you will always respawn",["value"] = "On"},
+			["Lives Amount"] = {["options"] = {1,3,5,"infinite"},["text"] = "The amounts of lives you start with",["value"] = 3},
+		},
+	},
+	["Performance"] = {
+		["CommandBlocks"] = {
+			["Command Spread Factor"] = {["options"] = {0.05,0.1,0.5,1,5,10,25},["text"] = "Lower values will reduce the lag caused by commandBlocks",["value"] = 1},
+			["Internal Tick Speed"] = {["options"] = {0.05,0.1,0.15,0.2,0.25,0.5,1},["text"] = "Higher values will reduce the lag caused by each tick. Use 0.05!",["value"] = 0.05},
+		},
+	},
+	["Arena Setup"] = {
+		["Spawn Equipment"] = {
+			["Starting Equipment"] = {["options"] = {"Good","Okay","Poor","None"},["text"] = "This will set the quality/ amount of equipment you spawn with",["value"] = "Okay"},
+			["Starting Supply"] = {["options"] = {"Good","Okay","Poor","None"},["text"] = "This will set the quality/ amount of supplies you spawn with, like food and torches",["value"] = "Okay"},
+			["Initial Healing"] = {["options"] = {3,2,1,0},["text"] = "The Amount of Healing Potions you start with",["value"] = 1},
+		},
+		["Arena Design"] = {
+			["Remove Torches"] = {["options"] = {"Yes","No"},["text"] = "Remove torches placed in previous run-troughs?",["value"] = "Yes"},
+		},
+		["Debug"] = {
+			["Enable"] = {["options"] = {"Yes","No"},["text"] = "Enable Debug/Dev mode",["value"] = "No"},
+		},
+	},
+}
+
+
+local storedOptions = {}
+for field,v in pairs(options) do
+	storedOptions[field] = {}
+	for area,w in pairs(v) do
+		storedOptions[field][area] = {}
+		for name,data in pairs(w) do
+			storedOptions[field][area][name] = data
+		end
+	end
+end
+
+
+local optionsCompiled = {}
+function calculateOptions()
+	for k,v in pairs(options) do
+		optionsCompiled[k] = {}
+		for l,w in pairs(v) do
+			optionsCompiled[k][(#optionsCompiled[k]+1)] = {["text"] = l,["color"] = colors.gray}
+			for m,x in pairs(w) do
+				optionsCompiled[k][(#optionsCompiled[k]+1)] = {["text"] = m,["color"] = colors.lightGray,["data"] = x}
+			end
+		end
+	end
+end
+calculateOptions()
+
+
+-- As can be found here: http://www.computercraft.info/forums2/index.php?/topic/25340-cc-176-easy-drawing-characters/
+local pixel = {
+  draw = function(self,x,y)
+    term.setBackgroundColor( self.inverted and self.fg or self.bg )
+    term.setTextColor( self.inverted and self.bg or self.fg )
+    term.write( self.char )
+  end,
+  setBg = function( self, color )
+    self.bg = color
+	return self
+  end,
+  setFg = function(self,color)
+    self.fg = color
+	return self
+  end
+}
+function getDrawingCharacter(topLeft, topRight, left, right, bottomLeft, bottomRight)
+  local data = 128
+  if not bottomRight then
+        data = data + (topLeft and 1 or 0)
+        data = data + (topRight and 2 or 0)
+        data = data + (left and 4 or 0)
+        data = data + (right and 8 or 0)
+        data = data + (bottomLeft and 16 or 0)
+  else
+        data = data + (topLeft and 0 or 1)
+        data = data + (topRight and 0 or 2)
+        data = data + (left and 0 or 4)
+        data = data + (right and 0 or 8)
+        data = data + (bottomLeft and 0 or 16)
+  end
+  return setmetatable( {fg = colors.white, bg = colors.black, char = string.char(data), inverted = bottomRight}, {__index = pixel} )
+end
+--
+
+function scrollDown()
+	if(scrolled>1)then
+		scrolled = scrolled - 1
+	end
+end
+
+function scrollUp()
+	if(scrolled <= #optionsCompiled[selected])then
+		if(scrolled <= (ty-4)+#optionsCompiled[selected])then
+			scrolled = scrolled + 1
+		end
+	end
+end
+
+function reset()
+	options = nil
+	options = {}
+	for field,v in pairs(storedOptions) do
+		options[field] = {}
+		for area,w in pairs(v) do
+			options[field][area] = {}
+			for name,data in pairs(w) do
+				options[field][area][name] = data
+			end
+		end
+	end
+	calculateOptions()
+end
+
+function sendData()	
+	storedOptions = nil
+	storedOptions = {}
+	local t = {}
+	for field,v in pairs(options) do
+		t[field] = {}
+		storedOptions[field] = {}
+		for area,w in pairs(v) do
+			t[field][area] = {}
+			storedOptions[field][area] = {}
+			for name,data in pairs(w) do
+				t[field][area][name] = data["value"]
+				storedOptions[field][area][name] = data
+			end
+		end
+	end
+	rednet.send(15,t)
+	calculateOptions()
+end
+
+function renderBaseUI(a)
+	if(a)then
+		term.setTextColor(colors.white)
+		term.setBackgroundColor(colors.lightGray)
+		term.clear()
+	end
+	
+	local arrowColor = colors.lime
+	if(blink)then
+		arrowColor = colors.orange
+	end
+	
+	local applyColor = colors.green
+	if(applyClicked)then
+		applyColor = colors.lime
+	end
+	
+	local cancleColor = colors.red
+	if(cancleClicked)then
+		cancleColor = colors.pink
+	end	
+	
+	term.setCursorPos(1,1)
+	term.setBackgroundColor(colors.gray)
+	term.write(string.rep(" ",tx))
+	term.setCursorPos(1,1)
+	for k,v in pairs(options) do
+		if(k==selected)then
+			term.setTextColor(colors.black)
+			term.setBackgroundColor(colors.orange)
+		else
+			term.setTextColor(colors.lightGray)
+			term.setBackgroundColor(colors.gray)
+		end
+		write("["..k.."]")
+		term.setTextColor(colors.lightGray)
+		term.setBackgroundColor(colors.gray)
+		write(" ")
+	end
+	
+	term.setCursorPos(1,2)
+	term.setBackgroundColor(colors.gray)
+	term.setTextColor(colors.lightGray)
+	term.write(string.rep(getDrawingCharacter(true,true,false,false,true,true).char,tx))
+	--
+	term.setTextColor(colors.black)
+	term.setBackgroundColor(colors.white)
+	
+	if(selected)then
+		for i=(2+scrolled),(ty-4) do
+			term.setCursorPos(2,i)
+			if(optionsCompiled[selected][(i-2)])then
+				local a = optionsCompiled[selected][(i-2)]
+				term.setBackgroundColor(a["color"])
+				if(a["data"])then
+					if(selectedOption==(i-2))then
+						term.setBackgroundColor(colors.orange)
+					end
+					term.write("  "..a["text"]..": ")
+					local len = 0
+					term.setTextColor(colors.black)
+					if(selectedOption==(i-2))then
+						for k,v in pairs(a["data"]["options"]) do
+							term.write(" ")
+							if(v == a["data"]["value"])then
+								term.setBackgroundColor(colors.green)
+							end
+							term.write("["..v.."]")
+							term.setBackgroundColor(colors.orange)
+						end
+					else
+						term.write(a["data"]["value"])
+					end
+					term.write(t)
+					term.setTextColor(colors.black)
+				else
+					term.write(a["text"])
+				end
+				
+			end
+		end
+	end
+	
+	
+	
+	-- Bottom GUI
+	term.setBackgroundColor(colors.gray)
+	if(a)then
+		term.setCursorPos(1,(ty-3))
+		term.write(string.rep(" ",tx))
+		term.setCursorPos(1,(ty-2))
+		term.write(string.rep(" ",tx))
+		term.setCursorPos(1,(ty-1))
+		term.write(string.rep(" ",tx))
+		term.setCursorPos(1,(ty))
+		term.write(string.rep(" ",tx))
+	end
+	
+	term.setBackgroundColor(colors.black)
+	
+	     -- 1 --
+	     --   --
+	     --   -- 
+	if(a)then
+		term.setCursorPos((tx-39),(ty-2))
+		getDrawingCharacter(true,true,true,true,true,true):setBg(colors.gray):setFg(cancleColor):draw()
+		-- C
+		getDrawingCharacter(false,false,false,true,true,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,true,true,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,false,false,true,false):setBg(cancleColor):draw()
+		-- a
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		-- n
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		-- c
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()	
+		-- e
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		-- l
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,true,false,true,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		-- [ ]	
+		getDrawingCharacter(false,false,false,false,false,false):setBg(colors.gray):setFg(applyColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(colors.gray):setFg(applyColor):draw()
+		getDrawingCharacter(true,true,true,true,true,true):setBg(colors.gray):setFg(applyColor):draw()
+		-- A
+		getDrawingCharacter(false,false,false,true,true,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,true,true,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,false,false,true,false):setBg(applyColor):draw()
+		-- p
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		-- p
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		-- l
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,true,false,true,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		-- y
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+	end
+	-- >
+	term.setCursorPos((tx-2),(ty-2))
+	getDrawingCharacter(false,false,false,true,false,false):setBg(applyColor):setFg(arrowColor):draw()
+	getDrawingCharacter(false,false,false,false,true,false):setBg(applyColor):setFg(arrowColor):draw()
+	getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):setFg(arrowColor):draw()
+	
+	     --   --
+	     -- 2 --
+	     --   -- 
+	if(a)then
+		term.setCursorPos((tx-39),(ty-1))
+		getDrawingCharacter(true,true,true,true,true,true):setBg(colors.gray):setFg(cancleColor):draw()
+		-- C
+		getDrawingCharacter(true,false,true,false,true,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		-- a
+		getDrawingCharacter(false,true,false,false,false,true):setBg(cancleColor):draw()
+		getDrawingCharacter(true,true,false,false,true,true):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,true,false,true,false):setBg(cancleColor):draw()
+		-- n
+		getDrawingCharacter(true,true,true,false,true,false):setBg(cancleColor):draw()
+		getDrawingCharacter(true,true,false,false,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,true,false,true,false):setBg(cancleColor):draw()
+		-- c
+		getDrawingCharacter(false,true,true,false,true,false):setBg(cancleColor):draw()
+		getDrawingCharacter(true,true,false,false,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,true,false,false,false):setBg(cancleColor):draw()
+		-- e
+		getDrawingCharacter(false,true,true,false,true,true):setBg(cancleColor):draw()
+		getDrawingCharacter(true,true,false,false,true,true):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,true,false,true,false):setBg(cancleColor):draw()
+		-- l
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(true,false,true,false,true,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		-- [ ]	
+		getDrawingCharacter(false,false,false,false,false,false):setBg(colors.gray):setFg(applyColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(colors.gray):setFg(applyColor):draw()
+		getDrawingCharacter(true,true,true,true,true,true):setBg(colors.gray):setFg(applyColor):draw()
+		-- A
+		getDrawingCharacter(true,true,true,false,true,false):setBg(applyColor):draw()
+		getDrawingCharacter(true,true,false,false,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(true,false,true,false,true,false):setBg(applyColor):draw()
+		-- p
+		getDrawingCharacter(true,false,true,true,true,false):setBg(applyColor):draw()
+		getDrawingCharacter(true,true,false,false,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,true,false,true,false):setBg(applyColor):draw()
+		-- p
+		getDrawingCharacter(true,false,true,true,true,false):setBg(applyColor):draw()
+		getDrawingCharacter(true,true,false,false,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,true,false,true,false):setBg(applyColor):draw()
+		-- l
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(true,false,true,false,true,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		-- y
+		getDrawingCharacter(true,false,true,false,true,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(true,false,true,false,true,false):setBg(applyColor):draw()
+	end
+	-- >
+	term.setCursorPos((tx-2),(ty-1))
+	getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):setFg(arrowColor):draw()
+	getDrawingCharacter(false,true,false,false,false,true):setBg(applyColor):setFg(arrowColor):draw()
+	getDrawingCharacter(false,false,true,false,false,false):setBg(applyColor):setFg(arrowColor):draw()
+	
+		 --   --
+	     --   --
+	     -- 3 -- 
+	if(a)then
+		term.setCursorPos((tx-39),(ty))
+		getDrawingCharacter(true,true,true,true,true,true):setBg(colors.gray):setFg(cancleColor):draw()
+		-- C
+		getDrawingCharacter(true,false,false,true,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,true,true,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(true,false,false,false,false,false):setBg(cancleColor):draw()
+		-- a
+		getDrawingCharacter(true,false,false,true,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,true,true,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(true,false,true,false,false,false):setBg(cancleColor):draw()
+		-- n
+		getDrawingCharacter(true,false,true,false,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(true,false,true,false,false,false):setBg(cancleColor):draw()
+		-- c
+		getDrawingCharacter(true,false,false,true,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,true,true,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(true,false,false,false,false,false):setBg(cancleColor):draw()
+		-- e
+		getDrawingCharacter(true,false,false,true,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,true,true,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,true,false,false,false):setBg(cancleColor):draw()
+		-- l
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(true,false,false,true,false,false):setBg(cancleColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(cancleColor):draw()
+		-- [ ]	
+		getDrawingCharacter(false,false,false,false,false,false):setBg(colors.gray):setFg(applyColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(colors.gray):setFg(applyColor):draw()
+		getDrawingCharacter(true,true,true,true,true,true):setBg(colors.gray):setFg(applyColor):draw()
+		-- A
+		getDrawingCharacter(true,false,true,false,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(true,false,true,false,false,false):setBg(applyColor):draw()
+		-- p
+		getDrawingCharacter(true,true,true,false,true,false):setBg(applyColor):draw()
+		getDrawingCharacter(true,true,false,false,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		-- p
+		getDrawingCharacter(true,true,true,false,true,false):setBg(applyColor):draw()
+		getDrawingCharacter(true,true,false,false,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		-- l
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(true,false,false,true,false,false):setBg(applyColor):draw()
+		getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):draw()
+		-- y
+		getDrawingCharacter(false,true,false,false,true,true):setBg(applyColor):draw()
+		getDrawingCharacter(true,true,false,false,true,true):setBg(applyColor):draw()
+		getDrawingCharacter(true,false,true,false,false,false):setBg(applyColor):draw()
+	end
+	-- >
+	term.setCursorPos((tx-2),(ty))
+	getDrawingCharacter(false,false,false,true,false,false):setBg(applyColor):setFg(arrowColor):draw()
+	getDrawingCharacter(true,false,false,false,false,false):setBg(applyColor):setFg(arrowColor):draw()
+	getDrawingCharacter(false,false,false,false,false,false):setBg(applyColor):setFg(arrowColor):draw()
+	
+	-- Update the text
+	term.setBackgroundColor(colors.gray)
+	term.setTextColor(colors.black)
+	
+	if(optionsCompiled[selected] and optionsCompiled[selected][selectedOption] and optionsCompiled[selected][selectedOption]["data"])then
+		term.setCursorPos(2,ty-4)
+		local words = {}
+		for word in (optionsCompiled[selected][selectedOption]["data"]["text"] or ""):gmatch("%w+") do table.insert(words, word) end
+		local pos = 1
+		local pointer = 1
+		local line = 1
+		while line < 4 do
+			term.setCursorPos(2,ty-4+line)
+			while(#words >= pointer and pos + words[pointer]:len() < tx-40)do
+				term.write(words[pointer].." ")
+				pos = pos + words[pointer]:len() + 1
+				pointer = pointer + 1
+			end
+			pos = 1
+			line = line + 1
+		end
+	end
+end
+
+renderBaseUI(true)
+
+-- Main Loop
+function mainLoop()
+	while true do
+		local event, button, x, y = os.pullEvent()
+		if(event == "mouse_click")then
+			if(x>1 and x<tx)then
+				if(y>2 and y<(ty-4))then
+					local newSelected = scrolled + (y-3)
+					if(newSelected == selectedOption)then
+						-- Check for the option clicked
+						if(optionsCompiled[selected][selectedOption] and optionsCompiled[selected][selectedOption]["data"])then
+							local xSidePressed = (x - (optionsCompiled[selected][selectedOption]["text"]):len() - 6)
+							local c = xSidePressed
+							local i = 0
+							while(c > 0 and i < #optionsCompiled[selected][selectedOption]["data"]["options"])do
+								i = i + 1
+								c = c - (tostring(optionsCompiled[selected][selectedOption]["data"]["options"][i]):len()+3)
+								if(c == 0)then i = 0 end
+							end
+							if(c >= 0)then i = 0 end
+							if(i > 0)then
+								optionsCompiled[selected][selectedOption]["data"]["value"] = optionsCompiled[selected][selectedOption]["data"]["options"][i]
+								optionChanged = true
+								somethingChanged = true
+							else
+								selectedOption = nil
+							end
+						end
+					else
+						selectedOption = newSelected
+					end
+				end
+			end
+			if(y == 1)then
+				term.setCursorPos(1,5)
+				local prim = {}
+				for k,v in pairs(options)do
+					prim[(#prim+1)] = k
+				end
+				local pos = x
+				local i = 0
+				while (i <= #prim and pos > 0) do
+					i = i + 1
+					pos = pos - (tostring(prim[i]):len() + 3)
+					if(pos == 0)then i = 0 end
+				end
+				if(pos >= 0)then i = 0 end
+				if(i>0)then
+					selected = prim[i]
+					selectedOption = nil
+				else
+					selected = nil
+				end
+			end
+			if(y>=24 and y<=26 and x>=32 and x<=50)then -- Cancle
+				cancleClicked = true
+			elseif(x>=53 and x<=71 and y>=24 and y<=26)then -- Apply
+				applyClicked = true
+			end
+			
+			renderBaseUI(true)
+		end
+		
+		if(event == "mouse_click")then
+			term.setBackgroundColor(colors.gray)
+			term.setTextColor(colors.black)
+			term.setCursorPos(1,ty)
+			term.write(x.."/"..y.."      ")
+		end
+	end
+end
+
+function secondClock()
+	while true do
+		sleep(1)
+		timerStarted = false
+		renderBaseUI(false)
+		if(optionChanged or cancleClicked or applyClicked)then
+			sleep(.1)
+			optionChanged = false
+			selectedOption = nil
+			if(cancleClicked)then somethingChanged = false reset() end
+			cancleClicked = false
+			if(applyClicked)then somethingChanged = false sendData() end
+			applyClicked = false
+			renderBaseUI(true)
+		end
+		if(somethingChanged)then
+			blink = not blink
+		end
+	end
+end
+
+
+parallel.waitForAll(mainLoop,secondClock)

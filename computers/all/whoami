@@ -10,9 +10,18 @@ if(pocket)then
 end
 
 
+
+
 -- Main Computer
 if(block.name == "minecraft:quartz")then
-	return
+	shell.run("dungeon/computers/all/update","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/")
+	shell.run("dungeon/computers/dev/main")
+end
+
+-- Settings monitor
+if(block.name == "minecraft:wool")then
+	shell.run("dungeon/computers/all/update","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/")
+	shell.run("dungeon/computers/option/main")
 end
 
 
