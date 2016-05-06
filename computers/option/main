@@ -22,7 +22,7 @@ local options = {
 			["Natural Regeneration"] = {["options"] = {"On","Off"},["text"] = "Disables natural ingame generation",["value"] = "On"},
 		},
 		["Lives"] = {
-			["Enable Lives"] = {["options"] = {"On","Off"},["text"] = "Enable Disables lives. If disabled, you will always respawn",["value"] = "On"},
+			["Enable Purchasable Lives"] = {["options"] = {"On","Off"},["text"] = "Enables or disables purchasing lives at the shop",["value"] = "On"},
 			["Lives Amount"] = {["options"] = {1,3,5,"infinite"},["text"] = "The amounts of lives you start with",["value"] = 3},
 		},
 	},
@@ -39,10 +39,21 @@ local options = {
 			["Initial Healing"] = {["options"] = {3,2,1,0},["text"] = "The Amount of Healing Potions you start with",["value"] = 1},
 		},
 		["Arena Design"] = {
-			["Remove Torches"] = {["options"] = {"Yes","No"},["text"] = "Remove torches placed in previous run-troughs?",["value"] = "Yes"},
+			["Remove Torches"] = {["options"] = {"Yes","No"},["text"] = "Remove torches placed in previous run-throughs",["value"] = "Yes"},
 		},
 		["Debug"] = {
 			["Enable"] = {["options"] = {"Yes","No"},["text"] = "Enable Debug/Dev mode",["value"] = "No"},
+		},
+	},
+	["Aesthetics"] = {
+		["Music"] = {
+			["Enable"] = {["options"] = {"Yes","No"},["text"] = "Enable random music",["value"] = "No"},
+		},
+		["Detail"] = {
+			["Book Wear"] = {["options"] = {"Yes","No"},["text"] = "Enable or disable tradeable books wearing down over time",["value"] = "Yes"},
+		},
+		["Language"] = {
+			["Language"] = {["options"] = {"English", "Deutsch"},["text"] = "Choose the map's language",["value"] = "English"},
 		},
 	},
 }
@@ -156,6 +167,7 @@ function sendData()
 		end
 	end
 	rednet.send(15,t)
+	rednet.send(15,"done")
 	calculateOptions()
 end
 
