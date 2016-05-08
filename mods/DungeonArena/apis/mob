@@ -1,8 +1,51 @@
+local function get_v(id)
+	if not fs.exists(".config") then
+		return nil
+	end
+	local open = fs.open(".config", "r")
+	local all = open.readAll()
+	open.close()
+	all = textutils.unserialize(all)
+	if all[id] then
+		return all[id]
+	else
+		return nil
+	end
+end
+
+local nm = newMob
+newMob = function(...)
+	local mob = nm(unpack({...}))
+	if get_v("Item Drop Rate") == "None" then
+		mob.dropChances = {"0.0f","0.0f","0.0f","0.0f","0.0f"} --0%
+	elseif get_v("Item Drop Rate") == "Few" then
+		mob.dropChances = {"0.05f","0.05f","0.05f","0.05f","0.05f"} --5%
+	elseif get_v("Item Drop Rate") == "Normal" then
+		mob.dropChances = {"0.1f","0.1f","0.1f","0.1f","0.1f"} --10%
+	elseif get_v("Item Drop Rate") == "High" then
+		mob.dropChances = {"0.5f","0.5f","0.5f","0.5f","0.5f"} --50%
+	elseif get_v("Item Drop Rate") == "All" then
+		mob.dropChances = {"1.0f","1.0f","1.0f","1.0f","1.0f"} --100%
+	end
+	return mob
+end
+
 local ranks = {"High Prelan", "Ruler", "Right-Hand Man", "King", "Leader"}
 --Summons a boss.
 --@x,@y,@z: X, Y, and Z coordinates.
 --@mobType: Type of mob.
 --@difficulty: Mob level.
+function summonBoss(x,y,z,mobType,difficulty)
+	local boss = mob.newMob({difficulty = difficulty, type = mobType})
+	boss:auto()
+	boss.name = boss_name(math.random(10)) .. ", " .. ranks[math.random(#ranks)] .. " of the Mobs"
+	boss.dropChances = {"1.0f","1.0f","1.0f","1.0f","1.0f"}
+	boss:setEquipment("helmet",{["id"] = 69,["Damage"] = 0,["Count"] = 1,["tag"] = {["display"] = {["Name"] = "Gate Key", ["Lore"] = {"Said to open Death's Shop.","Maybe there's a gate somewhere to use this on?", "You'd think placing it would be stupid of you."}}},})
+	boss:summon(x,y,z)
+end
+
+--Old function, for reference in case stuff needs to be modified
+--[[
 function summonBoss(x,y,z,mobType,difficulty)
 	mob.initializeMob(x,y,z,mobType,difficulty)
 	mob.setEquipmentOfMob()
@@ -15,22 +58,18 @@ function summonBoss(x,y,z,mobType,difficulty)
 	if getMobData("mobType") == "spider_jockey" then
 		data["Riding"] = {["id"] = "Spider"}
 	end
-	data["Equipment"][5] = {
-	["id"] = 69,
-	["Damage"] = 0,
-	["Count"] = 1,
-	["tag"] = {["display"] = {["Name"] = "Gate Key", ["Lore"] = {"Said to open Death's Shop.","Maybe there's a gate somewhere to use this on?", "You'd think placing it would be stupid of you."}}},
-	}
+
 	for i = 1, 5 do
 		data["DropChances"][i] = "1.0f"
 	end
 	data["PersistenceRequired"] = "1b"
-	
+
 	local dataTag = dcore.getNBTStringFromTable(data)
-	local cmd = "summon "..mob.getEntityName(mob.getMobData("mobType")).." "..mob.getMobData("xCoord").." "..mob.getMobData("yCoord").." "..mob.getMobData("zCoord").." "..dataTag
+	local cmd = "/summon "..mob.getEntityName(mob.getMobData("mobType")).." "..mob.getMobData("xCoord").." "..mob.getMobData("yCoord").." "..mob.getMobData("zCoord").." "..dataTag
 	local success,answer = commands.exec(cmd)
 
 	if(not answer)then
 		print_log("command","[error] Failed to execute Command: "..cmd.."; Error message:"..answer[1]..(answer[2] or "").."")
 	end
 end
+]]

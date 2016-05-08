@@ -1,0 +1,25 @@
+while true do
+	local status = ""
+	if not _G["st_m"] then
+		status = "unknown"
+	elseif not _G["tab_count"] then
+		status = "red"
+	elseif _G["st_m"]["getTitle"](1) == "shell" then
+		status = "red"
+	elseif _G["tab_count"] == _G["st_m"]["getCount"]() then
+		status = "green"
+	else
+		status = "yellow"
+	end
+	print(status)
+	if status == "red" then
+		commands.exec("/setblock 2 9 -15 redstone_block")
+	elseif status == "green" then
+		commands.exec("/setblock 2 9 -15 emerald_block")
+	elseif status == "yellow" then
+		commands.exec("/setblock 2 9 -15 gold_block")
+	else
+		commands.exec("/setblock 2 9 -15 wool 5")
+	end
+	sleep(2)
+end

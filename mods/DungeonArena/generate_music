@@ -1,0 +1,67 @@
+local t = {}
+local sounds = {"note.bassattack","note.bd","note.harp","note.hat","note.snare"}
+local soundsPlayedStart = 7
+local soundsPlayedMax = 31
+local soundsPlayed = soundsPlayedStart
+local c = {}
+local songDone = false
+local songCount = 0
+
+function setNewOption(i)
+	t[i] = {["c"] = 2^math.random(1,5),["s"] = sounds[math.random(#sounds)],["p"] = (math.random(5,20)/10)}
+	t[i]["d"] = t[i]["c"] * math.random(10,30*t[i]["p"])
+	t[i]["start"] = math.random(1,soundsPlayed)
+	c[i] = 1
+end
+while true do
+	-- Load a new Song
+	local songSpeed = math.floor(2,10)/20
+	
+	for i=1,soundsPlayedStart do
+		setNewOption(i)
+	end
+	
+	soundsPlayed = soundsPlayedStart
+	local songRunning = true
+	songDone = false
+	songCount = 0
+	while songRunning do
+		if _G["stopSong"] then
+			songRunning = false
+			_G["stopSong"] = false
+		end
+		songCount = songCount + 1
+		for i=1,soundsPlayed do
+			c[i] = c[i] + 1
+			if(c[i]>=t[i]["c"])then
+				if(t[i]["start"]<=0)then
+					t[i]["d"] = t[i]["d"] - 1
+					commands.execAsync("/execute @a ~ ~ ~ playsound "..t[i]["s"].." @p[r=0] ~ ~ ~ 1 "..t[i]["p"])
+					c[i] = 0
+				else
+					t[i]["start"] = t[i]["start"] - 1
+				end
+				if(t[i]["d"]<0)then
+					if(not songDone)then
+						if(soundsPlayed < soundsPlayedMax)then
+							soundsPlayed = soundsPlayed + 1
+							setNewOption(soundsPlayed)
+						end
+						setNewOption(i)
+					else
+						soundsPlayed = soundsPlayed - 1
+					end
+				end
+			end
+		end
+		if(math.random(songCount) > 500)then
+			songDone = true
+		end
+		if(soundsPlayed < soundsPlayedStart or songCount > 1000)then
+			print("Done with song! "..songCount.."("..math.floor((songCount*songSpeed)).."s)")
+			songRunning = false
+		end
+		sleep(songSpeed)
+	end
+	sleep(1)
+end

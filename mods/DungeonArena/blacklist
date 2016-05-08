@@ -1,12 +1,55 @@
-local blacklist = {"TeamTwiistz"}
+--CONFIG--
+local blacklist = {["7f1447f0dd5e4de9ac27317c7e4cee64ba5f8ef8e4a8a163b529aa2058a4e42a"] = true, ["94038b4a51d71645fbf93bde420121dcd8e4055bc1a7e1582e4977e8286f7dde"] = true}
+--END CONFIG--
 
-while true do
-	for i = 1, #blacklist do
-		local x = commands.exec("/testfor " .. blacklist[i])
-		if x then
-			commands.execAsync("/tp " .. blacklist[i] .. " 0 10000 0")
-			commands.execAsync('/tellraw @a ["",{"text":"Fuck you, ' .. blacklist[i] .. '.","color":"gold"}]')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+get_text = script.get_text
+dcore.requireAPI("sha256")
+dcore.requireAPI("achievement")
+_G["plist"] = cmd.getAllPlayerNames()
+local current_list = {}
+local people_amount = #_G["plist"]
+
+function refreshBlacklist() --if person is detected with blacklisted hash, add them to the list
+	for i = 1, #_G["plist"] do
+		if blacklist[sha256.sha256(_G["plist"][i] .. "lolsalty")] then
+			current_list[#current_list+1] = _G["plist"][i]
 		end
 	end
-	sleep(10)
+	return true
+end
+refreshBlacklist()
+while true do
+	if #_G["plist"] ~= people_amount then
+		refreshBlacklist()
+		people_amount = #_G["plist"]
+	end
+	for i = 1, #current_list do
+		local x = commands.exec("/testfor " .. current_list[i])
+		if x then
+			achievement.makeAchievement(get_text("achievement.hated.name"), get_text("achievement.hated.description"), current_list[i], 4, false)
+			commands.execAsync("/tp " .. current_list[i] .. " 0 100000 0")
+		end
+	end
+	sleep(0.5)
 end

@@ -1,14 +1,69 @@
---Special functions
-local tArgs = {...}
-if tArgs[1] == "help" then
-	print("Usage: start [mode]")
-	print("Valid modes are: reset (reset progress)")
-elseif tArgs[1] == "reset" then
-	if fs.exists(".config") then
-		fs.delete(".config")
+os.loadAPI("script")
+get_text = script.get_text
+function get_v(id, permanent)
+	local path; if permanent then path = ".permanent_config" else path = ".config" end
+	if not fs.exists(path) then
+		return nil
 	end
-	print("Reset progress!")
-	return
+	local open = fs.open(path, "r")
+	local all = open.readAll()
+	open.close()
+	all = textutils.unserialize(all)
+	if all[id] then
+		return all[id]
+	else
+		return nil
+	end
+end
+function set_v(id, s, permanent)
+	local path; if permanent then path = ".permanent_config" else path = ".config" end
+	local all
+	if not fs.exists(path) then
+		all = "{}"
+	else
+		local open = fs.open(path, "r")
+		all = open.readAll()
+		open.close()
+	end
+	all = textutils.unserialize(all)
+	all[id] = s
+	all = textutils.serialize(all)
+	local open = fs.open(path, "w")
+	open.write(all)
+	open.close()
+	if permanent then
+		if fs.exists(":dungeon/mods/DungeonArena/.internal_perm_config") then
+			fs.delete(":dungeon/mods/DungeonArena/.internal_perm_config")
+		end
+		fs.copy(path, ":dungeon/mods/DungeonArena/.internal_perm_config")
+	end
+end
+local tickspeed = get_v("Internal Tick Speed") or 0.05; tickspeed = tickspeed*2
+--TP to waiting room if just booting
+if not get_v("has_setup") then
+	commands.exec("/effect @a minecraft:instant_health 20 10")
+	commands.exec("/effect @a minecraft:saturation 20 10")
+	commands.exec("/tp @a -4 5 -16")
+	commands.exec("/gamemode 2 @a")
+	if math.random(100) <= 5 then --5% chance of pakka
+		commands.exec("/setblock 67 27 37 prismarine")
+	else
+		commands.exec("/setblock 67 27 37 air")
+	end
+	commands.exec("/setblock 74 27 30 sponge 1")
+	fs.delete("/dungeon/event/achievements")
+end
+local torch_coords = {"62 19 50", "66 19 50", "71 22 49", "60 20 6","56 20 6","53 20 3","53 20 -1","53 20 -9","53 20 -13","60 20 -16","68 20 -16","72 20 -16","75 20 -13","75 20 -1","75 20 3","72 20 6","68 20 6"}
+local torch_rooms = {{"112 24 -52", "92 16 43"},{"72 18 43", "91 24 -52"}, {"52 18 55", "71 24 -53"}, {"51 24 -53", "32 24 43"}, {"31 24 43", "16 16 -52"}, {"37 33 -32", "56 25 22"}, {"57 33 -32", "76 26 22"}, {"77 33 -32", "91 26 22"}, {"91 7 2", "72 16 -32"}, {"71 7 -32", "52 16 42"}, {"51 15 -12", "37 7 22"}}
+if get_v("Remove Torches") ~= false and not get_v("has_setup") then
+	for i = 1, #torch_rooms do
+		commands.execAsync("/fill " .. torch_rooms[i][1] .. " " .. torch_rooms[i][2] .. " air 0 replace torch")
+		sleep(tickspeed/2)
+	end
+	for i = 1, #torch_coords do
+		commands.execAsync("/setblock " .. torch_coords[i] .. " torch")
+		sleep(tickspeed)
+	end
 end
 --Set variables and crap
 commands.execA = function(cmd)
@@ -30,6 +85,7 @@ dcore.requireAPI("villager")
 dcore.requireAPI("achievement")
 dcore.requireAPI("cmd")
 print("...done")
+cmd.set_factor()
 
 local wave = 1
 local level = 1
@@ -45,6 +101,37 @@ local high_level_villager_areas = {
 {53,26,35},
 }
 print("Initialising")
+--check if rolled back
+if get_v("old") and not get_v("done_old") then
+	for _ = 1, #cmd.getAllPlayerNames() do
+		achievement.makeAchievement(get_text("achievement.dead.name"), get_text("achievement.dead.description"), cmd.getAllPlayerNames()[_], 6, false)
+	end
+	set_v("old", nil)
+	set_v("done_old", true) --can't get the achievement again by dying and rolling back again
+end
+for _ = 1, #cmd.getAllPlayerNames() do
+	if get_text("script.ign"):find(cmd.getAllPlayerNames()[_]) then
+		achievement.makeAchievement(get_text("achievement.translate.name"), get_text("achievement.translate.description"), cmd.getAllPlayerNames()[_], 8, false)
+	end
+end
+--check if perm config is same
+if fs.exists(".permanent_config") and fs.exists(":dungeon/mods/DungeonArena/.internal_perm_config") then
+	local open = fs.open(":dungeon/mods/DungeonArena/.internal_perm_config", "r")
+	local all = open.readAll()
+	open.close()
+	
+	local open = fs.open(".permanent_config", "r")
+	local all2 = open.readAll()
+	open.close()
+	
+	if all ~= all2 then
+		for _ = 1, #cmd.getAllPlayerNames() do
+			achievement.makeAchievement(get_text("achievement.history.name"), get_text("achievement.history.description"), cmd.getAllPlayerNames()[_], 9, false)
+		end
+		fs.delete(".permanent_config")
+		fs.copy(":dungeon/mods/DungeonArena/.internal_perm_config", ".permanent_config")
+	end
+end
 --Set config
 if not fs.exists(".config") then
 	local open = fs.open(".config", "w")
@@ -52,14 +139,15 @@ if not fs.exists(".config") then
 	open.close()
 end
 write(".")
-local function getScoreboard()
-	local _, data = commands.exec("/scoreboard players list @p")
+local function getScoreboard(p)
+	local _, data = commands.exec("/scoreboard players list " .. p)
 	local x = data[2]:gsub("- m_v: ", "")
 	x = x:gsub(" %(m_v%)", "")
 	x = tonumber(x)
 	return x
 end
 write(".")
+_G["st_m"] = multishell
 local function getChest(past)
 	local chests = room.getChestPlaceTable()
 	local r = chests[math.random(#chests)]
@@ -69,9 +157,13 @@ local function getChest(past)
 		return r
 	end
 end
+--[[
 write(".")
 local function set(m, id)
 	commands.exec("/scoreboard players set @a m_v 0")
+	local _, p = commands.exec("/testfor @r")
+	p = p[1]:gsub("Found ", "")
+	sleep(0.2)
 	local open = fs.open(".config", "r")
 	local all = open.readAll()
 	open.close()
@@ -79,11 +171,11 @@ local function set(m, id)
 	if all[id] ~= nil then
 		return all[id]
 	end
-	local command = '/tellraw @p ["",{"text":"' .. m .. '","color":"green"},{"text":" [Yes]","color":"dark_green","clickEvent":{"action":"run_command","value":"/scoreboard players set @a m_v 1"}},{"text":" [No]","color":"red","clickEvent":{"action":"run_command","value":"/scoreboard players set @a m_v 2"}}]'
+	local command = '/tellraw ' .. p .. ' ["",{"text":"' .. m .. '","color":"green"},{"text":" [Yes]","color":"dark_green","clickEvent":{"action":"run_command","value":"/scoreboard players set @a m_v 1"}},{"text":" [No]","color":"red","clickEvent":{"action":"run_command","value":"/scoreboard players set @a m_v 2"}}]'
 	commands.exec(command)
 	repeat
-		x = getScoreboard()
-		sleep(0.05)
+		x = getScoreboard(p)
+		sleep(tickspeed)
 	until x ~= 0
 	if x == 1 then
 		all[id] = true
@@ -96,32 +188,136 @@ local function set(m, id)
 	commands.exec("/scoreboard players set @a m_v 0")
 	return x
 end
-local function set_v(id, s)
-	local open = fs.open(".config", "r")
-	local all = open.readAll()
-	open.close()
-	all = textutils.unserialize(all)
-	all[id] = s
-	all = textutils.serialize(all)
-	local open = fs.open(".config", "w")
-	open.write(all)
-	open.close()
-end
 write(".")
-local function get_v(id)
+local function setscale(m, id)
+	commands.exec("/scoreboard players set @a m_v 0")
+	local _, p = commands.exec("/testfor @r")
+	p = p[1]:gsub("Found ", "")
+	sleep(0.2)
 	local open = fs.open(".config", "r")
 	local all = open.readAll()
 	open.close()
 	all = textutils.unserialize(all)
-	if all[id] then
+	if all[id] ~= nil then
 		return all[id]
+	end
+	local command = '/tellraw ' .. p .. '  ["",{"text":"' .. m .. '","color":"green"},{"text":" [Never]","color":"dark_red","clickEvent":{"action":"run_command","value":"/scoreboard players set @a m_v 1"}},{"text":" [Rarely]","color":"red","clickEvent":{"action":"run_command","value":"/scoreboard players set @a m_v 2"}},{"text":" [Usually]","color":"aqua","clickEvent":{"action":"run_command","value":"/scoreboard players set @a m_v 3"}},{"text":" [Always]","color":"gold","clickEvent":{"action":"run_command","value":"/scoreboard players set @a m_v 4"}}]'
+	commands.exec(command)
+	repeat
+		x = getScoreboard(p)
+		sleep(tickspeed)
+	until x ~= 0
+	all[id] = x
+	local open = fs.open(".config", "w")
+	open.write(textutils.serialize(all))
+	open.close()
+	commands.exec("/scoreboard players set @a m_v 0")
+	return x
+end
+]]
+--from http://lua-users.org/wiki/SplitJoin, thanks!
+function explode(d,p)
+  local t, ll
+  t={}
+  ll=0
+  if(#p == 1) then return {p} end
+    while true do
+      l=string.find(p,d,ll,true) -- find the next d in the string
+      if l~=nil then -- if "not not" found then..
+        table.insert(t, string.sub(p,ll,l-1)) -- Save it in our array.
+        ll=l+1 -- save just after where we found it for searching next time.
+      else
+        table.insert(t, string.sub(p,ll)) -- Save what's left in our array.
+        break -- Break at end, as it should be, according to the lua manual.
+      end
+    end
+  return t
+end
+if (get_v("first_day", true) == nil) then
+	local dt = http.get("http://www.timeapi.org/utc/now")
+	if dt then
+		dt = dt.readAll()
+		dt = explode("-", dt)
+		dt[3] = dt[3]:sub(0,2)
+		date_table = {dt[2],dt[3],dt[1]}
+		set_v("first_day", date_table, true)
 	else
-		return nil
+		set_v("first_day", {"0", "0", "0"}, true)
+	end
+end
+if not get_v("death_count", true) then
+	set_v("death_count", 0, true)
+end
+local boot_count = get_v("boot_count", true) or 0; boot_count = boot_count+1
+set_v("boot_count", boot_count, true)
+write(".")
+--Parses human-readable table sent from option UI and sends it to .config
+local function parse(settings, type_of_enable)
+	local parse_list = {["On"] = true, ["Off"] = true, ["Yes"] = true, ["No"] = true} --list of all of them to check
+	local parse_table = {["On"] = true, ["Off"] = false, ["Yes"] = true, ["No"] = false} --list of if it should turn to true or false
+	for k, setting in pairs(settings) do
+		if type(setting) == "table" then
+			if k == "Debug" then
+				parse(setting, "debug")
+			elseif k == "Music" then
+				parse(setting, "music")
+			else
+				parse(setting)
+			end
+		else
+			if parse_list[setting] then
+				setting = parse_table[setting]
+			end
+			if type_of_enable == "debug" then
+				if k == "Enable" then
+					k = "Enable Debug"
+				end
+			elseif type_of_enable == "music" then
+				if k == "Enable" then
+					k = "Enable Music"
+				end
+			end
+			set_v(k, setting)
+		end
 	end
 end
 write(".")
+_G["reconfig"] = function(f)
+	if not f then
+		commands.exec("/tp @a -4 5 -16")
+	end
+	rednet.open("top")
+	rednet.broadcast("start")
+	repeat
+		local _, message = rednet.receive() --get table
+		if type(message) == "table" then
+			parse(message)
+		else
+			print(tostring(message))
+		end
+	until message == "done"
+	--[[
+	set("Do you want to be able to play copyrighted music?", "cm")
+	set("Do you want a limited amount of lives, with extra lives being purchaseable?", "lv")
+	setscale("How frequent should mobs drop items?", "md")
+	set("Enable debug mode?", "db")
+	set_v("has_setup", true)
+	]]
+	if get_v("Enable Debug") == true then
+		commands.exec("/setblock 67 27 37 prismarine 0")
+		for i = 1, #cmd.getAllPlayerNames() do
+			print("Cheater achievement for " .. cmd.getAllPlayerNames()[i])
+			achievement.makeAchievement(get_text("achievement.cheat.name"), get_text("achievement.cheat.description"), cmd.getAllPlayerNames()[i], 9, false)
+			sleep(tickspeed)
+		end
+	end
+	set_v("has_setup", true)
+	sleep(tickspeed)
+	os.reboot()
+end
+write(".")
 commands.execd = function(...)
-	if get_v("db") then
+	if get_v("Enable Debug") then
 		return commands.exec(unpack({...}))
 	else
 		return false
@@ -132,20 +328,41 @@ if not get_v("stage") then
 	commands.exec("/clear @a")
 end
 if get_v("has_setup") == nil then
-	set("Do you want to be able to play copyrighted music?", "cm")
-	set("Do you want a limited amount of lives, with extra lives being purchaseable?", "lv")
-	--set("Should tools have durability, or be unbreakable?", "ub")
-	set("Enable debug mode?", "db")
-	set_v("has_setup", true)
-	os.reboot()
+	_G["reconfig"](true)
 end
+write(".")
+if not get_v("Language", true) then
+	if get_v("Language") then
+		set_v("Language", get_v("Language"), true)
+	else
+		set_v("Language", "English", true)
+	end
+end
+local language = get_v("Language", true) or "English"
+if fs.exists(":dungeon/mods/DungeonArena/languages/" .. language) then
+	fs.delete("/script")
+	fs.copy(":dungeon/mods/DungeonArena/languages/" .. language, "/script")
+else
+	fs.delete("/script")
+	fs.copy(":dungeon/mods/DungeonArena/languages/English", "/script")
+end
+script = nil
+os.loadAPI("script")
+get_text = script.get_text
 write(".")
 --Check and set settings
 local w = 0
+_G["tab_count"] = (6)+1
 multishell.launch({}, "/dungeon/mods/DungeonArena/live")
 multishell.launch({}, "/dungeon/mods/DungeonArena/rednet_receiver")
 multishell.launch({}, "/dungeon/mods/DungeonArena/blacklist")
 multishell.launch({}, "/dungeon/mods/DungeonArena/misc")
+multishell.launch({}, "/dungeon/mods/DungeonArena/status")
+multishell.launch({}, "/dungeon/mods/DungeonArena/fast_misc")
+if get_v("Enable Music") then
+	multishell.launch({}, "/dungeon/mods/DungeonArena/generate_music")
+	_G["tab_count"] = _G["tab_count"]+1
+end
 if get_v("wave") then
 	wave = tonumber(get_v("wave"))
 	level = 1
@@ -158,87 +375,143 @@ if get_v("wave") then
 	end
 	level = tonumber(level) --My OCPD complains that this needs to exist
 end
-if get_v("cm") and get_v("wave") == nil then
-	commands.exec('/tellraw @a ["",{"text":"Be sure to download the music resource pack! ","color":"gold"},{"text":"[click]","color":"green","clickEvent":{"action":"open_url","value":"https://www.dropbox.com/s/vwr8kpgqtbrpnyk/DungeonMap%20Arena%20Music.zip?dl=0"},"hoverEvent":{"action":"show_text","value":{"text":"","extra":[{"text":"Click!"}]}}}]')
-end
 --TP in Arena
+_G["pos"] = {"64 10 32", "93 19 14", "63 17 -46", "84 19 35", "71 28 16", "48 29 -20", "83 28 15", "49 11 -1", "64 9 -24", "87 21 -25", "84 22 -45", "110 19 39", "65 10 40", "102 17 -6", "84 19 40"}
 if not get_v("stage") then
-	commands.exec("/tp @a 93 19 14")
+	local count
+	if get_v("Starting Supply") == "Good" then
+		count = 20
+	elseif get_v("Starting Supply") == "Okay" then
+		count = 10
+	elseif get_v("Starting Supply") == "Poor" then
+		count = 5
+	else
+		count = 0
+	end
+	local modifier
+	if get_v("Starting Equipment") == "Good" then
+		modifier = math.random(10) -- 1-10 levels extra
+	elseif get_v("Starting Equipment") == "Okay" then
+		modifier = 0 -- 0 levels extra
+	elseif get_v("Starting Equipment") == "Poor" then
+		modifier = 0-math.random(5) -- -1-5 levels extra
+	else
+		modifier = "skip"
+	end
+	if get_v("Minecraft Difficulty") then
+		commands.exec("/difficulty " .. get_v("Minecraft Difficulty"))
+	end
+	if not get_v("Natural Regeneration") then
+		commands.exec("/gamerule naturalRegeneration false")
+	else
+		commands.exec("/gamerule naturalRegeneration true")
+	end
 	commands.exec("/spawnpoint @a -7 4 8")
 	commands.exec("/gamerule keepInventory true")
 	commands.exec("/gamerule mobGriefing false")
 	--Give starter equipment
-	commands.exec("/give @a cooked_beef 10")
-	for i=1,10 do
-	commands.exec("/give @r torch")
+	commands.exec("/give @a cooked_beef " .. count)
+	for i=1,count do
+		commands.exec("/give @r torch 1 0 {HideFlags:16,CanPlaceOn:[\"minecraft:dirt\", \"minecraft:stone\", \"minecraft:stonebrick\", \"minecraft:planks\"]}")
 	end
 	write(".")
-	sleep(1)
+	sleep(tickspeed)
 	local t = _G["plist"]
 	local typelist = {"weapon","boots","leggings","chestplate","helmet"}
-	for i=1,#t do
-		for j=1,5 do
-			local tagtable, more
-			local type = typelist[j]
-			if(j==1)then
-				tagtable = advitem.newItem({itemLevel = math.floor(level*20+6), itemType = type}):autoNBT()
-				--tagtable, more = advitem.getEquipment(math.floor(level*20+6),j,"zombie")
-			else
-				tagtable = advitem.newItem({itemLevel = math.floor(level*20+0.5), itemType = type}):autoNBT()
-				--tagtable, more = advitem.getEquipment(math.floor(level*20+0.5),j,"zombie")
-			end
+	if not (modifier == "skip") then
+		for i=1,#t do
+			for j=1,5 do
+				local tagtable, more
+				local ttype = typelist[j]
+				if(j==1)then
+					repeat
+						tagtable1 = advitem.newItem({itemLevel = math.floor(level*20+6+modifier), itemType = ttype, unbreakable = true})
+						sleep(tickspeed)
+					until tagtable1.itemType ~= "bow"
+					tagtable = tagtable1:autoNBT()
+					--tagtable, more = advitem.getEquipment(math.floor(level*20+6),j,"zombie")
+				else
+					tagtable1 = advitem.newItem({itemLevel = math.floor(level*20+0.5+modifier), itemType = ttype, unbreakable = true})
+					tagtable = tagtable1:autoNBT()
+					--tagtable, more = advitem.getEquipment(math.floor(level*20+0.5),j,"zombie")
+				end
 		
-			if tagtable.tag then
-				local command = "/give "..t[i].." " .. tagtable.id .. " 1 0 "
-				command = command .. dcore.getNBTStringFromTable(tagtable.tag)
-				commands.exec(command)
+				if tagtable.tag then
+					--below is support just in case the bow detection breaks somehow
+					if tagtable1.itemType == "bow" then
+						local ac = math.random(20,30)
+						commands.execd('/tellraw @a "Player ' .. t[i] .. ' got bow (somehow)! Giving ' .. ac .. ' arrows."')
+						commands.exec("/give " .. t[i] .. " minecraft:arrow " .. ac)
+					end
+					local command = "/give "..t[i].." " .. tagtable.id .. " 1 0 "
+					command = command .. dcore.getNBTStringFromTable(tagtable.tag)
+					commands.exec(command)
+				end
+				sleep(tickspeed)
 			end
-			sleep(0.1)
 		end
 	end
-	commands.exec('/give @a computercraft:pocketComputer 1 1 {display:{Name:"Options"},computerID:2,upgrade:1}')
+	if get_v("Initial Healing") then
+		for i = 1, tonumber(get_v("Initial Healing")) do
+			commands.exec('/give @r potion 1 16421 {CustomPotionEffects:[{Id:6,Amplifier:1,Duration:10}],display:{Name:"§2Pure Commands§r",Lore:["It\'s a Healthy Potion!","This potion is worth §60§r§5 quaz.","The effects of this potion are 100% positive","Might contain.. nothing? Huh?"]}}')
+		end
+	end
+	commands.exec('/give @a computercraft:pocketComputer 1 1 {display:{Name:"' .. get_text("rednet.options") .. '"},computerID:2,upgrade:1}')
 end
 write(".")
 function killVillagers()
+	commands.execd('/tellraw @a "Killing villagers"')
 	commands.exec("/tp @e[type=Villager] ~ -1000 ~")
 end
 write(".")
+_G["respawnHat"] = function()
+	commands.execAsync("/tp @e[type=Villager,name=" .. get_text("villager.hats") .. "] ~ -1000 ~")
+	sleep(tickspeed)
+	villager.new({noAI = true}):setCustomType("hat"):summon(62, 26, 28)
+end
 function summonVillagers()
-	--commands.execd('/tellraw @a "Summoning Villagers"')
+	commands.execd('/tellraw @a "Summoning villagers"')
 	print("Summoning villagers")
-	villager.summon_drug(82,26,35,level,nil,get_v("lv"))
-	if get_v("cm") then
-		commands.exec('/setblock 62 27 27 air')
-		villager.summon_music(62,26,28)
-	else
-		commands.exec('/setblock 62 27 27 wall_sign 3 replace {Text1:"Sorry, music is", Text2:"currently not", Text3:"available!"}')
-	end
-	villager.summon_currency(77,26,38)
-	villager.summon_currency(80,26,38)
-	villager.summon_food(77,26,31)
-	villager.summon("trash",67,26,28)
+	local args = {noAI = true}
+	villager.new(args):setCustomType("drug", level):setName(get_text("villager.drug")):summon(82, 26, 35)
+	respawnHat()
+	villager.new(args):setCustomType("currency"):setName(get_text("villager.exchange")):summon(77, 26, 38)
+	villager.new(args):setCustomType("currency"):setName(get_text("villager.exchange")):summon(80, 26, 38)
+	villager.new(args):setCustomType("food"):setName(get_text("villager.food")):summon(77, 26, 31)
+	villager.new(args):setCustomType("trash"):setName(get_text("villager.trash")):summon(67, 26, 28)
 	for i = 1, #villager_areas do
-		villager.summon("equipment",villager_areas[i][1], villager_areas[i][2], villager_areas[i][3], level+5, 1, 0, true)
-		sleep(0.2)
+		local obj = villager.new(args):setCustomType("equipment", level+5)
+		obj:setName(get_text("villager.normal"))
+		obj:summon(villager_areas[i][1], villager_areas[i][2], villager_areas[i][3])
+		sleep(tickspeed)
 	end
 	print("Summoning more villagers")
 	for i = 1, #high_level_villager_areas do
-		villager.summon("equipment",high_level_villager_areas[i][1], high_level_villager_areas[i][2], high_level_villager_areas[i][3], (level*1.4)+10, 1, 0, true)
-		sleep(0.2)
+		local obj = villager.new(args):setCustomType("equipment", (level*1.4)+10)
+		obj:setName(get_text("villager.high"))
+		obj:summon(high_level_villager_areas[i][1], high_level_villager_areas[i][2], high_level_villager_areas[i][3])
+		sleep(tickspeed)
 	end
-	--commands.exec('/tellraw @a "Done Villagers"')
 end
 write(".")
 --loadETable(24,17,-5)
 --loadETable(104,17,-25)
 function loadETable(x,y,z)
+		local cco = 0
         local function addBookshelf(x,baseY,z)
+				local c = (math.random(4) == 1)
+				if c then
+					cco = cco + 1
+				end
+				if cco == 4 then
+					c = not c
+				end
                 local function addBookshelfOrNot(bshelf,a)
                         commands.async.setblock(x,baseY+a,z,((not bshelf) and 'minecraft:air' or 'minecraft:bookshelf'))
                 end
                 local lower = math.random(2)>1
                 addBookshelfOrNot(lower,0)
-                addBookshelfOrNot(lower and math.random(4) == 1,1)
+                addBookshelfOrNot(lower and c,1)
         end
         for i=0,2 do
                 addBookshelf(x-1+i,y,z+2)
@@ -268,7 +541,7 @@ local function summonChests()
 	past[coords] = true
 	chosen[#chosen+1] = coords
 	commands.execd("/tellraw @a \"Anvil coords: " .. textutils.serialize(coords) .. "\"")
-	sleep(0.1)
+	sleep(tickspeed)
 	commands.setblock(coords[1],coords[2],coords[3],"anvil")
 	print("Done summoning anvil")
 	
@@ -282,19 +555,34 @@ end
 write(".")
 _G["removeChests"] = function()
 	if not get_v("chest_coords") then
-		return false
+		return
 	end
 	print("Resetting chests")
 	local chests = textutils.unserialize(get_v("chest_coords"))
 	for i = 1, #chests do
 		local coords = chests[i]
 		commands.blockdata(coords[1], coords[2], coords[3], "{Items:[]}")
-		sleep(1)
+		sleep(tickspeed)
 		commands.setblock(coords[1], coords[2], coords[3], "air")
 	end
 	print("Done resetting chests")
 end
 write(".")
+if get_v("Enable Debug") then
+	--levers chest
+	commands.execd("/setblock 62 20 44 wall_sign 0 replace {Text1:\"" .. get_text("chest.levers") .. "\", Text2:\"I\", Text3:\"I\", Text4:\"V\"}")
+	commands.execd("/setblock 62 19 44 chest 1 replace {Items:[{Slot:0,id:\"minecraft:lever\", Count:64, Damage:0, tag:{display:{Name:\"Cheat Lever\", Lore:[\"Said to open Death's Shop.\", \"Maybe try not cheating next time?\", \"-Atenefyr\"]}}}]}")
+	--money chest
+	commands.execd("/setblock 74 27 36 wall_sign 1 replace {Text1:\"" .. get_text("chest.money") .. "\", Text2:\"I\", Text3:\"I\", Text4:\"V\"}")
+	commands.execd("/setblock 74 26 36 chest 1 replace {Items:[{Slot:0,id:\"minecraft:nether_star\", Count:64, tag:{display:{Name:\"Nether Star\", Lore:[\"This item is part of the currency\", \"It is worth exactly "..SS(2).."1'250'000"..SS("r")..SS("5")..SS("o").." quaz!\"]}}}, {Slot:1,id:\"minecraft:paper\", Count:1, tag:{display:{Name:\"Note\", Lore:[\"Maybe try not cheating next time?\", \"-Atenefyr\"]}}}, {Slot:2,id:\"minecraft:diamond_pickaxe\",Count:1,tag:{CanDestroy:[\"minecraft:sponge\", \"minecraft:prismarine\"],display:{Name:\"Easter Egg Pick\",Lore:[\"Breaks secret blocks\"]}}}]}")
+else
+	local coords = {"62 19 44", "62 20 44", "74 26 36", "74 27 36"}
+	for i = 1, #coords do
+		commands.exec("/blockdata " .. coords[i] .. " {Items:[]}")
+		sleep(tickspeed)
+		commands.exec("/setblock " .. coords[i] .. " air")
+	end
+end
 if get_v("stage") ~= "shop" then
 	killVillagers()
 	summonVillagers()
@@ -335,13 +623,19 @@ if get_v("stage") ~= nil and get_v("stage") ~= "start" then
 	commands.execd('/tellraw @a "Skipping to stage ' .. stage .. '!"')
 end
 
-local messages = {"Words of encouragement!", "I'd say you're doing great, but I don't know.", "You're doing great!", "Meow meow meow!", "Blank.", "Please put that into the Creator's jokebox.", "#WergatYouFool", "Punchline!", "Splash!", "Help! I'm trapped in a splash factory!", "H2O, too!", "fml fml fml", "TEM OUTTA TEM", "Don't ask me, ask yourself. Maybe they know."}
+local messages = get_text("wave.splashs") or {"missingno"}
 while true do
 	if stage == "start" then
+		if wave == 1 then
+			local _pos = _G["pos"]
+			commands.exec("/tp @a " .. _pos[math.random(#_pos)])
+		end
 		math.randomseed((wave+level)/2) --seed is the average of the wave # and the level
+		msg = messages[math.random(#messages)]
+		commands.execd('/tellraw @a "rnseed: ' .. (wave+level)/2 .. ' splash: ' .. msg .. '"') --randomseed & splash
 		commands.exec("/setblock -6 5 -2 air")
-		commands.exec('/title @a title ["",{"text":"Wave ","color":"gold"},{"text":"' .. wave .. '","color":"blue"}]')
-		commands.exec('/title @a subtitle ["",{"text":"' .. messages[math.random(#messages)] .. '","color":"blue"}]')
+		commands.exec('/title @a title ["",{"text":"' .. get_text("wave.name") .. ' ","color":"gold"},{"text":"' .. wave .. '","color":"blue"}]')
+		commands.exec('/title @a subtitle ["",{"text":"' .. msg .. '","color":"blue"}]')
 		set_v("wave", wave)
 		
 		--Summon chests
@@ -368,7 +662,9 @@ while true do
 		commands.exec("/setblock -6 5 -2 air")
 	
 		-- Place Loot Chest
-		chest.placeChest(level+5,64,20,53)
+		--math.randomseed(os.time())
+		math.randomseed((wave+level)/2)
+		chest.placeChest(level,64,20,53)
 		
 		stage = "waiting_shop"
 		set_v("stage", stage)
@@ -378,7 +674,7 @@ while true do
 		commands.execd('/tellraw @a "Waiting for players infront of the shop"')
 		repeat
 			local _, aaa = commands.exec("/xp 0 @a[72,26,40,rm=5]")
-			sleep(0.3)
+			sleep(tickspeed+0.05)
 		until #aaa == 0
 		--commands.execd('/tellraw @a "Welcome to Death's Shop!"')
 	
@@ -403,7 +699,7 @@ while true do
 		shell.run("/dungeon/mods/DungeonArena/reset", level, wave)
 			
 		-- Summon the next wave
-		sleep(1)
+		sleep(tickspeed+0.05)
 		print("Starting loading mobs")
 		shell.run("/dungeon/mods/DungeonArena/wave", level)
 		print("Done loading mobs")
@@ -414,13 +710,15 @@ while true do
 		-- Achievement
 		for i = 1, #_G["plist"] do
 			print("Shopper achievement for " .. _G["plist"][i])
-			achievement.makeAchievement("Shopper", "Unlock the shop\nfor the first time.", _G["plist"][i], 3, false)
+			achievement.makeAchievement(get_text("achievement.shop.name"), get_text("achievement.shop.description"), _G["plist"][i], 1, false)
 			sleep(1)
 		end
 		
 		-- Increase the difficulty/wave
 		wave = wave + 1
 		level = level + (wave/4) + 1
+		set_v("wave", wave)
+		set_v("level", level)
 		
 		-- Reset Redstone reciever
 		commands.exec("/setblock -6 5 -3 air")
@@ -430,27 +728,23 @@ while true do
 		if http.get("http://www.timeapi.org/utc/now?%25b") then
 			month = http.get("http://www.timeapi.org/utc/now?%25b").readAll()
 			day = http.get("http://www.timeapi.org/utc/now?%25d").readAll()
-			if month == "Oct" then --Pumpkin Pie: 50% discount during October!
-				commands.exec('/setblock 75 27 32 wall_sign 3 replace {Text1:"50% DISCOUNT", Text2:"ON PUMPKIN PIE", Text3:"ONLY IN OCTOBER!"}')
-				commands.exec('/setblock 80 27 32 wall_sign 3 replace {Text1:"50% DISCOUNT", Text2:"ON PUMPKIN PIE", Text3:"ONLY IN OCTOBER!"}')
-				commands.execd('/tellraw @a "We might have some sales!"')
-			elseif month == "Apr" and day == "01" then --This was added on October 24th, 2015. I like to think ahead of time, okay? -Atenefyr
-				commands.exec('/setblock 75 27 32 wall_sign 3 replace {Text1:"ALL FOODS", Text2:"ARE NOW FREE!"}')
-				commands.exec('/setblock 80 27 32 wall_sign 3 replace {Text1:"ALL FOODS", Text2:"ARE NOW FREE!"}')
-				commands.execd('/tellraw @a "The food store has a great announcement!"')
+			if month == "Apr" and day == "01" then --This was added on October 24th, 2015. I like to think ahead of time, okay? -Atenefyr
+				commands.exec('/setblock 75 27 32 wall_sign 3 replace ' .. get_text("sign.april_fools"))
+				commands.exec('/setblock 80 27 32 wall_sign 3 replace ' .. get_text("sign.april_fools"))
+				--commands.execd('/tellraw @a "The food store has a great announcement!"')
 			else
-				commands.exec('/setblock 75 27 32 wall_sign 3 replace {Text1:"BUY YOUR FOODS", Text2:"HERE!"}')
-				commands.exec('/setblock 80 27 32 wall_sign 3 replace {Text1:"BUY YOUR FOODS", Text2:"HERE!"}')
+				commands.exec('/setblock 75 27 32 wall_sign 3 replace ' .. get_text("sign.normal"))
+				commands.exec('/setblock 80 27 32 wall_sign 3 replace ' .. get_text("sign.normal"))
 			end
 		else
 			print("User has no internet, easter eggs have been removed.")
 			for i = 1, #_G["plist"] do
-				achievement.makeAchievement("Internet Killer", "Unlock the Shop\nwhile your internet\nis dead.", _G["plist"][i], 8, false)
+				achievement.makeAchievement(get_text("achievement.no_internet.name"), get_text("achievement.no_internet.description"), _G["plist"][i], 6, false)
 			end
 			month = ""
 			day = ""
-			commands.exec('/setblock 75 27 32 wall_sign 3 replace {Text1:"BUY YOUR FOODS", Text2:"HERE, PLEB!"}')
-			commands.exec('/setblock 80 27 32 wall_sign 3 replace {Text1:"BUY YOUR FOODS", Text2:"HERE, PLEB!"}')
+			commands.exec('/setblock 75 27 32 wall_sign 3 replace ' .. get_text("sign.no_internet"))
+			commands.exec('/setblock 80 27 32 wall_sign 3 replace ' .. get_text("sign.no_internet"))
 		end
 		
 		stage = "shop"
@@ -462,7 +756,7 @@ while true do
 		commands.execd('/tellraw @a "Waiting for everyone to finish"')
 		repeat
 			local _, aaa = commands.exec("/xp 0 @a[84,28,26,rm=5]")
-			sleep(0.3)
+			sleep(tickspeed+0.05)
 		until #aaa == 0
 		commands.execd('/tellraw @a "Good luck!"')
 	

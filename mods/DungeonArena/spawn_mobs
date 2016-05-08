@@ -6,24 +6,29 @@ local tArgs = {...}
 local difficulty = (tonumber(tArgs[1]) or 20)
 
 local rooms = room.rooms
-local roomsToSpawnIn = room.getRooms(10)
+local roomsToSpawnIn, c = room.getRooms(10)
 
 write("Loading normal mobs")
 
 -- Summon random mobs that run around the arena
-for i=1,10 do
+for i=1,8 do --dungeon, 0% harder (0% easier, 4/4)
 	write(".")
 	for j=1,math.random(5,8) do
-		mob.summonMob(roomsToSpawnIn[i][1],roomsToSpawnIn[i][2]+0.5,roomsToSpawnIn[i][3],nil,difficulty+math.random(4))
+		mob.newMob({difficulty = difficulty+math.random(4)}):auto():summon(roomsToSpawnIn[i][1],roomsToSpawnIn[i][2]+0.5,roomsToSpawnIn[i][3])
 	end
 end
---[[
-for i = 1, 3 do
+for i=8,14 do --forest, -25% harder (25% easier, 3/4)
+	write(".")
 	for j=1,math.random(5,8) do
-		mob.summonMob(roomsToSpawnIn[i][1],roomsToSpawnIn[i][2]+0.5,roomsToSpawnIn[i][3],nil,(difficulty/4)*3)
+		mob.newMob({difficulty = ((difficulty+math.random(4))/4)*3}):auto():summon(roomsToSpawnIn[i][1],roomsToSpawnIn[i][2]+0.5,roomsToSpawnIn[i][3])
 	end
 end
-]]
+for i=14,20 do --mines, 25% harder (-25% easier, 5/4)
+	write(".")
+	for j=1,math.random(5,8) do
+		mob.newMob({difficulty = ((difficulty+math.random(4))/4)*5}):auto():summon(roomsToSpawnIn[i][1],roomsToSpawnIn[i][2]+0.5,roomsToSpawnIn[i][3])
+	end
+end
 print("done!")
 
 print("Loading Boss")
@@ -32,7 +37,14 @@ print("Loading Boss")
 mob.summonBoss(60,18,-1,nil,difficulty+20)
 -- Summon boss peasants
 for j=1,math.random(14,20) do
-	mob.summonMob(64+math.random(-5,-5),19,-5+math.random(-5,-5),nil,difficulty)
+	local r = mob.newMob({difficulty = difficulty})
+	r:auto()
+	r:setDropChances({"0.1f","0.1f","0.1f","0.1f","0.1f"})
+	if r.equipment.helmet[1] == nil then
+		r:setEquipment("helmet",{["id"] = 77,["Damage"] = 0,["Count"] = 1,["tag"] = {["display"] = {["Name"] = "Sun Shield", ["Lore"] = {"It's not a key, unfortunately."}}},})
+		r:setDropChances({"0f","0.1f","0.1f","0.1f","0.1f"})
+	end
+	r:summon(64+math.random(-5,-5),19,-5+math.random(-5,-5))
 end
 
 --commands.exec('/tellraw @a "^ done!"')

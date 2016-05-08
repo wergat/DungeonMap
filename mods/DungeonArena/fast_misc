@@ -1,0 +1,77 @@
+if not achievement then
+	dcore.requireAPI("achievement")
+end
+if not villager then
+	dcore.requireAPI("villager")
+end
+if not script then
+	os.loadAPI("script")
+end
+get_text = script.get_text
+local function get_v(id, permanent)
+	local path; if permanent then path = ".permanent_config" else path = ".config" end
+	if not fs.exists(path) then
+		return nil
+	end
+	local open = fs.open(path, "r")
+	local all = open.readAll()
+	open.close()
+	all = textutils.unserialize(all)
+	if all[id] then
+		return all[id]
+	else
+		return nil
+	end
+end
+local function set_v(id, s, permanent)
+	local path; if permanent then path = ".permanent_config" else path = ".config" end
+	local all
+	if not fs.exists(path) then
+		all = "{}"
+	else
+		local open = fs.open(path, "r")
+		all = open.readAll()
+		open.close()
+	end
+	all = textutils.unserialize(all)
+	all[id] = s
+	all = textutils.serialize(all)
+	local open = fs.open(path, "w")
+	open.write(all)
+	open.close()
+	if permanent then
+		if fs.exists(":dungeon/mods/DungeonArena/.internal_perm_config") then
+			fs.delete(":dungeon/mods/DungeonArena/.internal_perm_config")
+		end
+		fs.copy(path, ":dungeon/mods/DungeonArena/.internal_perm_config")
+	end
+end
+local tickspeed = get_v("Internal Tick Speed") or 0.05; tickspeed = tickspeed*2
+local function unlockHat(hat_type, is_hat)
+	local hat_type = hat_type or get_text("hats.unknown")
+	set_v(hat_type, true)
+	for i = 1, #villager.hats do
+		if villager.hats[i] == hat_type then
+			commands.exec('/tellraw @a ["",{"text":"' .. villager.hat_names[i] .. '","color":"dark_red"},{"text":" ' .. get_text("hats.acquired") .. '!","color":"green"}]')
+		end
+	end
+	sleep(tickspeed)
+	_G["respawnHat"]()
+end
+
+local skull = get_v("skull") or false
+sleep(5)
+
+while true do
+	--suicide achievement
+	local success, dat = commands.exec("/execute @a ~ ~ ~ detect ~ ~ ~ lava 0 /help")
+	print(success)
+	if success and not skull then
+		for i = 1, #_G["plist"] do
+			achievement.makeAchievement(get_text("achievement.suicide.name"), get_text("achievement.suicide.description"), _G["plist"][i], 2, false)
+		end
+		skull = true
+		unlockHat("skull")
+	end
+	sleep(tickspeed)
+end

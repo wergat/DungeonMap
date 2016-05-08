@@ -1,8 +1,9 @@
-local function get_vv(id)
-	if not fs.exists(".config") then
+local function get_v(id, permanent)
+	local path; if permanent then path = ".permanent_config" else path = ".config" end
+	if not fs.exists(path) then
 		return nil
 	end
-	local open = fs.open(".config", "r")
+	local open = fs.open(path, "r")
 	local all = open.readAll()
 	open.close()
 	all = textutils.unserialize(all)
@@ -12,14 +13,125 @@ local function get_vv(id)
 		return nil
 	end
 end
-
-if get_vv("lv") then
-	trades = {"{buy:" .. dcore.getNBTStringFromTable(getCurrencyTradeTablesByPrice(10000, 2)) .. ",maxUses:999999,sell:{id:40,Count:1,Damage:0,tag:{display:{Name:\"1-Up\",Lore:[\"ɠHalf-Price Drugs 1981-2023\"]}}},rewardExp:false}"}
+get_text = script.get_text
+local function set_v(id, s)
+	local all
+	if not fs.exists(".config") then
+		all = "{}"
+	else
+		local open = fs.open(".config", "r")
+		all = open.readAll()
+		open.close()
+	end
+	all = textutils.unserialize(all)
+	all[id] = s
+	all = textutils.serialize(all)
+	local open = fs.open(".config", "w")
+	open.write(all)
+	open.close()
 end
-if http.get("http://www.timeapi.org/utc/now?%25b") then
-	local month = http.get("http://www.timeapi.org/utc/now?%25b").readAll()
-	local day = http.get("http://www.timeapi.org/utc/now?%25d").readAll()
-	if month == "Dec" and tonumber(day) > 23 then --Katmas, treated as December 24-31
-		trades[#trades+1] = "{buy:" .. dcore.getNBTStringFromTable(getCurrencyTradeTablesByPrice(100, 2)) .. ",maxUsers:999999,sell:{id:383,Count:1,Damage:98,tag:{display:{Name:\"Kitty\",Lore:[\"On the Sixteenth day of Ka- wait, sorry.\"]}}}}"
+--from http://lua-users.org/wiki/SplitJoin, thanks!
+function explode(d,p)
+  local t, ll
+  t={}
+  ll=0
+  if(#p == 1) then return {p} end
+    while true do
+      l=string.find(p,d,ll,true) -- find the next d in the string
+      if l~=nil then -- if "not not" found then..
+        table.insert(t, string.sub(p,ll,l-1)) -- Save it in our array.
+        ll=l+1 -- save just after where we found it for searching next time.
+      else
+        table.insert(t, string.sub(p,ll)) -- Save what's left in our array.
+        break -- Break at end, as it should be, according to the lua manual.
+      end
+    end
+  return t
+end
+
+--hat dealer
+
+--CONFIG--
+local default_hats = {"bandana_hat"} --IDs of hats that are enabled by default
+hats = {"melting_hat", "pakka_hat","bandana_hat", "skeleton_hat", "bookshelf_hat", "big_hat", "skull"} --List of the internal IDs of all hats
+hat_names = {"Melting Cobblestone Hat", "Pakka Hat", "Manly Bandanna", "Skeleton Skull", "Bookshelf Hat", "Brobdingnagian Hat", "Randomized Skull"} --Names of the hats with the same position as previous config (second is pakka in both)
+hat_blocks = {["melting_hat"] = "wool:6:Atenefyr", ["pakka_hat"] = "prismarine:0:Atenefyr", ["bandana_hat"] = "iron_trapdoor:0:Mojang", ["skeleton_hat"] = "skull:0:Mojang", ["bookshelf_hat"] = "bookshelf:0:Mojang", ["big_hat"] = "computercraft:command_computer:0:dan200", ["skull"] = "skull:3:SKULL_OWNER:ss:ss"} --Info of each hat, in format block_name:metadata:author. Skull has 5 so misc knows that skull is selected
+hat_descriptions = {"melting cobblestone & cooling yourself off", "finding the rare Pakka", "starting the map", "crushing 1'250'000 quaz into one item", "clicking the Market Plaza sign in the shop", "booting the computer one million times", "jumping into lava"} --List of descriptions for hats, must fit example "Obtained by <description>"
+--END CONFIG--
+
+local book_tag = {
+["title"] = get_text("hats.book_title"),
+["author"] = get_text("villager.hats") .. ", " .. get_text("hats.circa") .. " " .. get_v("first_day", true)[1]:gsub("0", "") .. "/" .. get_v("first_day", true)[3],
+["generation"] = 1,
+["pages"] = get_text("hats.book_pages")
+}
+
+sleep(0.5)
+local dt = http.get("http://www.timeapi.org/utc/now").readAll()
+dt = explode("-", dt)
+dt[3] = dt[3]:sub(0,2)
+local current_date = {dt[2],dt[3],dt[1]}
+
+local age_days = current_date[2] - get_v("first_day", true)[2]
+local age_months = current_date[1] - get_v("first_day", true)[1]
+local age_years = current_date[3] - get_v("first_day", true)[3]
+local age = 1 --new
+
+if get_v("Book Wear") then
+	if age_years < 2000 then
+		if age_years > 0 then --more than a year
+			age = 7 --cracked
+		elseif age_months > 0 then --more than a month
+			math.randomseed((current_date[1]+current_date[3])*math.random(10))
+			age = math.random(4,6) --soaked/smeared/near illegible
+		elseif (age_days >= 20) then --20-31
+			age = 3 --tattered
+		elseif (age_days >= 10) then --10-19
+			age = 2 --slightly misused
+		end
 	end
 end
+
+print(age)
+book_tag["generation"] = age
+
+hats[#hats+1] = "disable_hat" --makes sure that disable hat is always last
+for i = 1, #default_hats do
+	if not get_v(default_hats[i]) then
+		set_v(default_hats[i], true)
+	end
+end
+registerCustomVillagerType("hat",function(self,argLevel)
+	self:addTrade(newTrade():setBuyToMoney(10):setSell({["id"] = "minecraft:written_book", ["Count"] = 1, ["Damage"] = 0, ["tag"] = book_tag}))
+	for i = 1, #hats-1 do
+		local hat_id = hats[i]
+		local hat_item = {["id"] = "minecraft:gold_block", ["Count"] = 1, ["Damage"] = 0, ["tag"] = {["display"] = {["Lore"] = {hats[i]},["Name"] = SS("2") .. get_text("hats.enable") .. " " .. hat_names[i]}}}
+		if get_v(hats[i]) then
+			self:addTrade(newTrade():setBuyToMoney(10):setSell(hat_item))
+		else
+			self:addTrade(newTrade():setMaxUses(0):setBuyToMoney(10):setSell(hat_item))
+		end
+	end
+	self:addTrade(newTrade():setBuyToMoney(10):setSell({["id"] = "minecraft:redstone_block", ["Count"] = 1, ["Damage"] = 0, ["tag"] = {["display"] = {["Lore"] = {"disable_hat"},["Name"] = SS("4") .. get_text("hats.disable")}}}))
+	self:addBlocker()
+	self.name = 'Hats'
+	self.profession = 0
+	return self
+end)
+
+--purchaseable lives
+if get_v("Enable Purchasable Lives") then
+	trades[#trades+1] = {10000, {["id"] = 40,["Count"] = 1,["Damage"] = 0,["tag"] = {["display"] = {["Name"] = "1-Up",["Lore"] = {"Copyright Half-Price Drugs 1981-2023"}}}}}
+end
+--bilbo
+trades[#trades+1] = {100, {["id"] = 383,["Count"] = 1,["Damage"] = 98,["tag"] = {["HideFlags"] = 8,["CanPlaceOn"] = {"minecraft:dirt", "minecraft:stone", "minecraft:stonebrick", "minecraft:planks"},["display"] = {["Name"] = "Bilbo the Cat",["Lore"] = {"R.I.P Bilbo, Early 2008-December 28th, 2015.", "You will be missed."}}}}}
+--pick easter egg
+local alphabet = "abcdefghijklmnopqrstuvwyxzABCDEFGHIJKLMNOPQRSTUVXYZ1234567890!@#$%^&*()"
+local rand_string = ""
+local pick_string = "Mysterious Pickaxe"
+for i = 1, math.random(10,15) do
+	local c = math.random(1, #alphabet)
+	rand_string = rand_string .. alphabet:sub(c,c)
+end
+--pickaxe trade, if you edit this, edit the money chest too :) -Atenefyr
+trades[#trades+1] = {500, {["id"] = 278,["Count"] = 1,["Damage"] = 0,["tag"] = {["ench"] = {{["id"] = 33,["lvl"] = 1}},["display"] = {["Name"] = pick_string,["Lore"] = {SS("k") .. rand_string}},["CanDestroy"] = {"minecraft:sponge", "minecraft:prismarine"}, ["HideFlags"] = 9}}}

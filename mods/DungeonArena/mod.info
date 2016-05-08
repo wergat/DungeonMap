@@ -3,6 +3,6 @@
   author = "Atenefyr & Wergat",
   name = "Dungeon Arena",
   newestVersion = 1,
-  active = false,
   install_file = "",
+  active = true,
 }

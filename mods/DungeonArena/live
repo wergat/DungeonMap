@@ -1,5 +1,7 @@
+dcore.requireAPI("sha256")
+get_text = script.get_text
 print("Starting lives program!")
-local function set_vv(id, s)
+local function set_v(id, s)
 	local open = fs.open(".config", "r")
 	local all = open.readAll()
 	open.close()
@@ -11,7 +13,7 @@ local function set_vv(id, s)
 	open.close()
 end
 
-local function get_vv(id)
+local function get_v(id)
 	local open = fs.open(".config", "r")
 	local all = open.readAll()
 	open.close()
@@ -24,12 +26,14 @@ local function get_vv(id)
 end
 
 local lives = 3
-if get_vv("lives") then
-	lives = tonumber(get_vv("lives"))
-elseif not get_vv("lv") then
+if get_v("Lives Amount") == "infinite" then
 	lives = 1e309
+elseif get_v("Lives Amount") then
+	lives = tonumber(get_v("Lives Amount"))
+else
+	lives = 3
 end
-set_vv("lives", lives)
+set_v("lives", lives)
 --/xp 0 @a[-7,4,8,r=5]
 
 --(/10)
@@ -43,37 +47,55 @@ print("Currently at " .. lives .. " lives")
 while true do
 	_G["plist"] = cmd.getAllPlayerNames()
 	sleep(0.5)
-	local success, cleart = commands.exec("/clear @a red_mushroom") --t = t + 0.2
-	if success then
-		n = cleart[1]:match("%d+")
-		sleep(1)
-		lives = lives + n
-		commands.exec('/tellraw @a ["",{"text":"You now have ","color":"green"},{"text":"' .. lives .. '","color":"gold","bold":true},{"text":" lives.","color":"green","bold":false}]')
-		print("Added " .. n .. " lives, now at " .. lives .. " lives")
-		set_vv("lives", lives)
+	if get_v("Lives Amount") ~= "infinite" then
+		local success, cleart = commands.exec("/clear @a red_mushroom") --t = t + 0.2
+		if success then
+			n = cleart[1]:match("%d+")
+			sleep(1)
+			lives = lives + n
+			commands.exec('/tellraw @a ["",{"text":"' .. get_text("life.change") .. ' ","color":"green"},{"text":"' .. lives .. '","color":"gold","bold":true},{"text":" ' .. get_text("life.life") .. '.","color":"green","bold":false}]')
+			print("Added " .. n .. " lives, now at " .. lives .. " lives")
+			set_v("lives", lives)
+		end
 	end
 	
 	local succ, cleart = commands.exec("/xp 0 @a[-7,4,8,r=3]")
 	if succ then
 		lives = lives - 1
-		commands.exec('/tellraw @a ["",{"text":"You now have ","color":"dark_green"},{"text":"' .. lives .. '","color":"gold","bold":true},{"text":" lives.","color":"dark_green","bold":false}]')
+		commands.exec('/tellraw @a ["",{"text":"' .. get_text("life.change") .. ' ","color":"dark_green"},{"text":"' .. lives .. '","color":"gold","bold":true},{"text":" ' .. get_text("life.life") .. '.","color":"dark_green","bold":false}]')
 		print("Deducted 1 life, now at " .. lives .. " lives")
-		commands.exec("/tp @p 45 28 14")
-		set_vv("lives", lives)
+		local _pos = _G["pos"]
+		if lives ~= 0 then
+			commands.exec("/tp @a " .. _pos[math.random(#_pos)])
+		else
+			commands.exec('/tp @a -6 26 -16')
+		end
+		set_v("lives", lives)
 	end
 	
 	if lives == 0 then
 		print("Game over!")
 		sleep(0.2)
-		commands.exec('/tellraw @a ["",{"text":"Game over!","color":"gold","bold":true}]')
-		commands.exec('/tp @a -8 5 0')
-		commands.exec('/gamemode 1 @a')
-		commands.exec('/playsound mob.blaze.death @a -8 5 0')
+		commands.exec('/tellraw @a ["",{"text":"' .. get_text("life.zero") .. '","color":"gold","bold":true}]')
+		commands.exec('/tp @a -6 26 -16')
+		--commands.exec('/gamemode 1 @a')
+		commands.exec('/execute @a ~ ~ ~ playsound mob.blaze.death @p[r=0]')
+		local death_count = get_v("death_count", true) or 0; death_count = death_count+1
+		set_v("death_count", death_count, true)
 		_G["removeChests"]()
-		fs.delete(".config")
-		commands.exec('/tellraw @a ["",{"text":"Right-click the computer to restart the game.","color":"gold","bold":true}]')
+		local save_name
+		if http.get("http://www.timeapi.org/utc") then
+			save_name = http.get("http://www.timeapi.org/utc").readAll():sub(1,-7):gsub("T", " @ "):gsub(":", "-") .. " UTC"
+		else
+			local open = fs.open(".config", "r")
+			local all = open.readAll()
+			open.close()
+			save_name = get_text("life.unknown_save") .. " " .. sha256.sha256(all)
+		end
+		set_v("old", true)
+		fs.move(".config", ".previous_saves/" .. save_name)
 		sleep(0.1)
-		os.shutdown()
+		os.reboot()
 	end
 	write(".")
 	sleep(0.3) --t = t + 0.3

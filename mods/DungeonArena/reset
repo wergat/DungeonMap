@@ -165,14 +165,12 @@ end
 local tArgs = {...}
 local difficulty = (tonumber(tArgs[1]) or 10)*2
 local wave = tonumber(tArgs[2]) or 1
+local mobs = {"Zombie", "Skeleton", "Spider", "PigZombie"}
 
-commands.exec('/tellraw @a "Loading next wave!"')
-if wave == 94 then
-	commands.execAsync('/say An error happened! "window:94: Arguments must be the same length"')
-end
+commands.execd('/tellraw @a "Loading next wave!"')
 loadConnections("stonebrick")
 --shell.run("spawn_mobs", difficulty) --Done when actually starting the wave
-commands.exec("/difficulty peaceful")
-sleep(.01)
-commands.exec("/difficulty easy")
-commands.exec('/tellraw @a "Done!"')
+for i = 1, #mobs do
+	commands.exec("/tp @e[type=" .. mobs[i] .. "] ~ -1000 ~")
+end
+commands.execd('/tellraw @a "Done!"')

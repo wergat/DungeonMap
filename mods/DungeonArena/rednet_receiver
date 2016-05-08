@@ -1,13 +1,39 @@
 print("Begin rednet receiver program!")
 rednet.open("top")
+get_text = script.get_text
+if not room then
+	os.loadAPI("/dungeon/mods/DungeonArena/room")
+end
+local function set_v(id, s)
+	local open = fs.open(".config", "r")
+	local all = open.readAll()
+	open.close()
+	all = textutils.unserialize(all)
+	all[id] = s
+	all = textutils.serialize(all)
+	local open = fs.open(".config", "w")
+	open.write(all)
+	open.close()
+end
 
 local function res()
 	_G["removeChests"]()
-	fs.delete(".config")
-	rednet.send(2, 1, "controls")
+	commands.exec("/xp -10000L @a")
+	local save_name
+	if http.get("http://www.timeapi.org/utc") then
+		save_name = http.get("http://www.timeapi.org/utc").readAll():sub(1,-7):gsub("T", " @ "):gsub(":", "-") .. " UTC"
+	else
+		local open = fs.open(".config", "r")
+		local all = open.readAll()
+		open.close()
+		save_name = "unknown date with hash " .. sha256.sha256(all)
+	end
+	set_v("old", true)
+	fs.move(".config", ".previous_saves/" .. save_name)
+	rednet.send(2, get_text("rednet.response_reset"), "controls")
 	os.reboot()
 end
-local function get_vv(id)
+local function get_v(id)
 	local open = fs.open(".config", "r")
 	local all = open.readAll()
 	open.close()
@@ -19,30 +45,47 @@ local function get_vv(id)
 	end
 end
 local getAmountOfLivesStillRemaining = function()
-	if get_vv("lv") then
-		return get_vv("lives") or "unknown"
-	else
-		return "Infinity"
-	end
+	return get_v("lives") or "unknown"
 end
 local ts = function()
-	return "Hello, world!"
+	return get_text("rednet.response_test")
+end
+local ss = function()
+	_G["stopSong"] = true
+	return get_text("rednet.response_shuffle")
+end
+local cw = function()
+	rednet.send(2, "hang", "controls")
+	local chests = room.getChestPlaceTable()
+	for i = 1, #chests do
+		print((i/#chests)*100 .. "% done")
+		local coords = chests[i]
+		commands.blockdata(coords[1], coords[2], coords[3], "{Items:[]}")
+		sleep(0.05)
+		commands.setblock(coords[1], coords[2], coords[3], "air")
+	end
+	return get_text("rednet.response_wipe")
 end
 commandList = {
-	["Reset"] = res,
-	["Test"] = ts,
-	["Lives"] = getAmountOfLivesStillRemaining,
+	[get_text("rednet.reset")] = res,
+	[get_text("rednet.test")] = ts,
+	[get_text("rednet.lives")] = getAmountOfLivesStillRemaining,
 }
+if get_v("Enable Music") then
+	commandList[get_text("rednet.shuffle")] = ss
+end
+if get_v("Enable Debug") then
+	commandList[get_text("rednet.wipe")] = cw
+end
 
 while true do
 	local id, message, protocol = rednet.receive("controls")
-	if id == 2 then
-		print(message)
+	if (id == 2) or (id == 19) then
 		if (type(commandList[message]) == "function") then		
 			print("#2 requests for \"" .. message.."\"")
 			local result = commandList[message]()
 			if not result then
-				result = true
+				result = get_text("rednet.response_unknown")
 			end
 			rednet.send(2, result, "controls")
 			print("Sent " .. tostring(res) .. " back to #2!")
@@ -50,6 +93,14 @@ while true do
 			local name = string.sub(message,6,-1)
 			print("New player ("..name..") registered!")
 			rednet.send(2,tostring(commands.exec("/testfor @a[name="..name.."]")), "controls")
+		elseif(message == "get_lang") then
+			print("Sent script file back to receiver!")
+			local open = fs.open("/script", "r"); local all = open.readAll(); open.close()
+			sleep(0.05)
+			rednet.send(id, all, "controls")
+		elseif(message == "reader_hat") then
+			print("GOT HAT SIGNAL")
+			_G["bookshelf_hat"] = true
 		elseif(message == "commands")then
 			write("Client request for commands! ")
 			local t = {}
@@ -59,12 +110,10 @@ while true do
 		elseif(message == "reboot")then
 			os.reboot()
 		elseif(message == "reset")then
-			_G["removeChests"]()
-			fs.delete(".config") 
-			os.reboot()
+			res()
 		else
-			print("Invalid command ("..message.."), sent true back to #2")
-			rednet.send(2, true, "controls")
+			print("Invalid command ("..message.."), sent invalid command back to #2")
+			rednet.send(2, get_text("rednet.invalid"), "controls")
 		end
 	end
 end
