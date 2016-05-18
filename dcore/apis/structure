@@ -213,7 +213,6 @@ end
 -- ////////////////////////////////////
 -- ////////////////////////////////////
 
--- what does a:b.c() do?
 
 function new()
 	local structureObject = {}
@@ -263,6 +262,7 @@ function new()
 	structureObject.loadFromFile = function(self,sourceFile)
 		local array = newPointedByteArray() --74282
 		local fileHandle = fs.open(sourceFile,"rb")
+		if(not fileHandle)then error("File not found!",2) end
 		local readData = 0
 		print("Started reading data")
 		repeat

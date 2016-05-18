@@ -1,4 +1,4 @@
-os.loadAPI(":dungeon/apis/dcore/dcore")
+os.loadAPI(":dungeon/dcore/apis/dcore")
 if(dcore)then dcore.runFileInAllMods("whoami")end
 local x,y,z = commands.getBlockPosition()
 local block = commands.getBlockInfo(x,y-1,z)

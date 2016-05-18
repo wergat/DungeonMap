@@ -27,7 +27,7 @@ function run()
 		local event, modemSide, senderChannel,replyChannel, message, senderDistance = os.pullEvent("modem_message")
 		if(message and type(message) == "table")then if(message[1] and computersID == replyChannel)then
 				if(type(message[1]) == "string")then
-					modem.transmit(23,computersID,{message[2],{commands.exec(message[1])}})
+					modem.transmit(23,computersID,{{message[2],{commands.exec(message[1])}},"cmd"})
 					commandTimeCounter[timeFrameCounter] = (commandTimeCounter[timeFrameCounter] or 0) + 1
 					commands_total = commands_total + 1
 				else
@@ -36,7 +36,7 @@ function run()
 						asyncCommandTimeCounter[timeFrameCounter] = (asyncCommandTimeCounter[timeFrameCounter] or 0) + 1
 						commands_total = commands_total + 1
 					end
-					modem.transmit(23,computersID,{message[2]})
+					modem.transmit(23,computersID,{{message[2]},"cmd"})
 				end
 		end	end
 	end
