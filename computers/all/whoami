@@ -2,7 +2,7 @@ os.loadAPI(":dungeon/dcore/apis/dcore")
 if(dcore)then dcore.runFileInAllMods("whoami")end
 local x,y,z = commands.getBlockPosition()
 local block = commands.getBlockInfo(x,y-1,z)
-
+print("No special block data found in mods, looking for native versions")
 
 -- Check for mobile computer
 if(pocket)then
@@ -13,8 +13,11 @@ end
 
 
 -- Main Computer
-if(block.name == "minecraft:quartz")then
-	shell.run("dungeon/computers/all/update","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/")
+if(block.name == "minecraft:quartz_block")then
+	print("Identified as Dev Computer")
+	local update = shell.run("dungeon/computers/all/update","https://api.github.com/repos/wergat/DungeonMap/contents/")
+	print("Running main function")
+	if(not update)then printError("Update File not found!") end
 	shell.run("dungeon/computers/dev/main")
 end
 
