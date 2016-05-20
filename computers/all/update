@@ -39,6 +39,8 @@ if(not JSON)then
 end
 print("JSON parser actually exists!")
 
+local logfile = fs.open(":dungeon/logs/updater","w")
+
 if(dcore)then dcore.requireAPI("github") else printError("DCORE API WAS NOT FOUND!") end
 if(not github)then
 	printError("Github API is not installed, using http as alternative to install it.")
@@ -70,7 +72,7 @@ else
 	print("Updating cancelled due to API limitations!")
 end
 
-local logfile = fs.open(":dungeon/logs/updater","w")
+
 logfile.writeLine("Log file for the updater!")
 local startRemaining = (JSON:decode(http.get("https://api.github.com/rate_limit").readAll())["resources"]["core"]["remaining"])
 logfile.writeLine("API Calls remaining: "..(startRemaining))
