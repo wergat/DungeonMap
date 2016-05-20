@@ -194,6 +194,31 @@ function runFileInAllMods(_fileName)
 	end
 end
 
+function checkForNewMessage()
+	while true do
+		local eventData = {os.pullEvent("modem_message")}
+		if(type(eventData[5]) == "table" and type(eventData[5][2]) == "string")then
+			local event = "dcore_"..tostring(eventData[5][2])
+			os.queueEvent(event,textutils.serialize(eventData))
+		end
+	end
+end
+function openChannel(channel)
+	for n,modemSide in ipairs(peripheral.getNames()) do
+		peripheral.call(modemSide,"open",channel)
+		print("Opened Channel "..channel.." for the modem on the "..modemSide)
+	end
+end
+function send(channel,replyChannel,message,target)
+	for n,modemSide in ipairs(peripheral.getNames()) do
+		if(target)then
+			peripheral.call(modemSide,"transmit",channel,replyChannel,{message,target})
+		else
+			peripheral.call(modemSide,"transmit",channel,replyChannel,message)
+		end
+	end
+end
+
 -- 1.20
 function getEngineVersion()
 	return 120
