@@ -5,23 +5,29 @@ print("Free space: "..(math.floor(fs.getFreeSpace("/")/102.4)/10).."kb")
 
 
 function getSizeOfFolder(_dirName,_countSubFolders)
- local size = 0
- local _countSubFolders = _countSubFolders or true
- local contents = fs.list(_dirName)
- if(#contents>0)then
-  for _,fileName in ipairs(contents) do
-   if(fs.exists(_dirName.."/"..fileName))then
-    if(fs.isDir(_dirName.."/"..fileName))then
-	 if(not (_dirName=="/rom") and _countSubFolders)then -- ignore rom
-	  size = size + getSizeOfFolder(_dirName.."/"..fileName,true)
-	 end
-	else
-	 size = size + fs.getSize(_dirName.."/"..fileName)
+	local size = 0
+	local _countSubFolders = _countSubFolders or true
+	local contents = fs.list(_dirName)
+	if(#contents>0)then
+		for _,fileName in ipairs(contents) do
+			if(fs.exists(_dirName.."/"..fileName))then
+				if(fs.isDir(_dirName.."/"..fileName))then
+					if(not (_dirName=="./rom") and _countSubFolders)then -- ignore rom
+						size = size + getSizeOfFolder(_dirName.."/"..fileName,true)
+					end
+				else
+					size = size + fs.getSize(_dirName.."/"..fileName)
+				end
+			end
+		end
 	end
-   end
-  end
- end
- return size
+	return size
 end
 
 print("Used Memory: "..(math.floor(getSizeOfFolder(".")/102.4)/10).."kb")
+local ThreadsMonitoringTab = multishell.launch({}, ":dungeon/utils/threads")
+local CommandsMonitoringTab = multishell.launch({}, ":dungeon/utils/commands")
+local ThreadsRunningTab = multishell.launch({}, ":dungeon/computers/dev/threads")
+
+
+
