@@ -1,0 +1,35 @@
+while not dcore do os.loadAPI(":dungeon/dcore/apis/dcore") sleep(1) end
+dcore.requireAPI("thread")
+
+local tx,ty = term.getSize()
+local offCounter = 1
+
+function draw()
+	while true do
+		local tThreads = thread.getThreads()
+		term.clear()
+		term.setCursorPos(2,1)
+		for i=1,#tThreads do
+			term.setCursorPos(2,i+1)
+			term.write(tThreads[i].name..":")
+			term.setCursorPos(30,i+1)
+			term.write((tThreads[i].status))
+		end
+		
+		term.setCursorPos(1,ty)
+		write(string.rep("#",offCounter))
+		if(offCounter>1)then offCounter = offCounter - 1 end
+		if(offCounter>=tx)then return end
+		
+		sleep(0.05)
+	end
+end
+
+function run()
+	while true do
+		local tEvent = {os.pullEvent("key")}
+		offCounter = offCounter + 2
+	end
+end
+
+parallel.waitForAny(run,draw)

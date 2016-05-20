@@ -1,0 +1,44 @@
+while not dcore do os.loadAPI(":dungeon/dcore/apis/dcore") sleep(1) end
+dcore.requireAPI("cmd")
+local tx,ty = term.getSize()
+local offCounter = 1
+
+function draw()
+	while true do
+		local slaveComputers = cmd.getSlaveComputerData()
+		local data = cmd.getCommandStats()
+		term.clear()
+		term.setCursorPos(25,3)
+		term.write(string.sub((100-((data.commandsExecuted*100)/data.commandsStarted)),1,5))
+		term.setCursorPos(32,3)
+		term.write("% Packet loss")
+		term.setCursorPos(25,4)
+		term.write((((data.asyncFeedback*100)/data.asyncStarted)))
+		term.setCursorPos(32,4)
+		term.write("% Async loss")
+				
+		term.setCursorPos(25,5)
+		term.write("Commands waiting: "..data.amountOfStoredCommands)
+		
+		for i=1,#slaveComputers do
+			term.setCursorPos(2,i+1)
+			term.write(slaveComputers[i].id..": "..(slaveComputers[i].state).." ("..slaveComputers[i].timeout..")")
+		end
+		
+		term.setCursorPos(1,ty)
+		write(string.rep("#",offCounter))
+		if(offCounter>1)then offCounter = offCounter - 1 end
+		if(offCounter>=tx)then return end
+		
+		sleep(0.05)
+	end
+end
+
+function run()
+	while true do
+		local tEvent = {os.pullEvent("key")}
+		offCounter = offCounter + 2
+	end
+end
+
+parallel.waitForAny(run,draw)

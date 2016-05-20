@@ -70,45 +70,18 @@ function updateUI()
 			if(i%5 == 1)then
 				write("^")
 			else write("=") end
-			local a = (commandTimeCounter[timeFrameCounter-i+1] or 0)*(ty-3)/maximum
-			local b = (asyncCommandTimeCounter[timeFrameCounter-i+1] or 0)*(ty-3)/maximum
-			if(a and b and a>0 and b>0)then
-				if(a<b)then
-					term.setTextColor(colors.blue)
-					for j=a,b do
-						term.setCursorPos(i,ty-j)
-						write("#")
-					end
-					term.setTextColor(colors.lightBlue)
-					for j=1,a do
-						term.setCursorPos(i,ty-j)
-						write("@")
-					end
-				else
-					term.setTextColor(colors.lightBlue)
-					for j=b,a do
-						term.setCursorPos(i,ty-j)
-						write("@")
-					end
-					term.setTextColor(colors.blue)
-					for j=1,b do
-						term.setCursorPos(i,ty-j)
-						write("#")
-					end
-				end
-			elseif(a and a>0)then
-				term.setTextColor(colors.lightBlue)
-				for j=1,a do
-					term.setCursorPos(i,ty-j)
-					write("@")
-				end	
-			elseif(b and b>0)then
-				term.setTextColor(colors.blue)
-				for j=1,b do
-					term.setCursorPos(i,ty-j)
-					write("#")
-				end
+			local a = ((commandTimeCounter[timeFrameCounter-i+1] or 0)*(ty-3)/maximum) or 0
+			local b = ((asyncCommandTimeCounter[timeFrameCounter-i+1] or 0)*(ty-3)/maximum) or 0
+			
+			
+			
+			for j=1,math.max(a,b) do
+				term.setCursorPos(i,ty-j)
+				if(j>a)then term.setTextColor(colors.blue) else term.setTextColor(colors.black) end
+				if(j>b)then term.setTextColor(colors.lightBlue) else term.setTextColor(colors.black) end
+				term.write(string.char(129))
 			end
+			term.setTextColor(colors.black)
 		end
 	
 	

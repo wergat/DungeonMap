@@ -1,0 +1,273 @@
+while not dcore do os.loadAPI(":dungeon/dcore/apis/dcore") sleep(1) end
+dcore.requireAPI("thread")
+
+
+local tx,ty = term.getSize()
+
+function getSizeOfFolder(_dirName,_countSubFolders)
+	local size = 0
+	local _countSubFolders = _countSubFolders
+	if(type(_countSubFolders) ~= "boolean")then _countSubFolders = true end
+	local contents = fs.list(_dirName)
+	if(#contents>0)then
+		for _,fileName in ipairs(contents) do
+			if(fs.exists(_dirName.."/"..fileName))then
+				if(fs.isDir(_dirName.."/"..fileName))then
+					if(_countSubFolders)then
+						size = size + getSizeOfFolder(_dirName.."/"..fileName,true)
+					end
+				else
+					size = size + fs.getSize(_dirName.."/"..fileName)
+				end
+			end
+		end
+	end
+	return size
+end
+
+local folderColors = {colors.magenta,colors.lightBlue,colors.yellow,colors.lime,colors.pink,colors.cyan,colors.purple,colors.blue,colors.brown,colors.green,colors.red}
+
+local openedPath = ""
+local scroll = 1
+
+local amountOfData = 0
+
+local totalFreeSpace = fs.getFreeSpace("")
+local totalUsedSpace = getSizeOfFolder("")
+local totalSpaceAvailable = totalFreeSpace + totalUsedSpace
+
+local freeSpace = fs.getFreeSpace(openedPath)
+local usedSpace = getSizeOfFolder(openedPath)
+local availableSpace = freeSpace + usedSpace
+
+local folderSize = {}
+local fileSize = getSizeOfFolder(openedPath,false)
+
+function countFilesInFolder(folderName)
+	local count = 0
+	for _,fileName in pairs(fs.list(folderName)) do
+		if(fs.exists(openedPath.."/"..fileName))then
+			if(not fs.isDir(openedPath.."/"..fileName))then
+				count = count + 1
+			end
+		end
+	end
+	return count
+end
+
+function updateFiles()
+	freeSpace = fs.getFreeSpace(openedPath)
+	usedSpace = getSizeOfFolder(openedPath)
+	fileSize = getSizeOfFolder(openedPath,false)
+	
+	totalFreeSpace = fs.getFreeSpace("")
+	totalUsedSpace = getSizeOfFolder("")
+	totalSpaceAvailable = totalFreeSpace + totalUsedSpace
+	
+	availableSpace = freeSpace + usedSpace
+	folderSize = {}
+	local contents = fs.list(openedPath)
+	amountOfData = 0
+	if(#contents>0)then
+		for _,fileName in pairs(contents) do
+			if(fs.exists(openedPath.."/"..fileName))then
+				if(fs.isDir(openedPath.."/"..fileName))then
+					folderSize[fileName] = getSizeOfFolder(openedPath.."/"..fileName,true)
+					amountOfData = amountOfData + 1
+				end
+			end
+		end
+	end
+end
+
+updateFiles()
+
+function draw()
+	-- Clear the Screen		
+	term.clear()
+		
+	-- Draw general Storage Dispay
+	term.setCursorPos(1,2)
+	for i=1,tx do
+		if((i/tx) <= (usedSpace/totalSpaceAvailable))then
+			term.setBackgroundColor(colors.white)
+		elseif((i/tx) <= (totalUsedSpace/totalSpaceAvailable))then
+			term.setBackgroundColor(colors.lightGray)
+		else
+			term.setBackgroundColor(colors.gray)
+		end
+		-- Border white/lightGray
+		if(usedSpace < (((i+0.5)/tx)*totalSpaceAvailable) and usedSpace > (((i)/tx)*totalSpaceAvailable))then
+			term.setBackgroundColor(colors.orange)
+			term.setTextColor(colors.white)
+			term.write(string.char(149))
+		elseif(usedSpace < ((i/tx)*totalSpaceAvailable) and usedSpace > (((i-0.5)/tx)*totalSpaceAvailable))then
+			term.setBackgroundColor(colors.lightGray)
+			term.setTextColor(colors.orange)
+			term.write(string.char(149))
+		-- Border lightGray/gray
+		elseif(totalUsedSpace < (((i+0.5)/tx)*totalSpaceAvailable) and totalUsedSpace > (((i)/tx)*totalSpaceAvailable))then
+			term.setBackgroundColor(colors.orange)
+			term.setTextColor(colors.lightGray)
+			term.write(string.char(149))
+		elseif(totalUsedSpace < ((i/tx)*totalSpaceAvailable) and totalUsedSpace > (((i-0.5)/tx)*totalSpaceAvailable))then
+			term.setBackgroundColor(colors.gray)
+			term.setTextColor(colors.orange)
+			term.write(string.char(149))
+		else
+			term.write(" ")
+		end
+		term.setTextColor(colors.white)
+		term.setBackgroundColor(colors.black)
+	end
+	term.setTextColor(colors.white)
+	term.setBackgroundColor(colors.black)
+	
+	--
+	-- Draw selected Folder:
+	term.setCursorPos(1,1)
+	term.setTextColor(colors.orange)
+	term.write("Opened Path ")
+	term.setTextColor(colors.lightGray)
+	term.write(openedPath)
+
+	-- Draw button to select Folder above current
+	term.setCursorPos(tx,1)
+	term.setTextColor(colors.lightGray)
+	term.write(string.char(24))
+	term.setTextColor(colors.orange)
+	
+	-- Adding arrows to scroll with
+	term.setCursorPos(1,6)
+	if(scroll > 1)then
+		term.setTextColor(colors.orange)
+	else
+		term.setTextColor(colors.gray)
+	end
+	term.write(string.char(24))
+		
+	term.setCursorPos(1,ty-2)
+	if((scroll-1)+(ty-8) < (amountOfData+1))then
+		term.setTextColor(colors.orange)
+	else
+		term.setTextColor(colors.gray)
+	end
+	term.write(string.char(25))
+
+		
+	-- Writing the Storage Size of the Files
+	term.setCursorPos(3,6)
+	term.setTextColor(colors.lightGray)		
+	term.write("Files ["..countFilesInFolder(openedPath).."]")
+	term.setTextColor(colors.orange)
+	term.setCursorPos(25,6)
+	term.write(string.sub((math.floor(fileSize/102.4)/10).."    ",1,5).."kb")
+	term.setCursorPos(35,6)
+	term.write(string.sub(((fileSize/usedSpace)*100).."    ",1,5).."%")
+
+	local i = 1
+	local start = 0
+	local previousColor = nil
+	local barPointer = 1
+	term.setCursorPos(1,(ty))
+	local j = 0
+	while (j+1) < (tx*(fileSize/usedSpace)*2) do
+		barPointer = barPointer + 1
+		term.setBackgroundColor(colors.lightGray)
+		term.write(" ")
+		j = j + 2
+	end
+	if(j%2==0 and fileSize > 0)then previousColor = colors.lightGray end
+	term.setBackgroundColor(colors.black)
+		
+	for k,v in pairs(folderSize) do
+		if(i >= scroll and i < ((ty-9)+scroll))then
+			term.setCursorPos(1,i+7-scroll)
+			term.setTextColor(colors.orange)
+			term.write("> ")
+			term.setTextColor(folderColors[(i%(#folderColors)+1)])			
+			term.write(k)
+			term.setTextColor(colors.orange)
+			term.setCursorPos(25,i+7-scroll)
+			term.write(string.sub((math.floor(v/102.4)/10).."    ",1,5).."kb")
+			term.setCursorPos(35,i+7-scroll)
+			term.write(string.sub(((v/usedSpace)*100).."    ",1,5).."%")
+		end
+		
+		-- Draw the part bar at the bottom
+		term.setCursorPos(barPointer,(ty))
+		term.setBackgroundColor(folderColors[(i%(#folderColors)+1)])		
+		-- Check if it is worthy to be drawn (% of the folder must be greater than a stripe of the bar)
+		if((v/usedSpace) > (1/(tx*2)))then
+			-- Draw the bar of whatever we have here
+			if(previousColor)then
+				j = 1
+				term.setTextColor(previousColor)
+				term.write(string.char(149))
+				previousColor = nil
+				barPointer = barPointer + 1
+			else j = 0 end
+			while (j+1) < (tx*(v/usedSpace)*2) do
+				term.write(" ")
+				barPointer = barPointer + 1
+				j = j + 2
+			end
+			if(j%2==0)then previousColor = folderColors[(i%(#folderColors)+1)] end
+			--term.write(math.floor(tx*(v/usedSpace)*2))
+		end
+		term.setBackgroundColor(colors.black)
+		i = i + 1
+	end
+	
+	term.setTextColor(colors.orange)
+		
+	term.setTextColor(colors.white)
+	term.setCursorPos(38,3)
+	term.write("Free: "..(math.floor(freeSpace/102.4)/10).."kb")
+	term.setTextColor(colors.white)
+	term.setCursorPos(1,3)
+	term.write("Total: "..(math.floor(usedSpace/102.4)/10).."kb")
+	term.setTextColor(colors.white)
+	term.setCursorPos(38,4)
+	term.setTextColor(colors.lightGray)
+	term.write("Max: "..(math.floor(totalSpaceAvailable/102.4)/10).."kb")
+	term.setCursorPos(1,ty)
+end
+
+function run()
+	while true do
+		local tEvent = {os.pullEvent("mouse_click")}
+		if(tEvent[3] == tx and tEvent[4] == 1)then
+			openedPath = fs.combine(openedPath,"../")
+			if(not fs.isDir(openedPath))then openedPath = "" end
+			scroll = 1
+			updateFiles()
+			draw()
+		end
+		if(tEvent[3] == 1 and tEvent[4] == 6 and scroll > 1)then
+			scroll = scroll - 1
+		end
+		if(tEvent[4] > 6 and tEvent[4] < (ty-2) and tEvent[4] <= (6+amountOfData))then
+			local t = {}
+			for k,_ in pairs(folderSize) do
+				t[(#t+1)] = k
+			end
+			scroll = 1
+			openedPath = fs.combine(openedPath,t[(tEvent[4]-7+scroll)])
+			updateFiles()
+			draw()
+		end
+		if(tEvent[3] == 1 and tEvent[4] == (ty-2) and ((scroll-1)+(ty-8) < (amountOfData+1)))then
+			scroll = scroll + 1
+		end
+		term.setCursorPos(1,ty-1)
+		term.write(tEvent[3])
+		term.setCursorPos(5,ty-1)
+		term.write(tEvent[4])
+		draw()
+	end
+end
+term.clear()
+draw()
+
+parallel.waitForAny(run)
