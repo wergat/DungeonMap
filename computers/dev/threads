@@ -1,0 +1,6 @@
+while not dcore do os.loadAPI(":dungeon/dcore/apis/dcore") sleep(1) end
+dcore.requireAPI("thread","cmd")
+thread.add(dcore.checkForNewMessage,"DCORE Event Lister")
+thread.add(cmd.chatchDoneCommandsLoop,"CMD Done Command Loop")
+thread.add(cmd.stackCheckerLoop,"CMD Stack checker")
+thread.run()
