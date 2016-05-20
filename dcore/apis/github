@@ -1,57 +1,72 @@
-keylist = textutils.unserialize(http.get("http://pastebin.com/raw.php?i=JBAmmZ2x").readAll())
+-- Loads a keylist form the internet
+local keylist = textutils.unserialize(http.get("http://pastebin.com/raw.php?i=JBAmmZ2x").readAll())
+-- JSON thing to parse data from github
 local JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
 
+local defaultKey = nil
+
+-- Tests a key
+function testKey(key)
+	local x = http.get("https://api.github.com/rate_limit",{["Authorization"] = "token " .. key,}).readAll()
+	return JSON:decode(x)["resources"]["core"]["remaining"]
+end
+
+-- Tests a array of Lists
+-- Input: Key List
+-- Output: Input list with rate limits
 function testkeylist(t)
-	local rate_url = "https://api.github.com/rate_limit"
 	local res = {}
-	for i = 1, #t do
-		local key = t[i]
-		local x = http.get(rate_url,{["Authorization"] = "token " .. key,}).readAll()
-		local grt = JSON:decode(x)
-		local left = grt["resources"]["core"]["remaining"]
-		res[key] = left
+	for i=1,#t do
+		res[key] = testKey(t[i])
 	end
-	return res --table
+	return res
 end
 
+-- Picks a working key
 function pickWorkingKey(t)
-	local r = testkeylist(t)
-	local x = 0
-	local ab = true
-	for i = 1, #t do
-		if r[t[i]] > 59 then
-			ab = false
+	local list = t
+	if(not list)then list = keylist end
+	local pointer = 1
+	-- Pick the first working key
+	while pointer <= #list do
+		local key = list[pointer]
+		-- Key must be above threshold
+		if(testKey(key) > 60)then
+			return key
 		end
+		pointer = pointer + 1
 	end
-	if ab then
-		return t[math.random(#t)] --pick any key, all are below threshold
-	end
-	repeat
-		key = t[math.random(#t)]
-	until r[key] > 59
-	return key
+	-- At this point all keys are invalid
 end
 
-function get(url, header, key)
+function setDefaultKey(key)
+	defaultKey = key
+end
+function get(url,header,key)
 	if not key then
-		return http.get(url, header)
+		if(defaultKey)then
+			return get(url, header,defaultKey)
+		else
+			return http.get(url, header)
+		end
 	end
 	header = header or {}
 	header["Authorization"] = "token " .. key
 	return http.get(url, header)
 end
 
-function getRequestAsTable(url, header, key)
-	local x = get(url, header, key) --wraps github.get
-	if x then
-		x = x.readAll()
+-- Returns the requested URL as a parsed Table, instead of JSON
+function getRequestAsTable(url,header,key)
+	if get(url,header,key) then
+		return JSON:decode(x.readAll())
 	else
 		return false, "GITHUB_NO_RESPONSE"
 	end
-	return JSON:decode(x) --parses JSON
+	
 end
 
-function request(url, header)
+-- Simple request for a simple URL request
+function request(url,header)
 	local header = header or {}
-	return getRequestAsTable(url, header, pickWorkingKey(keylist))
+	return getRequestAsTable(url,header,pickWorkingKey(keylist))
 end

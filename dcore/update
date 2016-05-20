@@ -45,9 +45,9 @@ if(not github)then
 	printError("Github API is not installed, using http as alternative to install it.")
 	github = {get = http.get}
 else
-	if(github.setKey)then
+	if(github.setDefaultKey)then
 		print("Loading Downloading Capacity Increaser Fix")
-		github.setKey(github.pickWorkingKey(github.keylist))
+		github.setDefaultKey(github.pickWorkingKey())
 	end
 end
 

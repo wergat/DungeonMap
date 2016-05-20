@@ -44,9 +44,17 @@ if(not github)then
 	printError("Github API is not installed, using http as alternative to install it.")
 	github = {get = http.get}
 else
-	if(github.setKey)then
+	if(github.setDefaultKey)then
 		print("Loading Downloading Capacity Increaser Fix")
-		github.setKey(github.pickWorkingKey(github.keylist))
+		logfile.writeLine("Loading Downloading Capacity Increaser Fix")
+		if(key)then
+			github.setDefaultKey(key)
+			logfile.writeLine("A key was found, here it is: "..key)
+		else
+			logfile.writeLine("No new key was found.")
+		end
+	else
+		logfile.writeLine("Failed Downloading Capacity Increaser Fix, outdated Github API")
 	end
 end
 
@@ -93,6 +101,7 @@ local function downloadFromDir(url)
 	if x then
 		x = x.readAll()
 	else
+		logfile.writeLine("Could not receive data from github. Checking that.")
 		local currentTime = getCurrentTimeAsUNIXTimespamp()
 		local githubRateTable = JSON:decode(github.get("https://api.github.com/rate_limit").readAll())
 		local githubRateLimit = githubRateTable["resources"]["core"]["reset"]

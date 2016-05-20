@@ -75,15 +75,17 @@ function updateUI()
 			
 			
 			
-			for j=1,math.max(a,b) do
+			for j=1,(ty-3) do
 				term.setCursorPos(i,ty-j)
-				if(j>a)then term.setTextColor(colors.blue) else term.setTextColor(colors.black) end
-				if(j>b)then term.setTextColor(colors.lightBlue) else term.setTextColor(colors.black) end
-				term.write(string.char(129))
+				if(j <= a)then term.setBackgroundColor(colors.lightGray) else term.setBackgroundColor(colors.black) end
+				if(j <= b)then term.setTextColor(colors.green) else term.setTextColor(colors.gray) end
+				term.write(string.char(127))
 			end
+			term.setBackgroundColor(colors.black)
 			term.setTextColor(colors.black)
 		end
-	
+		term.setBackgroundColor(colors.black)
+		term.setTextColor(colors.black)
 	
 		timeFrameCounter = timeFrameCounter + 1
 		term.setCursorPos(10,ty-1)
@@ -92,5 +94,4 @@ function updateUI()
 end
 
 parallel.waitForAll(run,updateUI)
-
 
