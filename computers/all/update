@@ -47,6 +47,7 @@ else
 	if(github.setDefaultKey)then
 		print("Loading Downloading Capacity Increaser Fix")
 		logfile.writeLine("Loading Downloading Capacity Increaser Fix")
+		local key = github.pickWorkingKey()
 		if(key)then
 			github.setDefaultKey(key)
 			logfile.writeLine("A key was found, here it is: "..key)
