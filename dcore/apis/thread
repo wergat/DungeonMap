@@ -1,0 +1,72 @@
+-- Got most of this stuff from the parrallel API
+local threads = {}
+
+function getThreads()
+	return threads
+end
+
+function add(func,name)
+	print("Thread "..name.." added!")
+	if(not func or type(func) ~= "function")then
+		error("thread.add Requires a function as input!",2)
+	end
+    local newRoutine = {["data"] = coroutine.create(func),["name"] = name or "unknown",["status"] = "init"}
+	threads[(#threads + 1)] = newRoutine
+	return #threads
+end
+
+function getLivingThreads()
+	local living = 0
+	for i=1,#threads do
+		if threads[i] then
+			living = living + 1
+		end
+	end
+	return living
+end
+
+local tickcounter = (os.clock()*20)
+local startCount = os.clock()
+
+
+
+function run()
+	 tickcounter = (os.clock()*20)
+	local eventData = {}
+	local tFilters = {}
+    while true do
+		--print("*tick* #"..tickcounter.." ("..#threads..")") -- ("..((os.clock()-startCount)/((tickcounter-(os.clock()*20))/20))..")
+		tickcounter = tickcounter + 1
+	    local count = #threads
+		-- Doing the stuff
+    	for n=1,count do
+    		local r = threads[n]
+    		if r.status ~= "dead" then
+				--print(r.name)
+    			if tFilters[r.data] == nil or tFilters[r.data] == eventData[1] or eventData[1] == "terminate" then
+	    			local ok, param = coroutine.resume(r.data,unpack(eventData))
+					r.status = coroutine.status(r.data)
+					if not ok then
+						error( param, 0 )
+					else
+						tFilters[r.data] = param
+					end
+					if coroutine.status(r.data) == "dead" then
+						threads[n].status = "dead"
+					end
+				end
+    		end
+    	end
+		
+		-- Removing old Threads
+		for n=1,count do
+    		local r = threads[n]
+			if r.status ~= "dead" and coroutine.status(r.data) == "dead" then
+				threads[n].status = "dead"
+			end
+		end
+    	eventData = { os.pullEventRaw() }
+    end
+end
+
+
