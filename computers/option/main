@@ -1,3 +1,10 @@
+if fs.exists("script") then
+	os.loadAPI("/script")
+	get_text = script.get_text
+else
+	os.loadAPI("/default_script")
+	get_text = default_script.get_text
+end
 local tx,ty = term.getSize()
 
 local selected = "Gameplay Settings"
@@ -42,12 +49,12 @@ local options = {
 			["Remove Torches"] = {["options"] = {"Yes","No"},["text"] = "Remove torches placed in previous run-throughs",["value"] = "Yes"},
 		},
 		["Debug"] = {
-			["Enable"] = {["options"] = {"Yes","No"},["text"] = "Enable Debug/Dev mode",["value"] = "No"},
+			["Enable Debug"] = {["options"] = {"Yes","No"},["text"] = "Enable Debug/Dev mode",["value"] = "No"},
 		},
 	},
 	["Aesthetics"] = {
 		["Music"] = {
-			["Enable"] = {["options"] = {"Yes","No"},["text"] = "Enable random music",["value"] = "No"},
+			["Enable Music"] = {["options"] = {"Yes","No"},["text"] = "Enable random music",["value"] = "No"},
 		},
 		["Detail"] = {
 			["Book Wear"] = {["options"] = {"Yes","No"},["text"] = "Enable or disable tradeable books wearing down over time",["value"] = "Yes"},
@@ -58,6 +65,9 @@ local options = {
 	},
 }
 
+if fs.exists("hasHard") then
+	options["Gameplay Settings"]["Difficulty"]["Ultra-Hard Mode"] = {["options"] = {"Yes", "No"},["text"] = "Enable or disable Ultra-Hard Mode. Will override certain values.",["value"] = "No"}
+end
 
 local storedOptions = {}
 for field,v in pairs(options) do
@@ -205,7 +215,7 @@ function renderBaseUI(a)
 			term.setTextColor(colors.lightGray)
 			term.setBackgroundColor(colors.gray)
 		end
-		write("["..k.."]")
+		write("["..get_text("options." .. k).."]")
 		term.setTextColor(colors.lightGray)
 		term.setBackgroundColor(colors.gray)
 		write(" ")
@@ -229,7 +239,7 @@ function renderBaseUI(a)
 					if(selectedOption==(i-2))then
 						term.setBackgroundColor(colors.orange)
 					end
-					term.write("  "..a["text"]..": ")
+					term.write("  "..get_text("options." .. a["text"])..": ")
 					local len = 0
 					term.setTextColor(colors.black)
 					if(selectedOption==(i-2))then
@@ -238,18 +248,16 @@ function renderBaseUI(a)
 							if(v == a["data"]["value"])then
 								term.setBackgroundColor(colors.green)
 							end
-							term.write("["..v.."]")
+							term.write("["..get_text("options." .. v).."]")
 							term.setBackgroundColor(colors.orange)
 						end
 					else
-						term.write(a["data"]["value"])
+						term.write(get_text("options." .. a["data"]["value"]))
 					end
-					term.write(t)
 					term.setTextColor(colors.black)
 				else
-					term.write(a["text"])
+					term.write(get_text("options." .. a["text"]))
 				end
-				
 			end
 		end
 	end
