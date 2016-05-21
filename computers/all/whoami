@@ -25,7 +25,7 @@ if(block.name == "minecraft:quartz_block")then
 		open.write("shell.run(\"dungeon/computers/all/whoami\")")
 		open.close()
 		sleep(2)
-		os.reboot()
+		--os.reboot()
 	else
 		print("Running main function")
 		shell.run("dungeon/computers/dev/main")
