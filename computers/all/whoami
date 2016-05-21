@@ -2,6 +2,8 @@ os.loadAPI(":dungeon/dcore/apis/dcore")
 local tArgs = {...}
 local init = false
 if(tArgs[1])then init = true end
+print(tostring(init))
+sleep(2)
 if(dcore)then dcore.runFileInAllMods("whoami")end
 local x,y,z = commands.getBlockPosition()
 local block = commands.getBlockInfo(x,y-1,z)
@@ -45,6 +47,7 @@ if(init)then
 	local open = fs.open(":startup","w")
 	open.write("shell.run(\"dungeon/computers/all/whoami\")")
 	open.close()
+	sleep(2)
 	os.reboot()
 end
 
