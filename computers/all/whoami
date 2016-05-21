@@ -19,12 +19,15 @@ end
 if(block.name == "minecraft:quartz_block")then
 	print("Identified as Dev Computer")
 	if(itit)then
+		print("JAA")
+		sleep(3)
 		local update = shell.run("dungeon/computers/all/update","https://api.github.com/repos/wergat/DungeonMap/contents/")
 		if(not update)then printError("Update File not found!") end
-		local open = fs.open(":startup","w")
-		open.write("shell.run(\"dungeon/computers/all/whoami\")")
-		open.close()
-		sleep(2)
+		--sleep(2)
+		--local open = fs.open(":startup","w")
+		--open.write("shell.run(\"dungeon/computers/all/whoami\")")
+		--open.close()
+		
 		--os.reboot()
 	else
 		print("Running main function")
