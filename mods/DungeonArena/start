@@ -39,12 +39,26 @@ function set_v(id, s, permanent)
 	end
 end
 local tickspeed = get_v("Internal Tick Speed") or 0.05; tickspeed = tickspeed*2
---TP to waiting room if just booting
+local chest_areas = {"76 25 39", "90 29 -31", "37 9 -3", "18 19 21", "84 20 -54"}
+
+function test_resourcepack()
+	local _, res = commands.exec("/summon testing123")
+	print(res[1])
+	return res[1] == "DO NOT TRANSLATE THIS!"
+end
 if not get_v("has_setup") then
-	commands.exec("/effect @a minecraft:instant_health 20 10")
-	commands.exec("/effect @a minecraft:saturation 20 10")
+	commands.exec("/effect @a minecraft:instant_health 20 30 true")
+	commands.exec("/effect @a minecraft:saturation 20 30 true")
 	commands.exec("/tp @a -4 5 -16")
 	commands.exec("/gamemode 2 @a")
+	commands.exec("/setblock 84 20 -53 stonebrick 0 replace")
+	commands.exec("/setblock -12 16 -26 chest 5 replace {Items:[{Slot:13,id:\"minecraft:nether_wart\", Count:1, Damage:0, tag:{display:{Name:\"" .. get_text("chest.blue_key_name") .. "\"}}}]}")
+	local function setSecretChest(coords)
+		commands.exec("/setblock " .. coords .. " chest 1 replace {Items:[{Slot:13,id:\"minecraft:double_plant\", Count:1, Damage:0, tag:{display:{Name:\"" .. get_text("chest.coin") .. "\", Lore:[\"" .. get_text("chest.coin_lore") .. "\"]}}}]}")
+	end
+	for i = 1, #chest_areas do
+		setSecretChest(chest_areas[i])
+	end
 	if math.random(100) <= 5 then --5% chance of pakka
 		commands.exec("/setblock 67 27 37 prismarine")
 	else
@@ -53,7 +67,7 @@ if not get_v("has_setup") then
 	commands.exec("/setblock 74 27 30 sponge 1")
 	fs.delete("/dungeon/event/achievements")
 end
-local torch_coords = {"62 19 50", "66 19 50", "71 22 49", "60 20 6","56 20 6","53 20 3","53 20 -1","53 20 -9","53 20 -13","60 20 -16","68 20 -16","72 20 -16","75 20 -13","75 20 -1","75 20 3","72 20 6","68 20 6"}
+local torch_coords = {"66 20 43", "62 20 43", "62 19 50", "66 19 50", "71 22 49", "60 20 6","56 20 6","53 20 3","53 20 -1","53 20 -9","53 20 -13","60 20 -16","68 20 -16","72 20 -16","75 20 -13","75 20 -1","75 20 3","72 20 6","68 20 6"}
 local torch_rooms = {{"112 24 -52", "92 16 43"},{"72 18 43", "91 24 -52"}, {"52 18 55", "71 24 -53"}, {"51 24 -53", "32 24 43"}, {"31 24 43", "16 16 -52"}, {"37 33 -32", "56 25 22"}, {"57 33 -32", "76 26 22"}, {"77 33 -32", "91 26 22"}, {"91 7 2", "72 16 -32"}, {"71 7 -32", "52 16 42"}, {"51 15 -12", "37 7 22"}}
 if get_v("Remove Torches") ~= false and not get_v("has_setup") then
 	for i = 1, #torch_rooms do
@@ -311,6 +325,13 @@ _G["reconfig"] = function(f)
 			sleep(tickspeed)
 		end
 	end
+	if get_v("Ultra-Hard Mode") then
+		set_v("Starting Supply", "Poor")
+		set_v("Starting Equipment", "Poor")
+		set_v("Inital Healing", 0)
+		set_v("Enable Purchasable Lives", false)
+		set_v("Lives Amount", 1)
+	end
 	set_v("has_setup", true)
 	sleep(tickspeed)
 	os.reboot()
@@ -473,15 +494,27 @@ function summonVillagers()
 	commands.execd('/tellraw @a "Summoning villagers"')
 	print("Summoning villagers")
 	local args = {noAI = true}
-	villager.new(args):setCustomType("drug", level):setName(get_text("villager.drug")):summon(82, 26, 35)
-	respawnHat()
-	villager.new(args):setCustomType("currency"):setName(get_text("villager.exchange")):summon(77, 26, 38)
-	villager.new(args):setCustomType("currency"):setName(get_text("villager.exchange")):summon(80, 26, 38)
-	villager.new(args):setCustomType("food"):setName(get_text("villager.food")):summon(77, 26, 31)
-	villager.new(args):setCustomType("trash"):setName(get_text("villager.trash")):summon(67, 26, 28)
+	if get_v("Ultra-Hard Mode") then
+		villager.new(args):setCustomType("closed"):setName(get_text("villager.drug")):summon(82, 26, 35)
+		respawnHat()
+		villager.new(args):setCustomType("closed"):setName(get_text("villager.exchange")):summon(77, 26, 38)
+		villager.new(args):setCustomType("closed"):setName(get_text("villager.exchange")):summon(80, 26, 38)
+		villager.new(args):setCustomType("closed"):setName(get_text("villager.food")):summon(77, 26, 31)
+		villager.new(args):setCustomType("closed"):setName(get_text("villager.trash")):summon(67, 26, 28)
+	else
+		villager.new(args):setCustomType("drug", level):setName(get_text("villager.drug")):summon(82, 26, 35)
+		respawnHat()
+		villager.new(args):setCustomType("currency"):setName(get_text("villager.exchange")):summon(77, 26, 38)
+		villager.new(args):setCustomType("currency"):setName(get_text("villager.exchange")):summon(80, 26, 38)
+		villager.new(args):setCustomType("food"):setName(get_text("villager.food")):summon(77, 26, 31)
+		villager.new(args):setCustomType("trash"):setName(get_text("villager.trash")):summon(67, 26, 28)
+	end
 	for i = 1, #villager_areas do
 		local obj = villager.new(args):setCustomType("equipment", level+5)
 		obj:setName(get_text("villager.normal"))
+		if get_v("Ultra-Hard Mode") then
+			obj:setCustomType("closed")
+		end
 		obj:summon(villager_areas[i][1], villager_areas[i][2], villager_areas[i][3])
 		sleep(tickspeed)
 	end
@@ -489,6 +522,9 @@ function summonVillagers()
 	for i = 1, #high_level_villager_areas do
 		local obj = villager.new(args):setCustomType("equipment", (level*1.4)+10)
 		obj:setName(get_text("villager.high"))
+		if get_v("Ultra-Hard Mode") then
+			obj:setCustomType("closed")
+		end
 		obj:summon(high_level_villager_areas[i][1], high_level_villager_areas[i][2], high_level_villager_areas[i][3])
 		sleep(tickspeed)
 	end
@@ -568,21 +604,21 @@ _G["removeChests"] = function()
 	print("Done resetting chests")
 end
 write(".")
-if get_v("Enable Debug") then
-	--levers chest
-	commands.execd("/setblock 62 20 44 wall_sign 0 replace {Text1:\"" .. get_text("chest.levers") .. "\", Text2:\"I\", Text3:\"I\", Text4:\"V\"}")
-	commands.execd("/setblock 62 19 44 chest 1 replace {Items:[{Slot:0,id:\"minecraft:lever\", Count:64, Damage:0, tag:{display:{Name:\"Cheat Lever\", Lore:[\"Said to open Death's Shop.\", \"Maybe try not cheating next time?\", \"-Atenefyr\"]}}}]}")
-	--money chest
-	commands.execd("/setblock 74 27 36 wall_sign 1 replace {Text1:\"" .. get_text("chest.money") .. "\", Text2:\"I\", Text3:\"I\", Text4:\"V\"}")
-	commands.execd("/setblock 74 26 36 chest 1 replace {Items:[{Slot:0,id:\"minecraft:nether_star\", Count:64, tag:{display:{Name:\"Nether Star\", Lore:[\"This item is part of the currency\", \"It is worth exactly "..SS(2).."1'250'000"..SS("r")..SS("5")..SS("o").." quaz!\"]}}}, {Slot:1,id:\"minecraft:paper\", Count:1, tag:{display:{Name:\"Note\", Lore:[\"Maybe try not cheating next time?\", \"-Atenefyr\"]}}}, {Slot:2,id:\"minecraft:diamond_pickaxe\",Count:1,tag:{CanDestroy:[\"minecraft:sponge\", \"minecraft:prismarine\"],display:{Name:\"Easter Egg Pick\",Lore:[\"Breaks secret blocks\"]}}}]}")
-else
-	local coords = {"62 19 44", "62 20 44", "74 26 36", "74 27 36"}
-	for i = 1, #coords do
-		commands.exec("/blockdata " .. coords[i] .. " {Items:[]}")
-		sleep(tickspeed)
-		commands.exec("/setblock " .. coords[i] .. " air")
-	end
+
+local coords = {"62 19 44", "62 20 44", "74 26 36", "74 27 36"}
+for i = 1, #coords do
+	commands.exec("/blockdata " .. coords[i] .. " {Items:[]}")
+	sleep(tickspeed)
+	commands.exec("/setblock " .. coords[i] .. " air")
 end
+--levers chest
+commands.execd("/setblock 62 20 44 wall_sign 0 replace {Text1:\"" .. get_text("chest.keys") .. get_text("chest.plural") .. "\", Text2:\"I\", Text3:\"I\", Text4:\"V\"}")
+commands.execd("/setblock 62 19 44 chest 1 replace {Items:[{Slot:0,id:\"minecraft:tripwire_hook\", Count:64, Damage:0, tag:{display:{Name:\"" .. get_text("chest.keys") .. "\", Lore:[\"" .. get_text("chest.keys_lore_fake")[1] .. "\", \"" .. get_text("chest.keys_lore_fake")[2] .. "\"]}}}]}")
+--money chest
+commands.execd("/setblock 74 27 36 wall_sign 1 replace {Text1:\"" .. get_text("chest.money") .. "\", Text2:\"I\", Text3:\"I\", Text4:\"V\"}")
+commands.execd("/setblock 74 26 36 chest 1 replace {Items:[{Slot:0,id:\"minecraft:nether_star\", Count:64, tag:{display:{Name:\"Nether Star\", Lore:[\"This item is part of the currency\", \"It is worth exactly "..SS(2).."1'250'000"..SS("r")..SS("5")..SS("o").." quaz!\"]}}}, {Slot:1,id:\"minecraft:diamond_pickaxe\",Count:1,tag:{CanDestroy:[\"minecraft:sponge\", \"minecraft:prismarine\"],display:{Name:\"Easter Egg Pick\",Lore:[\"Breaks secret blocks\"]}}}]}")
+
+write(".")
 if get_v("stage") ~= "shop" then
 	killVillagers()
 	summonVillagers()
@@ -624,6 +660,10 @@ if get_v("stage") ~= nil and get_v("stage") ~= "start" then
 end
 
 local messages = get_text("wave.splashs") or {"missingno"}
+test_resourcepack(); test_resourcepack(); test_resourcepack();
+if not test_resourcepack() then
+	commands.exec('/tellraw @p ["",{"text":"WARNING: You are not using the correct version of Minecraft! Make sure you are running Forge 1.8.9.","color":"gold"}]')
+end
 while true do
 	if stage == "start" then
 		if wave == 1 then
@@ -645,8 +685,11 @@ while true do
 		set_v("stage", stage)
 	end
 	if stage == "waiting_key" then
-		--Open gate when lever is put in
-		os.pullEvent("redstone")
+		--Open gate when person with key nearby is there
+		repeat
+			local suc, aaa = commands.exec("/clear @a[64,19,43,r=2] tripwire_hook 0 1")
+			sleep(tickspeed+0.05)
+		until suc and #aaa > 0
 	
 		-- Close forest gate
 		commands.exec("/setblock 84 28 23 iron_bars")
