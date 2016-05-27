@@ -21,11 +21,12 @@ local maximum = 0
 local maximumBoth = 0
 local timeFrameCounter = 1
 local commands_total = 0
+local work = false
 
 function run()
 	while true do
 		local event, modemSide, senderChannel,replyChannel, message, senderDistance = os.pullEvent("modem_message")
-		if(message and type(message) == "table")then if(message[1] and computersID == replyChannel)then
+		if(work and message and type(message) == "table")then if(message[1] and computersID == replyChannel)then
 				if(type(message[1]) == "string")then
 					modem.transmit(23,computersID,{{message[2],{commands.exec(message[1])}},"cmd"})
 					commandTimeCounter[timeFrameCounter] = (commandTimeCounter[timeFrameCounter] or 0) + 1
@@ -39,11 +40,17 @@ function run()
 					modem.transmit(23,computersID,{{message[2]},"cmd"})
 				end
 		end	end
+		if(message == "DoWork")then
+			work = true
+		end
 	end
 end
 
 function updateUI()
 	while true do
+		if(not work)then
+			modem.transmit(23,computersID,{"newSlave","newCMDSlave"})
+		end
 		-- Clearing the drawing area
 		for i=2,ty do
 			term.setCursorPos(1,i)
@@ -94,4 +101,3 @@ function updateUI()
 end
 
 parallel.waitForAll(run,updateUI)
-

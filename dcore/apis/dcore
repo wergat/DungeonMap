@@ -3,21 +3,23 @@ if(not config)then
 	print("Setting up the config!")
 	os.loadAPI(":dungeon/dcore/apis/config")
 	config = setmetatable(config,{__index = function(t,key) return t.get(key) end}) -- Making it easier to access config data
-	config.load() -- Loading previously saved configurations
-	--
-
-	-- Setting the default configurations
-	config.conditionalSet("DIR_TOTAL",":dungeon")
-	config.conditionalSet("DIR_MODS",":dungeon/mods")
-	config.conditionalSet("DIR_LOGS",":dungeon/logs")
-	config.conditionalSet("DIR_APIS",":dungeon/dcore/apis")
-	config.conditionalSet("ASYNC_TIMEOUT_MAXIMUM",20)
-	config.conditionalSet("ASYNC_USE_CUSTOM_ASYNC",false)
-	config.conditionalSet("ENABLE_DEVELOPER_MODE",true)
-	config.conditionalSet("ENABLE_SHUTDOWN_TRIGGERS",true)
-	config.conditionalSet("ENABLED_LOGS",{["dcore"] = true,["command"] = true,["error"] = true,["updater"] = true})
-	config.save() -- Saving the config for later usage!
 end
+-- Setting up the Config
+
+config.load() -- Loading previously saved configurations
+
+-- Setting the default configurations
+config.softInit("DIR_TOTAL",":dungeon")
+config.softInit("DIR_MODS",":dungeon/mods")
+config.softInit("DIR_LOGS",":dungeon/logs")
+config.softInit("DIR_APIS",":dungeon/dcore/apis")
+config.softInit("ASYNC_TIMEOUT_MAXIMUM",20)
+config.softInit("ASYNC_USE_CUSTOM_ASYNC",false)
+config.softInit("ENABLE_DEVELOPER_MODE",true)
+config.softInit("ENABLE_SHUTDOWN_TRIGGERS",true)
+config.softInit("ENABLED_LOGS",{["dcore"] = true,["command"] = true,["error"] = true,["updater"] = true})
+config.save() -- Saving the config for later usage!
+
 
 -- Use native Globals
 if(not _G["cleanG"])then

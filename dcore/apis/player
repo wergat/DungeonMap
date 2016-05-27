@@ -5,6 +5,7 @@ dcore.requireAPI("entity")
 function getPlayerByName(_playerName)
 	local playerObject = {}
 	playerObject.name = _playerName
+	playerObject.hasArmorStand = false
 	playerObject.position = {}
 	playerObject.rotation = {}
 	
@@ -112,9 +113,15 @@ function getPlayersBySelector(_selector)
 	local playerNames = {}
 	local playerObjects = {}
 	for i=1,#l do
-		playerObjects[#playerObjects+1] = getPlayerByName(string.sub(l[i],7,-1))
+		playerObjects[i] = getPlayerByName(string.sub(l[i],7,-1))
 	end	
-	return setmetatable({},{ __index = function(t,key) return function(t,...) local r={} for i=1,#playerObjects do r[playerObjects[i]:getName()] = playerObjects[i][key](playerObjects[i],unpack(arg)) end return r end end })
+	return setmetatable({},{
+		__index = function(t,key)
+			return function(t,...) 
+				local r={} 
+				for i=1,#playerObjects do 
+					r[playerObjects[i]:getName()] = playerObjects[i][key](playerObjects[i],unpack(arg)) 
+	end return r end end })
 end
 
 -- Register the type "PlayerObject" we just used

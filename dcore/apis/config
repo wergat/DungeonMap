@@ -1,7 +1,23 @@
 local data = {}
-
+local default = {}
 
 -- sets a key in the database if it is not set, returns the value anyways.
+function setDefault(key,value)
+	default[key] = value
+end
+
+function restoreDefault()
+	data = nil
+	for k,v in pairs(default) do
+		data[k] = v
+	end
+end
+
+function softInit(key,value)
+	default[key] = value
+	return conditionalSet(key,value)
+end
+
 function conditionalSet(key,value)
 	if(not data[key])then
 		data[key] = value
