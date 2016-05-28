@@ -48,9 +48,6 @@ end
 
 function updateUI()
 	while true do
-		if(not work)then
-			modem.transmit(23,computersID,{"newSlave","newCMDSlave"})
-		end
 		-- Clearing the drawing area
 		for i=2,ty do
 			term.setCursorPos(1,i)
@@ -96,6 +93,9 @@ function updateUI()
 	
 		timeFrameCounter = timeFrameCounter + 1
 		term.setCursorPos(10,ty-1)
+		modem.transmit(23,computersID,{"newSlave","newCMDSlave"})
+		sleep(1)
+		modem.transmit(23,computersID,{"newSlave","newCMDSlave"})
 		sleep(1)
 	end
 end
