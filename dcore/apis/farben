@@ -73,7 +73,7 @@ end
 -- Input: color hex code
 -- returns name of color
 function inspectColor(_color)
- local color = tonumber(_color) or 1 -- 1 to ?
+ local color = tonumber(_color, 16) or 1 -- 1 to ?
 
  r = math.floor(color/65536)
  g = math.floor((color%65536)/256)
