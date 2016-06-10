@@ -35,6 +35,8 @@ function run()
 					for i=1,#message[1] do
 						if(type(message[1][i]) == "string")then
 							commands.execAsync(message[1][i])
+						else
+							commands.say("input is not right! "..tostring(message[1][i]))
 						end
 						asyncCommandTimeCounter[timeFrameCounter] = (asyncCommandTimeCounter[timeFrameCounter] or 0) + 1
 						commands_total = commands_total + 1
