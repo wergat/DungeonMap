@@ -1,0 +1,17 @@
+dcore.requireAPI("chest")
+
+registerCustomVillagerType("chest",function(self,argLevel)
+	local level = argLevel or 1
+	local amountOfTrades = math.random(3,5)
+	for i=1,amountOfTrades do
+		local ttype = 1
+		if(math.random(5)>2)then ttype = math.random(4) end
+		dataTable = chest.getChestData(level,ttype); local name = dataTable["CustomName"]; dataTable["CustomName"] = nil
+		local item = {["id"] = "minecraft:chest",["Count"] = 1,["tag"] = {["BlockEntityTag"] = dataTable,["CanPlaceOn"] = {"minecraft:emerald_block"},["display"] = {["Name"] = name, ["Lore"] = {"Said to hold treasure.. maybe. Probably not."}}}}
+		self:addTrade(newTrade():setBuyToMoney(math.random((level*100)+math.random(15))):setSell(item))
+	end
+	self:addBlocker()
+	self.name = 'Chest Keeper'
+	self.profession = 1
+	return self
+end)
