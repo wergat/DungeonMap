@@ -37,10 +37,9 @@ end
 
 -- Settings monitor
 if(block.name == "minecraft:wool")then
-	shell.run("dungeon/computers/all/update","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/")
+	shell.run("dungeon/computers/all/update","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/","https://api.github.com/repos/wergat/DungeonMap/contents/computers/all","https://api.github.com/repos/wergat/DungeonMap/contents/mods/")
 	shell.run("dungeon/computers/option/main")
 end
-
 
 -- cmd_salve
 if(block.name == "minecraft:iron_block")then
