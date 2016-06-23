@@ -41,7 +41,7 @@ print("JSON parser actually exists!")
 	local logfile = fs.open(":dungeon/logs/updater","w")
 
 function writeToLog(text)
-	writeToLog(text)
+	logfile.writeLine(text)
 	logfile.flush()
 end
 if(dcore)then dcore.requireAPI("github") else printError("DCORE API WAS NOT FOUND!") end
@@ -137,11 +137,16 @@ local function downloadFromDir(url)
 		else
 			--for k,v in pairs(BLACKLIST) do if(v==path)then return end end
 			print(" > Downloading file: " .. path)
-			writeToLog(" > Downloading file: " .. path)
-			local xt = github.get(f["download_url"]).readAll()
-			local open = fs.open("dungeon/" .. path, "w")
-			open.write(xt)
-			open.close()
+			writeToLog(" > Downloading file: " .. path .. " URL: "..(f["download_url"] or "ERROR"))
+			local handle = github.get(f["download_url"])
+			if(handle)then
+				local xt = handle.readAll()
+				local open = fs.open("dungeon/" .. path, "w")
+				open.write(xt)
+				open.close()
+			else
+				writeToLog("PREVIOS HANDLE WAS INVALID! FILE COULD NOT BE LOADED! " .. path .. " URL: "..(f["download_url"] or "ERROR"))
+			end
 			SHACodes[path] = f["sha"]
 			files_updated = files_updated + 1
 		end
