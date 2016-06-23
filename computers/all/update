@@ -38,9 +38,12 @@ if(not JSON)then
 	if(not JSON)then error("Could not write the new JSON Parser into a file - it is required for the updater!") end
 end
 print("JSON parser actually exists!")
+	local logfile = fs.open(":dungeon/logs/updater","w")
 
-local logfile = fs.open(":dungeon/logs/updater","w")
-
+function writeToLog(text)
+	writeToLog(text)
+	logfile.flush()
+end
 if(dcore)then dcore.requireAPI("github") else printError("DCORE API WAS NOT FOUND!") end
 if(not github)then
 	printError("Github API is not installed, using http as alternative to install it.")
@@ -48,16 +51,16 @@ if(not github)then
 else
 	if(github.setDefaultKey)then
 		print("Loading Downloading Capacity Increaser Fix")
-		logfile.writeLine("Loading Downloading Capacity Increaser Fix")
+		writeToLog("Loading Downloading Capacity Increaser Fix")
 		local key = github.pickWorkingKey()
 		if(key)then
 			github.setDefaultKey(key)
-			logfile.writeLine("A key was found, here it is: "..key)
+			writeToLog("A key was found, here it is: "..key)
 		else
-			logfile.writeLine("No new key was found.")
+			writeToLog("No new key was found.")
 		end
 	else
-		logfile.writeLine("Failed Downloading Capacity Increaser Fix, outdated Github API")
+		writeToLog("Failed Downloading Capacity Increaser Fix, outdated Github API")
 	end
 end
 
@@ -73,10 +76,10 @@ else
 end
 
 
-logfile.writeLine("Log file for the updater!")
+writeToLog("Log file for the updater!")
 local startRemaining = (JSON:decode(http.get("https://api.github.com/rate_limit").readAll())["resources"]["core"]["remaining"])
-logfile.writeLine("API Calls remaining: "..(startRemaining))
-logfile.writeLine("==========================================")
+writeToLog("API Calls remaining: "..(startRemaining))
+writeToLog("==========================================")
 
 local SHACodes = {}
 if fs.exists(":dungeon/hashes") then
@@ -104,7 +107,7 @@ local function downloadFromDir(url)
 	if x then
 		x = x.readAll()
 	else
-		logfile.writeLine("Could not receive data from github. Checking that.")
+		writeToLog("Could not receive data from github. Checking that.")
 		local currentTime = getCurrentTimeAsUNIXTimespamp()
 		local githubRateTable = JSON:decode(github.get("https://api.github.com/rate_limit").readAll())
 		local githubRateLimit = githubRateTable["resources"]["core"]["reset"]
@@ -113,28 +116,28 @@ local function downloadFromDir(url)
 		local secs = waitTime%60
 		printError(" > Oops! It looks like you've installed the DungeonMap files too much recently. Try again in about " .. mins .. "m:" .. secs .. "s!")
 		print("")
-		logfile.writeLine("Oops! It looks like you've installed the DungeonMap files too much recently. Try again in about " .. mins .. "m:" .. secs .. "s!")
+		writeToLog("Oops! It looks like you've installed the DungeonMap files too much recently. Try again in about " .. mins .. "m:" .. secs .. "s!")
 		cancle = true
 		return
 	end
 	
 	x = JSON:decode(x)
-	logfile.writeLine("Found #"..tonumber(#x).." files inside "..url)
+	writeToLog("Found #"..tonumber(#x).." files inside "..url)
 	for i = 1, #x do
 		local f = x[i]
 		local path = f["path"]
 		if (f["sha"] == SHACodes[path] and f["type"] ~= "dir") then
 			files_not_updated = files_not_updated + 1
-			logfile.writeLine(" x Not updated: "..path)
+			writeToLog(" x Not updated: "..path)
 		elseif f["type"] == "dir" then
 			print("Scanning directory: " .. path)
-			logfile.writeLine("Downloading directory: " .. path)
+			writeToLog("Downloading directory: " .. path)
 			SHACodes[path] = f["sha"]
 			downloadFromDir(f["url"])
 		else
 			--for k,v in pairs(BLACKLIST) do if(v==path)then return end end
 			print(" > Downloading file: " .. path)
-			logfile.writeLine(" > Downloading file: " .. path)
+			writeToLog(" > Downloading file: " .. path)
 			local xt = github.get(f["download_url"]).readAll()
 			local open = fs.open("dungeon/" .. path, "w")
 			open.write(xt)
@@ -155,7 +158,7 @@ open.write(textutils.serialize(SHACodes))
 open.close()
 
 local endingRemaining = JSON:decode(http.get("https://api.github.com/rate_limit").readAll())["resources"]["core"]["remaining"]
-logfile.writeLine("==========================================")
-logfile.writeLine("API Calls remaining: "..endingRemaining)
-logfile.writeLine("API Calls used during update: "..(startRemaining-endingRemaining))
+writeToLog("==========================================")
+writeToLog("API Calls remaining: "..endingRemaining)
+writeToLog("API Calls used during update: "..(startRemaining-endingRemaining))
 logfile.close()
