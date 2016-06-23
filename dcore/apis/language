@@ -1,0 +1,48 @@
+local languageName = "English"
+-- This table includes all he text for the translations
+local data = {}
+
+set = function(newLanguageName)
+	languageName = newLanguageName
+end
+update = function()
+	local newData = {}
+	local l = fs.list(config.DIR_MODS)
+	for i=1,#l do
+		local pathToAPIFile = config.DIR_MODS.."/"..l[i].."/language/"..languageName
+		if(fs.exists(pathToAPIFile))then
+			--dcore.print_log("dcore","[TRANSLATE]["..languageName.."]["..l[i].."] Loading file "..pathToAPIFile.."")
+			local fileHandle = fs.open(pathToAPIFile,"r")
+			local fileContent = fileHandle.readAll()
+			fileHandle.close()
+
+			local function a(a)	
+				local a = string.gsub(a,"\n","")
+				local k = string.match(a,"(.-) =") or ""
+				local v = string.match(a,"= (.-)$") or ""
+				local toTable = textutils.unserialize(v) -- Sometime to boolean,lol
+				if(type(toTable)~="nil")then v = toTable 
+				elseif(type(tonumber(v)) == "number")then v = tonumber(v) 
+				elseif(v == "true")then v = true 
+				elseif(v == "false")then v = false
+				end
+				
+				newData[k] = v
+				
+			end
+			string.gsub(fileContent,".- = .-\n",a)
+			string.gsub(fileContent,"=.*\n(.- = .-)$",a)
+		end
+	end
+	for k,v in pairs(newData) do
+		data[k] = v
+	end
+end
+get = function(optionName)
+	if(data[optionName] ~= nil)then
+		return data[optionName]
+	else
+		return ("#"..languageName.."."..optionName)
+	end
+end
+
