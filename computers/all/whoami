@@ -37,7 +37,7 @@ end
 
 -- Settings monitor
 if(block.name == "minecraft:wool")then
-	shell.run("dungeon/computers/all/update","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/","https://api.github.com/repos/wergat/DungeonMap/contents/computers/all","https://api.github.com/repos/wergat/DungeonMap/contents/mods/")
+	shell.run("dungeon/computers/all/update","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/","https://api.github.com/repos/wergat/DungeonMap/contents/computers/option","https://api.github.com/repos/wergat/DungeonMap/contents/computers/all","https://api.github.com/repos/wergat/DungeonMap/contents/mods/")
 	shell.run("dungeon/computers/option/main")
 end
 
