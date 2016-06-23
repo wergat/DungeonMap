@@ -4,6 +4,7 @@ if(not config)then
 	os.loadAPI(":dungeon/dcore/apis/config")
 	config = setmetatable(config,{__index = function(t,key) return t.get(key) end}) -- Making it easier to access config data
 end
+
 -- Setting up the Config
 
 config.load() -- Loading previously saved configurations
@@ -13,13 +14,20 @@ config.softInit("DIR_TOTAL",":dungeon")
 config.softInit("DIR_MODS",":dungeon/mods")
 config.softInit("DIR_LOGS",":dungeon/logs")
 config.softInit("DIR_APIS",":dungeon/dcore/apis")
-config.softInit("ASYNC_TIMEOUT_MAXIMUM",20)
-config.softInit("ASYNC_USE_CUSTOM_ASYNC",false)
 config.softInit("ENABLE_DEVELOPER_MODE",true)
 config.softInit("ENABLE_SHUTDOWN_TRIGGERS",true)
 config.softInit("ENABLED_LOGS",{["dcore"] = true,["command"] = true,["error"] = true,["updater"] = true})
 config.save() -- Saving the config for later usage!
 
+
+
+-- Loading up the language API
+if(not language)then
+	print("Setting up the language API!")
+	os.loadAPI(":dungeon/dcore/apis/language")
+	--language = setmetatable(language,{__index = function(t,key) return t.get(key) end}) -- Making it easier to access config data
+	language.update()
+end
 
 -- Use native Globals
 if(not _G["cleanG"])then
@@ -82,6 +90,7 @@ function requireAPI(...)
 		end
 	end
 end
+
 
 function isModEnabled(modName)
 	if(fs.exists(":dungeon/mods/"..modName))then
@@ -436,23 +445,6 @@ if(not dcore)then
 	_G["sleep"] = function(...)
 		asyncCounter = 0
 		return nativeSleep(unpack(arg))
-	end
-	function checkForAsyncTimeout()
-		asyncCounter = asyncCounter + 1
-		if(asyncCounter>=config.ASYNC_TIMEOUT_MAXIMUM)then
-			sleep(0.05)
-		end
-	end
-	_G["commands"]["execAsync"] = function(...)
-		checkForAsyncTimeout()
-		return nativeExecAsync(unpack(arg))
-	end
-	for k,v in pairs(_G["commands"]["async"]) do
-		nativeAsyncCommands[k] = v
-		_G["commands"]["async"][k] = function(...)
-			checkForAsyncTimeout()
-			return nativeAsyncCommands[k](unpack(arg))
-		end
 	end
 
 	if(config.ENABLE_SHUTDOWN_TRIGGERS)then
