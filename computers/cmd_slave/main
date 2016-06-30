@@ -50,6 +50,13 @@ function run()
 	end
 end
 
+function show()
+	while true do
+		modem.transmit(23,computersID,{"newSlave","newCMDSlave"})
+		sleep(5)
+	end
+end
+
 function updateUI()
 	while true do
 		-- Clearing the drawing area
@@ -97,11 +104,8 @@ function updateUI()
 	
 		timeFrameCounter = timeFrameCounter + 1
 		term.setCursorPos(10,ty-1)
-		modem.transmit(23,computersID,{"newSlave","newCMDSlave"})
-		sleep(1)
-		modem.transmit(23,computersID,{"newSlave","newCMDSlave"})
 		sleep(1)
 	end
 end
 
-parallel.waitForAll(run) --,updateUI
+parallel.waitForAll(run,show) --,updateUI
