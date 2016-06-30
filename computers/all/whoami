@@ -1,7 +1,13 @@
 os.loadAPI(":dungeon/dcore/apis/dcore")
 local tArgs = {...}
 local init = false
-if(tArgs[1])then init = true end
+if(tArgs[1])then
+	print("This is the first run, initializing!")
+	init = true
+	local open = fs.open(":startup","w")
+	open.write("shell.run(\"dungeon/computers/all/whoami\")")
+	open.close()
+end
 if(dcore)then dcore.runFileInAllMods("whoami")end
 local x,y,z = commands.getBlockPosition()
 local block = commands.getBlockInfo(x,y-1,z)
@@ -23,10 +29,6 @@ if(block.name == "minecraft:quartz_block")then
 		sleep(1)
 		local update = shell.run("dungeon/computers/all/update","https://api.github.com/repos/wergat/DungeonMap/contents/")
 		if(not update)then printError("Update File not found!") end
-		sleep(1)
-		local open = fs.open(":startup","w")
-		open.write("shell.run(\"dungeon/computers/all/whoami\")")
-		open.close()
 		sleep(1)
 		os.reboot()
 	else
