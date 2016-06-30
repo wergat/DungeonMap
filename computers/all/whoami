@@ -15,7 +15,6 @@ print("No special block data found in mods, looking for native versions")
 
 -- Check for mobile computer
 if(pocket)then
-	-- Execute mobile scripts
 end
 
 
@@ -36,6 +35,7 @@ if(block.name == "minecraft:quartz_block")then
 		shell.run("dungeon/computers/dev/main")
 	end
 end
+
 
 -- Settings monitor
 if(block.name == "minecraft:wool")then

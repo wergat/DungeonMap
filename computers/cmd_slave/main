@@ -104,4 +104,4 @@ function updateUI()
 	end
 end
 
-parallel.waitForAll(run,updateUI)
+parallel.waitForAll(run) --,updateUI
