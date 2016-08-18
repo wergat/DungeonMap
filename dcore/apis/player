@@ -1,5 +1,8 @@
 os.loadAPI(":dungeon/dcore/apis/dcore")
 dcore.requireAPI("entity")
+dcore.requireAPI("cmd")
+local playerArmorStandCache
+
 
 -- Possible addition from MagicAndMages: player:castSpell(spell) ???
 function getPlayerByName(_playerName)
@@ -13,26 +16,22 @@ function getPlayerByName(_playerName)
 	playerObject.getName = function(self)
 		return self.name
 	end
-	
 	playerObject.isOnline = function(self)
-		local r,_ = commands.testfor(entity.newSel("a"):add("name",self.name):toString())
+		local r,_ = cmd.get(entity.newSel("a"):add("name",self.name):toString())
 		return r
 	end
-	
-	-- You can now add xp to the player
+	-- Add XP to the player
 	playerObject.addExp = function(self,v)
-		commands.xp(v,self.name)
+		cmd.run("/xp "..v.." "..self:getName())
 	end
-	
 	-- Test if the player is on any scoreboaqrd
 	playerObject.hasScoreboard = function(self)
-		local a,_ = commands.exec("/scoreboard players list "..self.name)
+		local a,_ = cmd.get("/scoreboard players list "..self.name)
 		return a
 	end
-	
 	-- Get a specific value of a scoreboard of a player
 	playerObject.getScoreboardValue = function(self,scoreBoardName)
-		local s,t = commands.exec("/scoreboard players list "..self.name)
+		local s,t = cmd.get("/scoreboard players list "..self.name)
 		if(s)then
 			for i=2,#t do
 				if(string.sub(string.match(string.match(t[i],"([^,]+):([^,]+)")," .*"),2,-1) == scoreBoardName)then
@@ -43,15 +42,13 @@ function getPlayerByName(_playerName)
 			return nil
 		end
 	end
-	
+	-- Set a scoreboard value for a player to a specific value
 	playerObject.setScoreboardValue = function(self,scoreBoardName,scoreBoardValue)
-		local s,t = commands.exec("/scoreboard players set "..self.name.." "..scoreBoardName.." "..scoreBoardValue.."")
+		cmd.run("/scoreboard players set "..self.name.." "..scoreBoardName.." "..scoreBoardValue.."")
 	end
-	
-	
 	-- Get all values of all scoreboard of a player	
 	playerObject.getScoreboardData = function(self)
-		local s,t = commands.exec("/scoreboard players list "..self.name)
+		local s,t = cmd.get("/scoreboard players list "..self.name)
 		local data = {}
 		if(s)then
 			for i=2,#t do
@@ -60,7 +57,6 @@ function getPlayerByName(_playerName)
 		end
 		return data
 	end
-	
 	-- Teleports a player to a location or other player
 	playerObject.teleportTo = function(self,...)
 		if(#arg==1)then -- Teleport to a player/entity
@@ -71,57 +67,120 @@ function getPlayerByName(_playerName)
 			if(not s) then print(e[1]) end
 		end
 	end
-	
 	-- REturns the players current position
 	playerObject.getPosition = function(self)
 		return self.position["x"],self.position["y"],self.position["z"]
 	end
-	
+	-- Returns the players current position
 	playerObject.getRotation = function(self)
 		return self.rotation["rX"],self.rotation["rY"]
 	end
+	playerObject.execute = function(self,command)
+		cmd.run("/execute @a[name="..self:getName().."] ~ ~ ~ "..command)
+	end
 	
+	
+	-- Updates the location of the player
 	playerObject.updateLocation = function(self)
-		local entitySelector = entity.newSel():add("name",self.name):add("type","ArmorStand"):toString()
-		local s,d = commands.tp(entitySelector,self.name)
-		local s,e = commands.entitydata(entitySelector,"{}")
+		if(not self.hasArmorStand)then
+			local hasArmorStand,_ = cmd.get("/testfor "..entity.newSel():add("name",self:getName()):add("type","ArmorStand"):toString())
+			print("Armorstand for "..self:getName().." :"..tostring(hasArmorStand))
+		end
+		local entitySelector = entity.newSel():add("name",self:getName()):add("type","ArmorStand"):toString()
+		cmd.run("/tp "..entitySelector.." "..self:getName())
+		local _,e = cmd.get("/entitydata "..entitySelector.." {}")
 		local data = dcore.convertNBTtoTable(string.sub(e[1],30,-1))
 		self.position = {["x"] = data["Pos"]["0"] or 0,["y"] = data["Pos"]["1"] or 0,["z"] = data["Pos"]["2"] or 0}
 		self.rotation = {["rX"] = data["Rotation"]["0"] or 0,["rY"] = data["Rotation"]["1"] or 0}
-		local s,d = commands.tp(entitySelector,0,10,0)
-	end
-	
-	-- Checking for player's armorStand
-	local armorStandExists,_ = commands.testfor(entity.newSel():add("name",_playerName):add("type","ArmorStand"):toString())
-	if(not armorStandExists)then 
-		commands.exec("/summon ArmorStand ~ ~1 ~ {CustomName:".._playerName..",ShowArms:1,Invisible:1,NoGravity:1,DisabledSlots:1973790}")
-		print("Summoned new ArmorStand!")
+		cmd.run("/tp "..entitySelector.." 0 10 0")
 	end
 	
 	-- Set semi-important Metadata for player object
 	local metaTable = {}
 	-- Set type of this object
-	metaTable["type"] = "PlayerObject" 
-	
+	metaTable["type"] = "PlayerObject"
+	metaTable["__add"] = function(self,other)
+		return ((getPlayersBySelector() + self) + other)
+	end
 	
 	playerObject = setmetatable(playerObject,metaTable)
 	return playerObject
 end
 
 function getPlayersBySelector(_selector)
-	local _,l = commands.testfor(tostring(_selector))
-	local playerNames = {}
-	local playerObjects = {}
-	for i=1,#l do
-		playerObjects[i] = getPlayerByName(string.sub(l[i],7,-1))
-	end	
-	return setmetatable({},{
-		__index = function(t,key)
-			return function(t,...) 
-				local r={} 
-				for i=1,#playerObjects do 
-					r[playerObjects[i]:getName()] = playerObjects[i][key](playerObjects[i],unpack(arg)) 
-	end return r end end })
+	local realTable = {}
+	realTable.playerObjects = {}
+	-- Filling the players in
+	-- You can call this function w/o argument to create the object empty
+	if(_selector)then
+		local e,l = cmd.get("/testfor "..tostring(_selector))
+		if(l and e)then
+			for i=1,#l do
+				if(type(l[i]) == "string")then
+					local playerName = string.sub(l[i],7,-1)
+					realTable.playerObjects[playerName] = getPlayerByName(playerName)
+				else
+					commands.exec("PlayerDebug:"..tostring(l[i]))
+				end
+			end
+		end
+	end
+	
+	-- // Functions added for multiple players
+	
+	
+	
+	realTable.getNames = function(self) -- returns table with players names
+		local names = {}
+		for name,_ in pairs(self.playerObjects) do
+			names[(#names + 1)] = name
+		end
+		return names
+	end
+	realTable.add = function(self,player)
+		if(player.getNames)then
+			-- Is a playerS object
+			for k,v in pairs(player.playerObjects) do
+				self.playerObjects[k] = v
+			end
+		else
+			-- is a player object
+			self.playerObjects[player:getName()] = player
+		end
+		return self
+	end
+	realTable.sub = function(self,player)
+		if(player.getNames)then
+			-- Is a playerS object
+			local names = {}
+			for i,v in pairs(player:getNames()) do names[i] = v end
+			for i=#names,1,-1 do
+				self.playerObjects[names[i]] = nil
+			end
+		else
+			-- is a player object
+			if(self.playerObjects[player:getName()])then
+				self.playerObjects[player:getName()] = nil
+			end
+		end
+		return self
+	end
+	
+	
+	local metaTable = {}
+	metaTable["__index"] = function(t,key)
+			return function(t,...)
+				local r={}
+				for playerName,playerObject in pairs(t.playerObjects) do
+					r[playerName] = playerObject[key](playerObject,unpack(arg)) 
+	end	return r end end
+	metaTable["__add"] = function(self,other)
+		return self:add(other)
+	end
+	metaTable["__sub"] = function(self,other)
+		return self:sub(other)
+	end
+	return setmetatable(realTable,metaTable)
 end
 
 -- Register the type "PlayerObject" we just used

@@ -1,0 +1,5 @@
+print("DA Off-Trigger")
+print("Config:")
+write("   ")
+print(type(config))
+

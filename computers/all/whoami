@@ -8,10 +8,44 @@ if(tArgs[1])then
 	open.write("shell.run(\"dungeon/computers/all/whoami\")")
 	open.close()
 end
-if(dcore)then dcore.runFileInAllMods("whoami")end
 local x,y,z = commands.getBlockPosition()
 local block = commands.getBlockInfo(x,y-1,z)
 print("No special block data found in mods, looking for native versions")
+
+	
+local l = fs.list(config.DIR_MODS)
+
+for i=1,#l do
+	-- l[i] = Modname
+	local pathToAPIFile = config.DIR_MODS.."/"..l[i].."/event/whoami"
+	if(fs.exists(pathToAPIFile))then
+		dcore.print_log("dcore","[EVENT][whoami]["..l[i].."] Starting "..pathToAPIFile.."")
+		local tEnv = setmetatable({block = block,init = init}, { __index = _ENV } )
+		local fnAPI, err = loadfile(pathToAPIFile)
+		if fnAPI then
+			setfenv( fnAPI, tEnv )
+			local ok, err = pcall( fnAPI )
+			if not ok then
+				dcore.print_log("error","[EVENT][whoami]["..l[i].."] While loading "..pathToAPIFile.."; "..err)
+				if(firstError)then
+					if(term.isColor())then term.setTextColor(colors.red) end
+					print("error found while loading api files, check logs/error for more informations! "..err)
+					term.setTextColor(colors.white)
+					firstError = false
+				end
+			end
+		else
+			dcore.print_log("error","[EVENT][whoami]["..l[i].."] While loading "..pathToAPIFile.."; ")
+			if(firstError)then
+				if(term.isColor())then term.setTextColor(colors.red) end
+				print("error found while loading api files, check logs/error for more informations! "..err)
+				term.setTextColor(colors.white)
+				firstError = false
+			end
+		end
+	end
+end
+
 
 -- Check for mobile computer
 if(pocket)then

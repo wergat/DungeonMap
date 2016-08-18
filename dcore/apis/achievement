@@ -1,6 +1,118 @@
-local qualities = {"usual","unusual","rare","extraordinary","epic","mythical","legendary","forgotten", "nil"}
-local q_color = {"white","aqua","dark_aqua","dark_blue","dark_purple","light_purple","gold","dark_red","dark_green"}
+if(not dcore)then os.loadAPI(":dungeon/dcore/apis/dcore") end
 
+-- SCOREBOARD SET-UP:
+-- scoreboard id = ach_..achID
+-- Value of scoreboard:
+-- 0: does not have that achievement
+-- 1: just made that achievement
+-- 2: has that achievement
+
+dcore.requireAPI("cmd","player","advitem")
+
+local cachedPlayerDone = {}
+
+local storedAchievements = {}
+function getAchievementByID(id)
+	return storedAchievements[id]
+end
+
+function getAll()
+	return storedAchievements
+end
+
+local function setStoredAchievement(ach)
+	storedAchievements[ach.id] = ach
+end
+
+function getCache(player,ach)
+	if(cachedPlayerDone[player])then
+		return cachedPlayerDone[player][ach]
+	end
+end
+function cache(player,achID,value)
+	if(type(player) ~= "string" or type(achID) ~= "string")then error("Player Name and achID needs to be strings",2) end
+	if(not player or not achID)then error("Player Name and achID needs to be strings",2) end
+	if(not cachedPlayerDone[player])then cachedPlayerDone[player] = {} end
+	cachedPlayerDone[player][achID] = value
+end
+
+-- Returns random 5 letter string. Might contain numbers
+local randomStringList = {}
+for i=97,122 do randomStringList[(#randomStringList + 1)] = string.char(i) end
+for i=1,9 do randomStringList[(#randomStringList + 1)] = i end
+local function randomString()
+	local s = ""
+	for i=1,8 do s = s..getRAE(randomStringList) end
+	return s
+end
+
+function new(id)
+	local achObj = {}
+	-- Setting defaults
+	achObj.id = id or tostring({})
+	achObj.title = "Not Set"
+	achObj.text = "Not Set"
+	achObj.hidden = false
+	achObj.rarity = 1
+	-- Checking for repeated unique Ids
+	while getAchievementByID(achObj.id) ~= nil do
+		achObj.id = randomString()
+	end
+	
+	cmd.run("/scoreboard objectives add ach_"..id)
+	
+	-- Setters
+	achObj.setTitle = function(self,newTitle) self.title = newTitle return self end
+	achObj.setText = function(self,newText) self.text = newText return self end
+	achObj.setHidden = function(self,isHidden) self.hidden = isHidden return self end
+	achObj.setRarity = function(self,newRarity) 
+		self.rarity = newRarity
+		if(not self.rarity)then error("Rarity is set to nil, cannot work with this!",2) end
+		return self
+	end
+	
+	-- player: NAME of the player
+	achObj.notify = function(self,playerName)
+		if(not self or not playerName)then error("This function requires an Achievement Object!",2) end
+		if(not self.rarity)then error("Rarity is set to nil, cannot work with this!",2) end
+		local command = '/tellraw @a ["",{"text":"'..playerName..' has just earned the "},{"text":"'..advitem.getRarity(self.rarity)..'","color":'..advitem.getRarityColor(self.rarity)..'},'..
+		'{"text":" achievement "},{"text":"['..self.title..']","color":"green","hoverEvent":{"action":"show_text","value":{"text":"","extra":[{"text":"'..self.title..'\n","color":"green"},'..
+		'{"text":"'..type(advitem.getRarity(self.rarity):gsub("^%l", string.upper))..' achievement\n","color":"'..advitem.getRarityColor(self.rarity)..'","italic":true},{"text":"'..tostring(self.text)..'"}]}}}]'
+		cmd.run(command)
+	end
+	
+	achObj.isDone = function(self,playerName)
+		local cacheValue = getCache(playerName,self.id)
+		if(cacheValue == nil)then
+			local value = tonumber(player.getPlayerByName(playerName):getScoreboardValue("ach_"..self.id) or 0)
+			-- Save it to the cache for quicker loading later on
+			cache(playerName,self.id,(value > 0))
+			return (value > 1)
+		else
+			return cacheValue
+		end
+	end
+	
+	-- Sets a achievment as completed by that player
+	achObj.setDone = function(self,playerName)
+		if(type(playerName) == "table")then
+			for i=1,#playerName do self:setDone(playerName[i]) end
+		elseif(type(playerName) == "string")then
+			if(not self:isDone(playerName))then 
+				self:notify(playerName)
+				player.getPlayerByName(playerName):setScoreboardValue("ach_"..self.id,2)
+				-- Save it to the cache for quicker loading later on
+				cache(playerName,self.id,true)
+			end
+		end
+	end
+	
+	setStoredAchievement(achObj)
+	
+	return achObj
+end
+
+--[[
 function getNearestPlayer()
 	local _, res = commands.xp(0, "@p")
 	local result = string.match(res[1], "Given 0 experience to (%w+)")
@@ -35,3 +147,5 @@ function makeAchievement(name,desc,player,tier,repeatable)
 	commands.exec(command)
 	return true
 end
+]]
+

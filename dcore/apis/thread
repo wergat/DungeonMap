@@ -1,3 +1,8 @@
+-- Restarting of dead threads once they error'ed once, just to give them a chance
+config.conditionalSet("THREAD_REVIVE_DEAD_ONCE",true)
+-- REboot the system if a thread is finally dead
+config.conditionalSet("THREAD_REBOOT_AFTER_DEAD",false)
+
 -- Got most of this stuff from the parrallel API
 local threads = {}
 
@@ -5,14 +10,28 @@ function getThreads()
 	return threads
 end
 
+function getThreadByID(id)
+	return threads[id]
+end
+
+-- Status:
+-- New: Jsut Created
+-- [...]
+-- terminate: killed or done working
+-- dead: threw error
+
 function add(func,name)
-	print("Thread "..name.." added!")
+	--print("Thread "..name.." added!")
 	if(not func or type(func) ~= "function")then
 		error("thread.add Requires a function as input!",2)
 	end
-    local newRoutine = {["data"] = coroutine.create(func),["name"] = name or "unknown",["status"] = "init"}
+    local newRoutine = {["data"] = coroutine.create(func),["name"] = name or "unknown",["status"] = "new",["func"] = func,["restarted"] = false}
 	threads[(#threads + 1)] = newRoutine
 	return #threads
+end
+
+function isRunning()
+	
 end
 
 function getLivingThreads()
@@ -41,18 +60,41 @@ function run()
 		-- Doing the stuff
     	for n=1,count do
     		local r = threads[n]
-    		if r.status ~= "dead" then
+    		if r.status ~= "dead" and r.status ~= "terminate" then
 				--print(r.name)
     			if tFilters[r.data] == nil or tFilters[r.data] == eventData[1] or eventData[1] == "terminate" then
 	    			local ok, param = coroutine.resume(r.data,unpack(eventData))
 					r.status = coroutine.status(r.data)
+					-- An error happened
 					if not ok then
-						error( param, 0 )
+						-- Check if thread has already been restarted
+						if((r.restarted and config.THREAD_REVIVE_DEAD_ONCE) or (not config.THREAD_REVIVE_DEAD_ONCE))then
+							printError("Critical error. Thread \""..r.name.."\" dead! Error Message: "..param)
+							cmd.run("/say Critical error. Thread \""..r.name.."\" dead! Error Message: "..param)
+							dcore.print_log("error","Critical error. Thread \""..r.name.."\" dead! Error Message: "..param)
+							r.restarted = true
+							if(config.THREAD_REBOOT_AFTER_DEAD)then
+								os.reboot()
+							end
+						else
+							printError("ERROR: "..param)
+							cmd.run("/say ERROR: "..param)
+							dcore.print_log("error","ERROR: "..param)
+							-- Revive the thread
+							r.status = "new"
+							tFilters[r.data] = nil
+							r.data = coroutine.create(r.func)
+							r.restarted = true
+						end
 					else
 						tFilters[r.data] = param
 					end
 					if coroutine.status(r.data) == "dead" then
-						threads[n].status = "dead"
+						if(ok)then
+							threads[n].status = "terminate"
+						else
+							threads[n].status = "dead"
+						end
 					end
 				end
     		end

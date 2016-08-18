@@ -3,6 +3,7 @@ dcore.requireAPI("farben")
 dcore.requireAPI("ench")
 
 config.conditionalSet("DISABLE_DURABILITY_ON_ITEMS",false)
+config.conditionalSet("ENABLE_ITEM_ROLL_INFORMATIONS",false)
 
 
 -- //////////////////
@@ -18,7 +19,7 @@ end
 local rarityColors = {"f","b","3","1","5","d","6","4"}
 -- Gets rarity color from rarity level
 function getRarityColor(_v)
-	if(not _v or _v>#rarityColors)then error("Please give a number! ".._v.." does not seem to be a good one!") end
+	if(not _v or _v>#rarityColors)then error("Please give a number! "..tostring(_v).." does not seem to be a good one for advitem.getRarityColor()!",2) end
 	return SS(rarityColors[_v]) or nil
 end
 -- Calculates rarity level, optional input is minimum rarity level

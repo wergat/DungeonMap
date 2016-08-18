@@ -1,0 +1,976 @@
+-- Sending to port 55
+-- recieving from port 54
+
+print("Initializing the Dungeon Arena")
+-- Laoding important APIS
+
+-- Loading more API's
+print("Loading more APIs")
+os.loadAPI(":dungeon/dcore/apis/dcore")
+os.loadAPI(":dungeon/mods/DungeonArena/apis/room")
+os.loadAPI(":dungeon/mods/DungeonArena/apis/sha256")
+os.loadAPI(":dungeon/mods/DungeonArena/apis/hat")
+
+
+dcore.requireAPI("chest")
+dcore.requireAPI("advitem")
+dcore.requireAPI("villager")
+dcore.requireAPI("achievement")
+dcore.requireAPI("cmd")
+dcore.requireAPI("player")
+dcore.requireAPI("mob")
+
+
+
+-- Setting default Config
+-- LOading the config, just to make sure it is loaded
+config.load()
+
+config.softInit("Internal Tick Speed",0.05)
+config.softInit("Command Spread Factor",5)
+config.softInit("Remove Torches",true)
+config.softInit("Place Torches",true)
+config.softInit("Wave",1)
+config.softInit("Starting Supply","Good")
+config.softInit("Starting Equipment","Good")
+config.softInit("Minecraft Difficulty","easy")
+config.softInit("Natural Regeneration",true)
+config.softInit("Spawn Villagers",true)
+config.softInit("CachedChestPositions","")
+config.softInit("LevelGain",8) -- 2,4,8,12,16
+config.softInit("Lives Amount",3)
+config.softInit("Enable Music",false)
+config.softInit("Stage","init")
+config.softInit("AchievementTickRate",0.1) -- In seconds, 1 is okay
+config.softInit("AllowLuaInjection",true) -- Allow user to send lua code to be executed here
+
+-- Saving if we just changed any settings
+config.save()
+
+-- Setting up scoreboards
+cmd.run("/scoreboard objectives add lives deathCount")
+
+-- Setting up the achievements
+--achievement.add(achievement.new(language.get("achievement.dead.name")):setDesc(language.get("achievement.dead.description")):setRarity(6))
+--achievement.add(achievement.new(language.get("achievement.history.name")):setDesc(language.get("achievement.history.description")):setRarity(9):setHidden(true))
+--achievement.add(achievement.new(language.get("achievement.cheat.name")):setDesc(language.get("achievement.cheat.description")):setRarity(9):setHidden(true))
+local achievements = {}
+achievements["enterShop"] = {"achievement.shop.name","achievement.shop.description",1,false}
+achievements["noInternet"] = {"achievement.no_internet.name","achievement.no_internet.description",6,true}
+achievements["hated"] = {"achievement.hated.name","achievement.hated.description",4,true}
+achievements["rich"] = {"achievement.rich.name","achievement.rich.description",3,false}
+achievements["reader"] = {"achievement.reader.name","achievement.reader.description",2,true}
+achievements["pakka"] = {"achievement.pakka.name","achievement.pakka.description",5,true}
+achievements["melt"] = {"achievement.melt.name","achievement.melt.description",6,false}
+achievements["meltClever"] = {"achievement.melt_clever.name","achievement.melt_clever.description",8,true}
+achievements["translate"] = {"achievement.translate.name","achievement.translate.description",8,false}
+achievements["herring"] = {"achievement.herring.name","achievement.herring.description",5,true}
+achievements["treasure"] = {"achievement.treasure.name","achievement.treasure.description",5,false}
+achievements["chicken"] = {"achievement.chicken.name","achievement.chicken.description",6,true,function()
+	achievement.getAchievementByID("chicken"):setDone(player.getPlayersBySelector("@a[score_ChickenKilled_min=1]"):getNames())
+end}
+achievements["heat"] = {"achievement.heat.name","achievement.heat.description",5,true,function()
+	local playersWithoutThisAchievment = (player.getPlayersBySelector("@a") - player.getPlayersBySelector("@a[score_ach_heat_min=1]"))
+	if(#playersWithoutThisAchievment:getNames() > 0)then -- Optimising this, keep the commands that are run always low!
+		playersWithoutThisAchievment:execute("detect ~ ~0.7 ~ minecraft:lava -1 /scoreboard players set @p ach_heat 1")
+		achievement.getAchievementByID("heat"):setDone(player.getPlayersBySelector("@a[score_ach_heat_min=1,score_ach_heat=1]"):getNames())
+	end
+end}
+achievements["fifty"] = {"achievement.fifty.name","achievement.fifty.description",7,false}
+achievements["ninetyFour"] = {"achievement.nf.name","achievement.nf.description",8,true}
+achievements["konami"] = {"achievement.konami.name","achievement.konami.description",4,true}
+
+-- Dungeon Arena Main Script
+
+-- Running Background Processe Monitor
+local ThreadsMonitoringTab = multishell.launch({}, ":dungeon/utils/threads")
+-- Runs Command Monitor
+local CommandsMonitoringTab = multishell.launch({}, ":dungeon/utils/commands")
+-- Start important main threads
+local ThreadsRunningTab = multishell.launch({}, ":dungeon/computers/dev/threads")
+--
+
+-- Setting options to default, if it those has not been set yet.
+local tickspeed = config.get("Internal Tick Speed")
+cmd.variableFactor = config.get("Command Spread Factor")
+local wave = config.get("Wave")
+
+-- Check for running Songs
+local songRunning = config.get("Enable Music")
+local nextSong = true
+
+local currentObjective = "Not sure"
+
+local hatData = {}
+if(fs.exists("hatData"))then
+	local hatFile = fs.open("hatData","r")
+	if(hatFile)then
+		hatData = textutils.unserialize(hatFile.readAll())
+		hatFile.close()
+	end
+end
+
+
+
+-- Get the Difficulty Level
+function getLevel()
+	local x = config.get("Wave")
+	return math.floor(((x + 1) * (x + config.get("LevelGain"))) / 8)
+end
+
+-- Rooms & Connections
+function loadConnections(block)
+	local block = "minecraft:stonebrick"
+
+	--                          +-------+
+	-- X-Connection (X-1/Y) [--<| ROOM  |>--} X-Connection (X/Y)
+	--                          | (X/Y) |
+	--                          +-------+
+	--                            \/ Y-Connection X/Y
+	--
+
+	-- Reset area from -4 20 -21 to 4 20 -13
+	local function removeXConnection(x,y)
+		for height=1,4 do
+			for width=1,5 do
+				cmd.run("/setblock "..(14+x*20).." "..(18+height).." "..(-68+y*20+width).." "..block)
+			end
+		end
+	end
+	local function removeYConnection(x,y)
+		for height=1,4 do
+			for width=1,5 do
+				cmd.run("/setblock "..(1+x*20+width).." "..(18+height).." "..(-55+y*20).." "..block)
+			end
+		end
+	end
+	local function addXConnection(x,y)
+		for height=1,4 do
+			for width=1,5 do
+				cmd.run("/setblock "..(14+x*20).." "..(18+height).." "..(-68+y*20+width).." air")
+			end
+		end
+	end
+	local function addYConnection(x,y)
+		for height=1,4 do
+			for width=1,5 do
+				cmd.run("/setblock "..(1+x*20+width).." "..(18+height).." "..(-55+y*20).." air")
+			end
+		end
+	end
+	local function addRandomXConnection(x,y)
+		addXConnection(x,y)
+	end
+	local function addRandomYConnection(x,y)
+		addYConnection(x,y)
+	end
+
+	for x=1,4 do
+		for y=1,4 do
+			removeXConnection(x,y)
+			removeYConnection(x,y)
+		end
+	end
+		
+	addRandomXConnection(3,3)
+	addRandomXConnection(2,3)
+	addRandomYConnection(3,3)
+	addRandomYConnection(3,2)
+
+	local start = {1,1}
+	local lookingAt = start
+
+	local points = {}
+	points[lookingAt[1]] = {}
+	points[lookingAt[1]][lookingAt[2]] = {["back"] = "-x",["backCheck"] = false,["bossCheck"] = false,["endCheck"] = false}
+
+	local done = false
+
+	function canConnectTo(x,y)
+		-- Check if coordinates are valid
+		if(x>=1 and x<=5 and y>=1 and y<=5)then
+			-- Check if space is not already taken
+			if((points[x])==nil)then
+				return true
+			else
+				if((points[x][y])==nil)then
+					return true
+				else
+					return false
+				end
+			end
+			return true
+		else
+			return false
+		end
+	end
+	while not done do
+		local dirs = {}
+		local x = lookingAt[1]
+		local y = lookingAt[2]
+		
+		if(canConnectTo(x+1,y))then table.insert(dirs,"+x") end
+		if(canConnectTo(x-1,y))then table.insert(dirs,"-x") end
+		if(canConnectTo(x,y+1))then table.insert(dirs,"+y") end
+		if(canConnectTo(x,y-1))then table.insert(dirs,"-y") end
+		
+		if(x==3 and y==3)then points[x][y]["bossCheck"] = true end
+		if(x==3 and y==1)then points[x][y]["endCheck"] = true end
+		
+		-- Go further
+		if(#dirs>0)then
+			local choosenDir = math.random(#dirs)
+			local backdir = dirs[choosenDir]
+			-- Encourage non-straight behaviour
+			if(points[x][y]["back"]==backdir and math.random(3)>1 and #dirs>1)then
+				choosenDir = math.random(#dirs)
+				backdir = dirs[choosenDir]
+			end
+			if(#dirs>1 and math.random(3)==1)then
+				local anotherDir = math.random(#dirs)
+				if(anotherDir ~= choosenDir)then
+					if(dirs[anotherDir] == "+x")then addRandomXConnection(x,y) end
+					if(dirs[anotherDir] == "-x")then addRandomXConnection(x-1,y) end
+					if(dirs[anotherDir] == "+y")then addRandomYConnection(x,y) end
+					if(dirs[anotherDir] == "-y")then addRandomYConnection(x,y-1) end
+				end
+			end
+			local newpoint = {}
+			if(backdir == "+x")then newpoint = {x+1,y} addXConnection(x,y) end
+			if(backdir == "-x")then newpoint = {x-1,y} addXConnection(x-1,y) end
+			if(backdir == "+y")then newpoint = {x,y+1} addYConnection(x,y) end
+			if(backdir == "-y")then newpoint = {x,y-1} addYConnection(x,y-1) end
+			
+			if(not points[newpoint[1]])then points[newpoint[1]] = {} end
+			points[newpoint[1]][newpoint[2]] = {["back"] = backdir,["backCheck"] = false,["bossCheck"] = false}
+			lookingAt = newpoint
+		else -- Go back
+			if(x == start[1] and y == start[2])then -- Check if back at start
+				points[x][y]["backCheck"] = true
+				done = true
+			else
+				points[x][y]["backCheck"] = true
+				local backdir = points[x][y]["back"]
+				if(backdir == "+x")then lookingAt = {x-1,y} end
+				if(backdir == "-x")then lookingAt = {x+1,y} end
+				if(backdir == "+y")then lookingAt = {x,y-1} end
+				if(backdir == "-y")then lookingAt = {x,y+1} end
+				points[lookingAt[1]][lookingAt[2]]["bossCheck"] = points[lookingAt[1]][lookingAt[2]]["bossCheck"] or points[x][y]["bossCheck"]
+				points[lookingAt[1]][lookingAt[2]]["endCheck"] = points[lookingAt[1]][lookingAt[2]]["endCheck"] or points[x][y]["endCheck"]
+			end
+		end
+	end
+end
+
+-- Chests
+function removeChests()
+	local chestPositions = config.get("CachedChestPositions")
+	if not chestPositions then return end
+	local chests = textutils.unserialize(chestPositions)
+	if(not chests)then return end
+	for i = 1, #chests do
+		local coords = chests[i]
+		if(not coords[1])then
+			error("meh1 ["..i.."] "..chestPositions,2)
+		end		if(not coords[2])then
+			error("meh2 ["..i.."] "..chestPositions,2)
+		end		if(not coords[3])then
+			error("meh3 ["..i.."] "..chestPositions,2)
+		end
+		cmd.run("/setblock "..coords[1].." "..coords[2].." "..coords[3].." {Items:[]}")
+		cmd.run("/setblock "..coords[1].." "..coords[2].." "..coords[3].." air")
+	end
+end
+function getChestAreas()
+	return {"76 25 39", "90 29 -31", "37 9 -3", "18 19 21", "84 20 -54"}
+end
+function getNewChestPosition(past,timeout)
+	local chests = room.getChestPlaceTable()
+	local r = chests[math.random(#chests)]
+	if past[r] and (timeout or 0) < 50 then
+		return getNewChestPosition(path,(timeout or 0) + 1)
+	else
+		return r
+	end
+end
+function resetMiscChests()
+	local coords = {"62 19 44", "62 20 44", "74 26 36", "74 27 36"}
+	for i = 1, #coords do
+		cmd.run("/blockdata " .. coords[i] .. " {Items:[]}",function() cmd.run("/setblock " .. coords[i] .. " air") end)
+	end
+	-- Levers chest (infront of gate)
+	cmd.run("/setblock 62 20 44 wall_sign 0 replace {Text1:\"" .. language.get("chest.keys") .. language.get("chest.plural") .. "\", Text2:\"I\", Text3:\"I\", Text4:\"V\"}")
+	cmd.run("/setblock 62 19 44 chest 1 replace {Items:[{Slot:0,id:\"minecraft:tripwire_hook\", Count:64, Damage:0, tag:{display:{Name:\"" .. language.get("chest.keys") .. "\", Lore:[\"" .. (language.get("chest.keys_lore_fake")[1] or "") .. "\", \"" .. (language.get("chest.keys_lore_fake")[2] or "") .. "\"]}}}]}")
+	-- Money chest (In the shop)
+	cmd.run("/setblock 74 27 36 wall_sign 1 replace {Text1:\"" .. language.get("chest.money") .. "\", Text2:\"I\", Text3:\"I\", Text4:\"V\"}")
+	cmd.run("/setblock 74 26 36 chest 1 replace {Items:[{Slot:0,id:\"minecraft:nether_star\", Count:64, tag:{display:{Name:\"Nether Star\", Lore:[\"This item is part of the currency\", \"It is worth exactly "..SS(2).."1'250'000"..SS("r")..SS("5")..SS("o").." quaz!\"]}}}, {Slot:1,id:\"minecraft:diamond_pickaxe\",Count:1,tag:{CanDestroy:[\"minecraft:sponge\", \"minecraft:prismarine\"],display:{Name:\"Easter Egg Pick\",Lore:[\"Breaks secret blocks\"]}}}]}")
+end
+function summonChests()
+	local count = math.random(2,4)
+	local past = {}
+	local chosen = {}
+	for i = 1, count do
+		local coords = getNewChestPosition(past)
+		past[coords] = true
+		chosen[#chosen+1] = coords
+		chest.placeChest(getLevel(),coords[1],coords[2],coords[3])
+	end
+
+	--Summon anvil
+	local coords = getNewChestPosition(past)
+	past[coords] = true
+	chosen[#chosen+1] = coords
+	cmd.run("/setblock "..coords[1].." "..coords[2].." "..coords[3].." anvil")
+	print("Done summoning anvil")
+	
+	print("Summoning bookshelves")
+	loadEnchantmentTables(24,17,-5)
+	loadEnchantmentTables(104,17,-25)
+	print("Done summoning bookshelves")
+	
+	config.set("CachedChestPositions", textutils.serialize(chosen))
+end
+function defuseChest(x,y,z)
+	cmd.run("/blockdata "..x.." "..y.." "..z.." {Items:[]}",function() cmd.run("/setblock "..x.." "..y.." "..z.." chest") end)
+end
+
+-- Torches
+function getTorch()
+	return {"66 20 43", "62 20 43", "62 19 50", "66 19 50", "71 22 49", "60 20 6","56 20 6","53 20 3","53 20 -1","53 20 -9","53 20 -13","60 20 -16","68 20 -16","72 20 -16","75 20 -13","75 20 -1","75 20 3","72 20 6","68 20 6"}
+end
+function getTorchRooms()
+	return {{"112 24 -52", "92 16 43"},{"72 18 43", "91 24 -52"}, {"52 18 55", "71 24 -53"}, {"51 24 -53", "32 24 43"}, {"31 24 43", "16 16 -52"}, {"37 33 -32", "56 25 22"}, {"57 33 -32", "76 26 22"}, {"77 33 -32", "91 26 22"}, {"91 7 2", "72 16 -32"}, {"71 7 -32", "52 16 42"}, {"51 15 -12", "37 7 22"}}
+end
+
+-- Other
+function isResourcePackInstalled()
+	local _, res = commands.exec("/summon testing123")
+	print(res[1])
+	return res[1] == "DO NOT TRANSLATE THIS!"
+end
+function getRandomSpawnPosition()
+	local t = {"64 10 32", "93 19 14", "63 17 -46", "84 19 35", "71 28 16", "48 29 -20", "83 28 15", "49 11 -1", "64 9 -24", "87 21 -25", "84 22 -45", "110 19 39", "65 10 40", "102 17 -6", "84 19 40"}
+	return t[math.random(#t)]
+end
+function setGateStatus(isOpen,gate)
+	local pos = {}
+	pos["forest"] = function(open) 
+		commands.exec("/setblock 84 28 23 "..(open and "minecraft:air" or "minecraft:iron_bars"))
+		commands.exec("/setblock 84 29 23 "..(open and "minecraft:air" or "minecraft:iron_bars"))
+	end
+	pos["key"] = function(open) 
+		commands.exec("/setblock 64 19 45 "..(open and "minecraft:air" or "minecraft:iron_bars"))
+		commands.exec("/setblock 64 20 45 "..(open and "minecraft:air" or "minecraft:iron_bars"))
+	end	
+	pos["shop"] = function(open) 
+		commands.exec("/setblock 72 26 37 "..(open and "minecraft:air" or "minecraft:iron_bars"))
+		commands.exec("/setblock 72 27 37 "..(open and "minecraft:air" or "minecraft:iron_bars"))
+	end	
+	pos["guardian"] = function(open)
+		-- Add more gates
+		if(open)then
+			cmd.run("/fill 72 18 -6 72 21 -4 air")
+			cmd.run("/fill 72 20 -6 72 21 -4 minecraft:iron_bars")
+			cmd.run("/fill 72 17 -6 72 19 -4 minecraft:stonebrick")
+			cmd.run("/fill 73 18 -6 73 18 -4 minecraft:stonebrick")
+		else
+			cmd.run("/fill 72 18 -6 72 21 -4 air")
+			cmd.run("/fill 72 17 -6 72 17 -4 minecraft:stone_brick_stairs")
+			cmd.run("/fill 73 18 -6 73 18 -4 minecraft:stone_brick_stairs")
+		end
+	end
+	pos["leaveShop"] = function(open)
+		commands.exec("/setblock 78 31 26 "..(open and "minecraft:air" or "minecraft:iron_bars"))
+		commands.exec("/setblock 78 32 26 "..(open and "minecraft:air" or "minecraft:iron_bars"))
+	end
+	if(pos[gate])then
+		pos[gate](isOpen)
+	end
+end
+
+-- Mobs 
+function killAllMobsInList(list)
+	for i = 1, #list do
+		cmd.run("/tp @e[type=" .. list[i] .. "] ~ -1000 ~",false)
+	end
+end
+function summonMobsInRooms()
+	local difficulty = getLevel()
+	local roomsToSpawnIn, c = room.getRooms(10)
+	-- Summon random mobs that run around the arena
+	for i=1,8 do --dungeon, 0% harder (0% easier, 4/4)
+		for j=1,math.random(5,8) do
+			mob.newMob({difficulty = difficulty+math.random(4)}):auto():summon(roomsToSpawnIn[i][1],roomsToSpawnIn[i][2]+0.5,roomsToSpawnIn[i][3])
+		end
+	end
+	for i=8,14 do --forest, -25% harder (25% easier, 3/4)
+		for j=1,math.random(5,8) do
+			mob.newMob({difficulty = ((difficulty+math.random(4))/4)*3}):auto():summon(roomsToSpawnIn[i][1],roomsToSpawnIn[i][2]+0.5,roomsToSpawnIn[i][3])
+		end
+	end
+	for i=14,20 do --mines, 25% harder (25% harder, 5/4)
+		for j=1,math.random(5,8) do
+			mob.newMob({difficulty = ((difficulty+math.random(4))/4)*5}):auto():summon(roomsToSpawnIn[i][1],roomsToSpawnIn[i][2]+0.5,roomsToSpawnIn[i][3])
+		end
+	end
+end
+function summonBoss()
+	local difficulty = getLevel()
+	mob.summonBoss(60,18,-1,nil,difficulty+20)
+	-- Summon boss peasants
+	for j=1,math.random(14,20) do
+		local r = mob.newMob({difficulty = difficulty})
+		r:auto()
+		r:setDropChances({"0.1f","0.1f","0.1f","0.1f","0.1f"})
+		if r.equipment.helmet[1] == nil then
+			r:setEquipment("helmet",{["id"] = 77,["Damage"] = 0,["Count"] = 1,["tag"] = {["display"] = {["Name"] = "Sun Shield", ["Lore"] = {"It's not a key, unfortunately."}}},})
+			r:setDropChances({"0f","0.1f","0.1f","0.1f","0.1f"})
+		end
+		r:summon(64+math.random(-5,-5),19,-5+math.random(-5,-5))
+	end
+end
+function summonGuardians()
+	local guardianData = '{ActiveEffects:[{Id:8,Amplifier:-10,Duration:2147483647}],PersistenceRequired:1b,CustomName:"Gate_Guardian",Equipment:[{},{id:313,Count:1,Damage:0,tag:{ench:[{id:2,lvl:4}]}},{},{id:311,Count:1,Damage:0},{id:310,Count:1,Damage:0}],Attributes:[{Name:"generic.movementSpeed",Base:0.0},{Name:"generic.knockbackResistance",Base:1.0}],DropChances:[0.0f,0.0f,0.0f,0.0f,0.0f]}'
+	commands.exec('/summon Zombie 70 16 -5 '..guardianData)
+	commands.exec('/summon Zombie 64 16 1 '..guardianData)
+	commands.exec('/summon Zombie 58 16 -5 '..guardianData)
+	commands.exec('/summon Zombie 64 16 -11 '..guardianData)
+end
+function checkForGuardians()
+	local a,b = cmd.get("/testfor @e[type=Zombie,name=Gate_Guardian]")
+	return a
+end
+
+
+
+-- First Setup
+function setup()
+	cmd.run("/spawnpoint @a -7 4 8")
+	cmd.run("/gamerule keepInventory true")
+	cmd.run("/gamerule mobGriefing false")
+end
+-- Reset
+function reset()
+	-- Remove Chests
+	removeChests()
+	resetMiscChests()
+	
+	-- Remove Torches
+	if config.get("Remove Torches") ~= false then
+		for i = 1, #getTorchRooms() do
+			cmd.run("/fill " .. getTorchRooms()[i][1] .. " " .. getTorchRooms()[i][2] .. " air 0 replace torch")
+		end
+	end
+	if config.get("Place Torches") == true then
+		for i = 1, #getTorch() do
+			cmd.run("/setblock " .. getTorch()[i] .. " torch")
+		end
+	end
+	
+	-- Giving Supply	
+	local count
+	if config.get("Starting Supply") == "Good" then count = 20
+	elseif config.get("Starting Supply") == "Okay" then count = 10
+	elseif config.get("Starting Supply") == "Poor" then count = 5
+	else count = 0 end
+	cmd.run("/give @a cooked_beef "..count)
+	for i=1,count do cmd.run("/give @r torch 1 0 {HideFlags:16,CanPlaceOn:[\"minecraft:dirt\", \"minecraft:stone\", \"minecraft:stonebrick\", \"minecraft:planks\"]}") end
+	local modifier
+	if config.get("Starting Equipment") == "Good" then modifier = math.random(10) -- 1-10 levels extra
+	elseif config.get("Starting Equipment") == "Okay" then modifier = 0 -- 0 levels extra
+	elseif config.get("Starting Equipment") == "Poor" then modifier = -math.random(5) -- -1-5 levels extra
+	else modifier = "skip" end
+	
+	-- Ingame Difficulty
+	if config.get("Minecraft Difficulty") then cmd.run("/difficulty " .. config.get("Minecraft Difficulty")) end
+	-- Natural Generation
+	if config.get("Natural Regeneration") then cmd.run("/gamerule naturalRegeneration true")
+	else cmd.run("/gamerule naturalRegeneration false") end
+	
+	--Give starter equipment
+	local playerList = player.getPlayersBySelector("@a"):isOnline()
+	if not (modifier == "skip") then
+		for playerName,isOnline in pairs(playerList) do
+			if(isOnline)then
+				for _,itemSlot in pairs({"weapon","boots","leggings","chestplate","helmet"}) do
+					local itemTable = {}
+					if(itemSlot == "weapon")then
+						repeat
+							itemTable = advitem.newItem({itemLevel = math.floor(getLevel()*20+6+modifier), itemType = itemSlot, unbreakable = true})
+						until itemTable.itemType ~= "bow"
+						itemTable = itemTable:autoNBT()
+					else
+						itemTable = advitem.newItem({itemLevel = math.floor(getLevel()*20+0.5+modifier), itemType = itemSlot, unbreakable = true}):autoNBT()
+					end
+					if(itemTable.tag)then
+						cmd.run("/give ".. playerName .." " .. itemTable.id .. " 1 0 " .. dcore.getNBTStringFromTable(itemTable.tag))
+					end
+				end
+			end
+		end
+	end
+	
+	-- Giving the players some potions at the start
+	if config.get("Initial Healing") then
+		for i = 1, tonumber(config.get("Initial Healing")) do
+			commands.exec('/give @r potion 1 16421 {CustomPotionEffects:[{Id:6,Amplifier:1,Duration:10}],display:{Name:"§2Pure Commands§r",Lore:["It\'s a Healthy Potion!","This potion is worth §60§r§5 quaz.","The effects of this potion are 100% positive","Might contain.. nothing? Huh?"]}}')
+		end
+	end
+	
+	-- Giving a controll computer to the players
+	cmd.run('/give @a computercraft:pocketComputer 1 1 {display:{Name:"' .. language.get("rednet.options") .. '"},computerID:2,upgrade:1}')
+	
+	-- Music Control
+	if config.get("Enable Music") == true then
+		os.queueEvent("music","enable")
+		os.queueEvent("music","next")
+	else
+		os.queueEvent("music","disable")
+	end
+	
+	
+end
+
+-- Villagers
+function killVillagers()
+	-- Killing all the villagers
+	--cmd.run('/tellraw @a "Killing villagers"')
+	cmd.run("/tp @e[type=Villager] ~ -1000 ~",false)
+end
+function summonVillagers()
+	local args = {noAI = true}
+	local villager_areas = {
+		{62,26,38},
+		{56,26,38},
+		{56,26,28},
+	}
+	local high_level_villager_areas = {
+		{53,26,31},
+		{53,26,35},
+	}
+	if config.get("Spawn Villagers") then
+		villager.new(args):setCustomType("closed"):setName(language.get("villager.drug")):summon(82, 26, 35)
+		villager.new(args):setCustomType("closed"):setName(language.get("villager.exchange")):summon(77, 26, 38)
+		villager.new(args):setCustomType("closed"):setName(language.get("villager.exchange")):summon(80, 26, 38)
+		villager.new(args):setCustomType("closed"):setName(language.get("villager.food")):summon(77, 26, 31)
+		villager.new(args):setCustomType("closed"):setName(language.get("villager.trash")):summon(67, 26, 28)
+	else
+		villager.new(args):setCustomType("drug", getLevel()):setName(language.get("villager.drug")):summon(82, 26, 35)
+		villager.new(args):setCustomType("currency"):setName(language.get("villager.exchange")):summon(77, 26, 38)
+		villager.new(args):setCustomType("currency"):setName(language.get("villager.exchange")):summon(80, 26, 38)
+		villager.new(args):setCustomType("food"):setName(language.get("villager.food")):summon(77, 26, 31)
+		villager.new(args):setCustomType("trash"):setName(language.get("villager.trash")):summon(67, 26, 28)
+	end
+	for i = 1, #villager_areas do
+		local obj = villager.new(args):setCustomType("equipment", getLevel()+5)
+		obj:setName(language.get("villager.normal"))
+		if config.get("Spawn Villagers") then
+			obj:setCustomType("closed")
+		end
+		obj:summon(villager_areas[i][1], villager_areas[i][2], villager_areas[i][3])
+	end
+	
+	-- Summoning more villagers
+	for i = 1, #high_level_villager_areas do
+		local obj = villager.new(args):setCustomType("equipment", (getLevel()*1.4)+10)
+		obj:setName(language.get("villager.high"))
+		if config.get("Spawn Villagers") then
+			obj:setCustomType("closed")
+		end
+		obj:summon(high_level_villager_areas[i][1], high_level_villager_areas[i][2], high_level_villager_areas[i][3])
+	end
+end
+
+-- Arena Generation
+function loadEnchantmentTables(x,y,z)
+	local enchTableCounter = 0
+	local function addBookshelf(x,baseY,z)
+		local c = (math.random(4) == 1)
+		if c then enchTableCounter = enchTableCounter + 1	end
+		if enchTableCounter == 12 then c = not c end
+		local function addBookshelfOrNot(bshelf,a)
+			cmd.run("/setblock "..x.." "..(baseY+a).." "..z.." "..((not bshelf) and 'minecraft:air' or 'minecraft:bookshelf'))
+		end
+		local lower = math.random(2) > 1
+		addBookshelfOrNot(lower,0)
+		addBookshelfOrNot(lower and c,1)
+	end
+	for i=0,2 do
+		addBookshelf(x-1+i,y,z+2)
+		addBookshelf(x+2,y,z-1+i)
+		addBookshelf(x-1+i,y,z-2)
+		addBookshelf(x-2,y,z-1+i)
+	end
+end
+
+
+local stages = {}
+function registerStage(stageName,func)
+	stages[stageName] = func
+end
+registerStage("start",function()
+	currentObjective = "Fight your way to the center!"
+	-- Print a random Message on Level start
+	local randomMessage = language.get("wave.splashs")
+	if config.get("Wave") == 1 then cmd.run("/tp @a "..getRandomSpawnPosition()) end
+	math.randomseed((config.get("Wave") + getLevel())) --seed is the average of the wave # and the level
+	local msg = randomMessage[math.random(#randomMessage)] or ""
+	cmd.run('/title @a title ["",{"text":"' .. language.get("wave.name") .. ' ","color":"gold"},{"text":"' .. config.get("Wave") .. '","color":"blue"}]')
+	cmd.run('/title @a subtitle ["",{"text":"' .. msg .. '","color":"blue"}]')
+	
+	--Summon chests to loot
+	summonChests()
+
+	-- Start the next stage
+	print("Stage: start -> waiting_key")
+	config.set("Stage","waiting_key")
+	config.save()
+end)
+registerStage("waiting_key",function()
+	--Open gate when person with key nearby is there
+	--cmd.run('/tellraw @a '..language.get("wave.waiting_key"))
+	cmd.run("/say Waiting for guardians to be killed")
+	currentObjective = "Kill the guardians and the boss in the centre of the arena!"
+	-- Wait for guardians to be killed
+	while checkForGuardians() do
+		sleep(1)
+	end
+	cmd.run("/say Waiting for someone with a key in front of the gate")
+	currentObjective = "Bring the key dropped by the boss to the gate!"
+	setGateStatus(true,"guardian")
+	
+	repeat
+		local suc, playersInAreaWithKey = commands.exec("/clear @a[64,19,43,r=2] tripwire_hook 0 1")
+		sleep(0.05)
+	until suc and #playersInAreaWithKey > 0
+	
+	-- Open/Close the gates
+	setGateStatus(false,"forest")
+	setGateStatus(true,"key")
+	
+	-- Place End-Of-Wave Chest
+	chest.placeChest(getLevel(),64,20,53)
+	
+	print("Stage: waiting_key -> waiting_shop")
+	config.set("Stage","waiting_shop")
+	config.save()
+end)
+registerStage("waiting_shop",function()
+	currentObjective = "Go upstairs"
+	cmd.run('/tellraw @a '..language.get("wave.waiting_shop"))
+	repeat
+		local _,playersOutsideArea = commands.exec("/xp 0 @a[72,26,40,rm=5]")
+		sleep(0.05)
+	until #playersOutsideArea == 0
+
+	-- Open/Close the gates
+	setGateStatus(false,"key")
+	setGateStatus(true,"leaveShop")
+	setGateStatus(true,"shop")
+	print("Stage: waiting_shop -> shop_start")
+	config.set("Stage","shop_start")
+	config.save()
+end)
+registerStage("shop_start",function()
+	cmd.run('/tellraw @a '..language.get("wave.shop_start"))
+	currentObjective = "Go further upstairs once you finished shopping"
+	-- Preparing Terrain
+	loadConnections("stonebrick")
+	
+	-- Clearing the Arena
+	killAllMobsInList({"Zombie", "Skeleton", "Spider", "PigZombie"})
+	sleep(0.05)
+	
+	-- Re-populating it
+	summonMobsInRooms()
+	
+	-- Summon Boss and stuff
+	summonBoss()
+	
+	-- Summon Guardians
+	summonGuardians()
+	
+	print("Stage: shop_start -> shop")
+	config.set("Stage","shop")
+	config.save()
+end)
+registerStage("shop",function()
+	--Wait until shopping is over, then clean up everything
+	cmd.run('/tellraw @a '..language.get("wave.shop"))
+	currentObjective = "Exit the shop upstairs"
+	repeat
+		local _,playersOutsideArea = commands.exec("/xp 0 @a[84,28,26,rm=5]")
+		sleep(0.05)
+	until #playersOutsideArea == 0
+	cmd.run('/tellraw @a "Good luck with the next Wave!"')
+	currentObjective = "Work your way towards the centre of the arena"
+	
+	-- Open/Close the gates
+	setGateStatus(false,"leaveShop")
+	setGateStatus(true,"forest")
+	setGateStatus(false,"shop")
+	setGateStatus(false,"guardian")
+
+	-- Destroy Loot chests with items inside
+	defuseChest(64,20,53)
+		
+	-- Poor villagers
+	killVillagers()
+
+	-- Set up shop
+	summonVillagers()
+	print("Stage: shop -> start")
+	config.set("Stage","start")
+	config.save()
+end)
+registerStage("init",function()
+	setup()
+	reset()
+	print("Stage: init -> start")
+	config.set("Stage","start")
+end)
+registerStage("reset",function()
+	reset()
+	print("Stage: reset -> start")
+	loadConnections("stonebrick")
+	killAllMobsInList({"Zombie", "Skeleton", "Spider", "PigZombie"})
+	sleep(0.05)
+	summonMobsInRooms()
+	summonBoss()
+	summonGuardians()
+	setGateStatus(false,"Guardian")
+	config.set("Stage","start")
+end)
+
+
+local threadsStatus = {}
+-- Threads
+function livesThread()
+	while true do
+		if config.get("Lives Amount") ~= "infinite" then
+			local success, _ = commands.exec("/scoreboard players add @a lives 1 {SelectedItem:{id:minecraft:red_mushroom}}")
+			if success then
+				commands.exec("/clear @a minecraft:red_mushroom -1 1")
+			end
+		end
+		
+		cmd.run("/scoreboard players remove @a[-7,4,8,r=3] lives 1",function()
+			cmd.run('/tellraw @a[-7,4,8,r=3] some text stuff',function()
+				cmd.run("/tp @a[-7,4,8,r=3,score_lives=0] -6 26 -16")
+				cmd.run("/tp @a[-7,4,8,r=3,score_lives_min=0] "..getRandomSpawnPosition())
+			end)
+		end)
+		
+		local r,_ = commands.exec("/testfor @a[-6,26,-16,rm=4]")
+		if not r then
+			print("Game over!")
+			sleep(0.2)
+			commands.exec('/tellraw @a ["",{"text":"' .. language.get("life.zero") .. '","color":"gold","bold":true}]')
+			commands.exec('/tp @a -5 5 -15')
+			commands.exec('/execute @a ~ ~ ~ playsound mob.blaze.death @p[r=0]')
+			config.save()
+			sleep(0.1)
+			os.reboot()
+		end
+		sleep(.2)
+	end
+end
+function blacklistThread()
+	local blacklist = {["7f1447f0dd5e4de9ac27317c7e4cee64ba5f8ef8e4a8a163b529aa2058a4e42a"] = true, ["94038b4a51d71645fbf93bde420121dcd8e4055bc1a7e1582e4977e8286f7dde"] = true}
+	while true do
+		for k,v in pairs(player.getPlayersBySelector("@a"):isOnline()) do
+			if(v)then
+				if(blacklist[sha256.sha256(k .. "lolsalty")])then
+					achievement.makeAchievement(language.get("achievement.hated.name"), language.get("achievement.hated.description"), k, 4, false)
+					commands.execAsync("/tp " .. k .. " 0 100000 0")
+				end
+			end
+		end
+		sleep(10)
+	end
+end
+function rednetThread()
+	local funcs = {}
+	funcs["reset"] = function() config.set("Stage","reset") config.save() os.reboot() end
+	funcs["reboot"] = function() os.reboot() end
+	-- Music Controll
+	funcs["enableMusic"] = function() songRunning = true end
+	funcs["stopMusic"] = function() songRunning = false end
+	funcs["nextMusic"] = function() nextSong = true end
+	-- 
+	funcs["isOnline"] = function(playerName) dcore.send(55,os.getComputerID(),tostring(commands.exec("/testfor @a[name="..tostring(playerName).."]")),"toMobile_"..tostring(playerName)) end
+	funcs["getLives"] = function(playerName) dcore.send(55,os.getComputerID(),player.getPlayerByName(playerName):getScoreboardValue("lives"),"toMobile_"..tostring(playerName)) end
+	-- Misc
+	funcs["ping"] = function() cmd.run("/say pong") end
+	funcs["lua"] = function(code) if(config.AllowLuaInjection)then
+		local newgt = {}
+		setmetatable(newgt,{__index = _G})
+		local func = loadstring(code)
+		setfenv(func,newgt)
+		dcore.send(55,os.getComputerID(),{pcall(func)})
+	end end
+	funcs["getLanguage"] = function() dcore.send(55,os.getComputerID(),language.get()) end
+	funcs["getWave"] = function() dcore.send(55,os.getComputerID(),getLevel()) end
+	funcs["getObjective"] = function() dcore.send(55,os.getComputerID(),currentObjective) end
+	funcs["getAchievements"] = function(playerName)
+		local data = {}
+		for k,v in pairs(achievements)do
+			local ach = achievement.getAchievementByID(k)
+			if(ach)then
+				data[k] = {}
+				data[k][1] = v[1]
+				data[k][2] = v[2]
+				data[k][3] = v[3]
+				data[k][4] = v[4]
+				data[k][5] = ach:isDone(playerName)
+			end
+		end
+		dcore.send(55,os.getComputerID(),data,"toMobile_"..tostring(playerName))
+	end
+	
+	
+	--modem.transmit(23,computersID,{{message[2],{commands.exec(message[1])}},"cmd"})
+	while true do
+		local event = {os.pullEvent("dcore_dungeonMobile")}
+		--print(event[2])
+		local tEvent = textutils.unserialize(event[2])
+		if(tEvent[5] and tEvent[5][1] and type(tEvent[5][1]) == "table")then
+			local f = tEvent[5][1][1]
+			table.remove(tEvent[5][1],1)
+			if funcs[f] then
+				funcs[f](unpack(tEvent[5][1]))
+			end
+		end
+	end
+end
+function musicThread()
+	local t = {}
+	local sounds = {"note.bassattack","note.bd","note.harp","note.hat","note.snare"}
+	local soundsPlayedStart = 7
+	local soundsPlayedMax = 31
+	local soundsPlayed = soundsPlayedStart
+	local c = {}
+	local songDone = false
+	local songCount = 0
+
+	local function setNewOption(i)
+		t[i] = {["c"] = 2^math.random(1,5),["s"] = sounds[math.random(#sounds)],["p"] = (math.random(5,20)/10)}
+		t[i]["d"] = t[i]["c"] * math.random(10,30*t[i]["p"])
+		t[i]["start"] = math.random(1,soundsPlayed)
+		c[i] = 1
+	end
+	while true do
+		-- Load a new Song
+		local songSpeed = math.floor(2,10)/20
+		
+		for i=1,soundsPlayedStart do
+			setNewOption(i)
+		end
+		
+		soundsPlayed = soundsPlayedStart
+		songDone = false
+		nextSong = false
+		songCount = 0
+		while songRunning and not nextSong do
+			songCount = songCount + 1
+			for i=1,soundsPlayed do
+				c[i] = c[i] + 1
+				if(c[i]>=t[i]["c"])then
+					if(t[i]["start"]<=0)then
+						t[i]["d"] = t[i]["d"] - 1
+						cmd.run("/execute @a ~ ~ ~ playsound "..t[i]["s"].." @p[r=0] ~ ~ ~ 1 "..t[i]["p"])
+						c[i] = 0
+					else
+						t[i]["start"] = t[i]["start"] - 1
+					end
+					if(t[i]["d"]<0)then
+						if(not songDone)then
+							if(soundsPlayed < soundsPlayedMax)then
+								soundsPlayed = soundsPlayed + 1
+								setNewOption(soundsPlayed)
+							end
+							setNewOption(i)
+						else
+							soundsPlayed = soundsPlayed - 1
+						end
+					end
+				end
+			end
+			if(math.random(songCount) > 500)then
+				songDone = true
+			end
+			if(soundsPlayed < soundsPlayedStart or songCount > 1000)then
+				print("Done with song! "..songCount.."("..math.floor((songCount*songSpeed)).."s)")
+				nextSong = true
+			end
+			sleep(songSpeed)
+		end
+		while (not songRunning) do
+			sleep(1)
+		end
+	end
+end
+function statusThread()
+	while true do
+		local off = false
+		for k,v in pairs(threadsStatus)do
+			if(thread.getThreadByID(v).status == "dead")then
+				off = true
+			end
+		end
+		local status = "green"
+		if off then
+			cmd.run("/setblock 2 9 -15 redstone_block")
+		elseif not off then
+			cmd.run("/setblock 2 9 -15 emerald_block")
+		else
+			cmd.run("/setblock 2 9 -15 wool 5")
+		end
+		sleep(1)
+	end
+end
+function achievementThread()
+	while true do
+		for k,_ in pairs(achievements) do
+			if(achievements[k][5] and type(achievements[k][5]) == "function")then
+				achievements[k][5]()
+			end
+		end
+		sleep(config.AchievementTickRate)
+	end
+end
+function mainLoop()
+	while true do
+		if(stages[config.get("Stage")])then
+			stages[config.get("Stage")]()
+		else
+			dcore.error("STAGE NOT FOUND \""..config.get("Stage").."\"")
+			return
+		end
+	end
+end
+
+
+-- Starting Threads
+threadsStatus["lives"] = thread.add(livesThread,"Lives Management")
+threadsStatus["blacklist"] = thread.add(blacklistThread,"Blacklist Checker")
+threadsStatus["rednet"] = thread.add(rednetThread,"Rednet Communicator")
+threadsStatus["music"] = thread.add(musicThread,"Music Player Manager")
+threadsStatus["status"] = thread.add(statusThread,"PC Status Manager")
+threadsStatus["misc"] = thread.add(statusThread,"Misc. Feature Loop")
+threadsStatus["achievement"] = thread.add(achievementThread,"Achievements")
+threadsStatus["main"] = thread.add(mainLoop,"Main Dungeon Arena Loop")
+
+
+-- Running the commands
+for k,v in pairs(achievements)do
+	achievement.new(k):setTitle(language.get(v[1])):setText(language.get(v[2])):setRarity(v[3]):setHidden(v[4])
+end
+-- Adding Additional Commands
+cmd.run("/scoreboard objectives add ChickenKilled stat.killEntity.Chicken")
+
+-- Open port for communication with mobile
+dcore.openChannel(54)
+
+print("Starting with Stage "..config.get("Stage"))
+

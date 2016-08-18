@@ -42,13 +42,16 @@ local apis_loaded = {}
 
 local firstError = true
 
-local file_used = {}
+_G["file_used"] = {}
 function print_log(file,text)
 	if(config.ENABLED_LOGS[file])then
-		local logfile = fs.open(config.DIR_LOGS.."/"..file, file_used[file] and "a" or "w")
+		local mode = file_used[file] and "a" or "w"
+		local logfile = fs.open(config.DIR_LOGS.."/"..file,mode)
 		if(logfile and type(text)=="string")then
 			if(not file_used[file])then file_used[file] = true end
-			logfile.writeLine(text)
+			logfile.writeLine(tostring(text))
+		end
+		if(logfile)then
 			logfile.close()
 		end
 	else
@@ -83,6 +86,7 @@ function requireAPI(...)
 				apis_loaded[tArgs[i]] = true
 				--Load apis from mods-folders with same name
 				loadSimilarApis(tArgs[i])
+				config.save()
 			end
 		else
 			print_log("dcore","[API][MAIN] DID NOT load "..config.DIR_APIS.."/"..tArgs[i].."; not found")
@@ -138,19 +142,21 @@ function loadSimilarApis(_forceName)
 					setfenv( fnAPI, tEnv )
 					local ok, err = pcall( fnAPI )
 					if not ok then
-						print_log("error","[API]["..l[i].."] While loading "..pathToAPIFile.."; ")
+						print_log("error","Some error happend!")
+						print_log("error","[API]["..l[i].."] While loading "..pathToAPIFile.."; "..tostring(err))
+						
 						if(firstError)then
 							if(term.isColor())then term.setTextColor(colors.red) end
-							print("error found while loading api files, check logs/error for more informations! "..err)
+							--print("[1] Error found while loading api files, check logs/error for more informations! "..err)
 							term.setTextColor(colors.white)
 							firstError = false
 						end
 					end
 				else
-					print_log("error","[API]["..l[i].."] While loading "..pathToAPIFile.."; ")
+					print_log("error","[API]["..l[i].."] While loading "..pathToAPIFile.."; "..tostring(err))
 					if(firstError)then
 						if(term.isColor())then term.setTextColor(colors.red) end
-						print("error found while loading api files, check logs/error for more informations! "..err)
+						--print("[2] Error found while loading api files, check logs/error for more informations! "..err)
 						term.setTextColor(colors.white)
 						firstError = false
 					end
@@ -184,7 +190,7 @@ function runFileInAllMods(_fileName)
 				setfenv( fnAPI, tEnv )
 				local ok, err = pcall( fnAPI )
 				if not ok then
-					print_log("error","[EVENT]["..file_name.."]["..l[i].."] While loading "..pathToAPIFile.."; ")
+					print_log("error","[EVENT]["..file_name.."]["..l[i].."] While loading "..pathToAPIFile.."; "..err)
 					if(firstError)then
 						if(term.isColor())then term.setTextColor(colors.red) end
 						print("error found while loading api files, check logs/error for more informations! "..err)
@@ -210,14 +216,19 @@ function checkForNewMessage()
 		local eventData = {os.pullEvent("modem_message")}
 		if(type(eventData[5]) == "table" and type(eventData[5][2]) == "string")then
 			local event = "dcore_"..tostring(eventData[5][2])
+			--print(event)
 			os.queueEvent(event,textutils.serialize(eventData))
 		end
 	end
 end
+
 function openChannel(channel)
 	for n,modemSide in ipairs(peripheral.getNames()) do
-		peripheral.call(modemSide,"open",channel)
-		print("Opened Channel "..channel.." for the modem on the "..modemSide)
+		if(not peripheral.call(modemSide,"isOpen",channel))then
+			peripheral.call(modemSide,"open",channel)
+			print_log("dcore","Opened Channel "..channel.." for the modem on the "..modemSide)
+			print("Opened Channel "..channel.." for the modem on the "..modemSide)
+		end
 	end
 end
 function send(channel,replyChannel,message,target)
@@ -498,5 +509,7 @@ end
 
 
 print_log("dcore","[API][DCORE] Loaded dcore ?")
-print_log("error","This is where the Errors can be found")
+print_log("error","This is where the Errors can be found "..os.time())
 print_log("command","This is where the executed Commands can be found")
+_G["TIMESDCOREWASLOADED"] = (_G["TIMESDCOREWASLOADED"] or 0) + 1
+print("DCORE WAS LOADED AGAIN! ["..tostring(_G["TIMESDCOREWASLOADED"]).."]")

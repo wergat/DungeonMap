@@ -1,19 +1,7 @@
-local function get_v(id, permanent)
-	local path; if permanent then path = ".permanent_config" else path = ".config" end
-	if not fs.exists(path) then
-		return nil
-	end
-	local open = fs.open(path, "r")
-	local all = open.readAll()
-	open.close()
-	all = textutils.unserialize(all)
-	if all[id] then
-		return all[id]
-	else
-		return nil
-	end
+if(not language)then
+	dcore.requireAPI("language")
 end
-get_text = script.get_text
+
 local function set_v(id, s)
 	local all
 	if not fs.exists(".config") then
@@ -58,12 +46,12 @@ hat_names = {"Melting Cobblestone Hat", "Pakka Hat", "Manly Bandanna", "Skeleton
 hat_blocks = {["melting_hat"] = "wool:6:Atenefyr", ["pakka_hat"] = "prismarine:0:Atenefyr", ["bandana_hat"] = "iron_trapdoor:0:Mojang", ["skeleton_hat"] = "skull:0:Mojang", ["bookshelf_hat"] = "bookshelf:0:Mojang", ["big_hat"] = "computercraft:command_computer:0:dan200", ["skull"] = "skull:3:SKULL_OWNER:ss:ss"} --Info of each hat, in format block_name:metadata:author. Skull has 5 so misc knows that skull is selected
 hat_descriptions = {"melting cobblestone & cooling yourself off", "finding the rare Pakka", "starting the map", "crushing 1'250'000 quaz into one item", "clicking the Market Plaza sign in the shop", "booting the computer one million times", "jumping into lava"} --List of descriptions for hats, must fit example "Obtained by <description>"
 --END CONFIG--
-
+--[[
 local book_tag = {
-["title"] = get_text("hats.book_title"),
-["author"] = get_text("villager.hats") .. ", " .. get_text("hats.circa") .. " " .. get_v("first_day", true)[1]:gsub("0", "") .. "/" .. get_v("first_day", true)[3],
+["title"] = language.get("hats.book_title"),
+["author"] = language.get("villager.hats") .. ", " .. language.get("hats.circa") .. " " .. get_v("first_day", true)[1]:gsub("0", "") .. "/" .. get_v("first_day", true)[3],
 ["generation"] = 1,
-["pages"] = get_text("hats.book_pages")
+["pages"] = language.get("hats.book_pages")
 }
 
 sleep(0.5)
@@ -135,3 +123,5 @@ for i = 1, math.random(10,15) do
 end
 --pickaxe trade, if you edit this, edit the money chest too :) -Atenefyr
 trades[#trades+1] = {500, {["id"] = 278,["Count"] = 1,["Damage"] = 0,["tag"] = {["ench"] = {{["id"] = 33,["lvl"] = 1}},["display"] = {["Name"] = pick_string,["Lore"] = {SS("k") .. rand_string}},["CanDestroy"] = {"minecraft:sponge", "minecraft:prismarine"}, ["HideFlags"] = 9}}}
+
+]]

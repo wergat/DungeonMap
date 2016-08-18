@@ -1,219 +1,297 @@
 -- Channel for slave -> master CMD communication
 dcore.openChannel(23)
 
+-- EVENTS
+-- dcore_cmd
+-- dcore_newCMDSlave
 
+-- ticks after wich a slave computer gets set to ready
+config.conditionalSet("CMD_MAXIMUM_TIMEOUT",20)
+-- Commands can be sent to slaves directlym without queueing if this is enabled
+config.conditionalSet("CMD_ALLOW_COMMAND_QUICK_FLUSHING",true)
 
-local variableFactor = 5
--- Change this to some value. 1 is recommanded.
--- can be set to 1/10 or 20
--- Good performance with 1/10th
+-- Waiting time between processing rounds
+config.conditionalSet("CMD_MAIN_LOOP_WAITTIME",.05)
 
--- Runs command command, afterwards calls function func
-local storedCommands = {}
+-- List of commands. Older commands first
+local commandList = {}
+-- Slowly getting worked on, packets getting sent to slaves
 
-function newSlaveComputer(id)
-	return {["state"] = "free",["timeout"] = 0,["id"] = id,["function"] = nil,["workingOnAsync"] = false}
+local statistics = {}
+statistics.commandsRun = 0
+statistics.AsyncCommandsRun = 0
+statistics.commandsSuccessfull = 0
+statistics.asyncCommandsSuccessfull = 0
+statistics.commandsLeftAfterSharing = 0
+statistics.commandsBeforeSharing = 0
+function getCommandStatistics()
+	local t = {}
+	for k,v in pairs(statistics) do
+		t[k] = v
+	end
+	t.commandListLength = #commandList
+	return t
 end
 
-local slaveComputers = {newSlaveComputer(11),newSlaveComputer(12),newSlaveComputer(13),newSlaveComputer(14),newSlaveComputer(15),newSlaveComputer(16),newSlaveComputer(17),newSlaveComputer(18)}
-
-
-local cores = #slaveComputers
-
-local runThreads = {}
-local commandsStarted = 1
-local commandsExecuted = 1
-local asyncStarted = 1
-local asyncFeedback = 1
-
-function getCommandStats()
+local commandSlaves = {}
+-- Creates new Slave Computer Objective
+-- States: ready|waiting
+-- timer: ticks since last state change
+-- id: Computer ID of slave
+-- workingOn: id of packet it is working on
+function newSlaveComputer(id)
 	return {
-		["commandsStarted"] = commandsStarted,
-		["commandsExecuted"] = commandsExecuted,
-		["asyncStarted"] = asyncStarted,
-		["asyncFeedback"] = asyncFeedback,
-		["amountOfStoredCommands"] = #storedCommands,
+		["state"] = "ready",
+		["timer"] = 0,
+		["id"] = id,
+		["workingOn"] = nil,
 	}
 end
-
--- run(command[,function to start on return][,useAsnyc])
-function run(command,arg)
-	if(type(arg) == "function")then
-		table.insert(runThreads,{["command"] = command,["func"] = arg,["async"] = false})
-		commandsStarted = commandsStarted + 1
-	else
-		asyncStarted = asyncStarted + 1
-		if(arg or arg == nil)then arg = true else arg = false end
-		table.insert(runThreads,{["command"] = command,["func"] = nil,["async"] = arg})
-	end
-end
-
-function getSlaveComputerData()
-	return slaveComputers
-end
-
-function getRunningCommands()
-	return storedCommands
-end
-
-
-
-function getWaitingCommands()
-	return runThreads
-end
-
+-- Returns the computer object with the arg id
 function getSlaveComputerByID(id)
-	for i=1,#slaveComputers do
-		if(slaveComputers[i].id == id)then
-			return i
+	for i=1,#commandSlaves do
+		if(commandSlaves[i].id == id)then
+			return commandSlaves[i]
 		end
 	end
 end
-
-function countFreeSlaveComputers()
-	local count = 0
-	for k,v in pairs(slaveComputers)do
-		if(v.state == "free")then
-			count = count + 1
-		end
-	end
-	return count
-end
-
-
-function findFreeSlaveComputer(asnyc)
-	for k,v in pairs(slaveComputers)do
-		if(v.state == "free")then
-			return k
-		end
-	end
-end
-
-function countWaitingCommands()
-	local count = 0
-	for i=1,#runThreads do
-		if(runThreads[i])then
-			count = count + 1
-		end
-	end
-	return count
-end
-
-local function chatchNewThreads()
-	local targetSlave = findFreeSlaveComputer()
-	local waitingCommands = countWaitingCommands()
-	
-	--print(waitingCommands..":"..packetLimit)
-	
-	
-	for i=1,#slaveComputers do
-		if(slaveComputers[i].state == "working")then
-			slaveComputers[i].timeout = slaveComputers[i].timeout + 1
-			if(slaveComputers[i].timeout >= 20)then
-				slaveComputers[i].state = "free"
-				slaveComputers[i]["function"] = nil
-				slaveComputers[i]["timeout"] = 0
-			end
-		end
-	end
-	while #runThreads>0 and targetSlave do
-		local threadID = math.random(999999999)
-		while(storedCommands[threadID])do
-			threadID = math.random(999999999)
-		end
-		-- Mark the slave as occupied, if thats the case.
-		slaveComputers[targetSlave].state = "working"
-		slaveComputers[targetSlave].timeout = 0
-				
-		-- If the slave should sent a return, save the function
-		if(not runThreads[1]["async"])then
-			storedCommands[threadID] = true
-			-- Transmit the command to the slave
-			dcore.send(22,slaveComputers[targetSlave].id,{runThreads[1]["command"],threadID})
-			-- Remove the command from the list
-			slaveComputers[targetSlave]["function"] = runThreads[1]["func"]
-			slaveComputers[targetSlave]["workingOnAsync"] = false
-			table.remove(runThreads,1)
-		else -- Slave is given all the Async Commands we got, at most ten, thoguh
-			local packetLimit = math.floor((math.sqrt((waitingCommands*cores*variableFactor+1)) + 10) / cores)
-			local t = {}
-			local u = nil
-			local pointer = 1
-			local timeout = 0
-			repeat
-				if(runThreads[pointer]["async"])then
-					u = runThreads[pointer]["command"]
-					table.remove(runThreads,pointer)
+-- Returns the computer object that was requested
+-- computer minimum timer
+function getFreeSlaveComputer(minimumTimer)
+	for i=1,#commandSlaves do
+		if(commandSlaves[i].state == "ready")then
+			if(minimumTimer)then
+				if(commandSlaves[i].timer >= minimumTimer)then
+					return commandSlaves[i]
 				end
-				pointer = pointer + 1
-				timeout = timeout + 1
-				if(u)then t[(#t+1)] = u u = nil end
-			until pointer>packetLimit or pointer > #runThreads or #t>packetLimit or timeout>=packetLimit
-			dcore.send(22,slaveComputers[targetSlave].id,{t,threadID})
-			
-			storedCommands[threadID] = true
-			slaveComputers[targetSlave]["function"] = nil
-			slaveComputers[targetSlave]["workingOnAsync"] = true
-		end
-		
-		-- Remove the current command from the list of todo threads.
-		
-		-- FInd the next free slave, if there is one!
-		targetSlave = findFreeSlaveComputer()
-	end
-end
-
-function stackCheckerLoop()
-	while true do
-		chatchNewThreads()
-		sleep(0.05)
-	end
-end
-
-
-
-local function chatchDoneCommands()
-	local event = {os.pullEvent("dcore_cmd")}
-	local tEvent = textutils.unserialize(event[2])
-	if(tEvent)then
-		local id = getSlaveComputerByID(tEvent[4])
-		local message = tEvent[5]
-		if(tEvent[3] == 23 and slaveComputers[id].state == "working" and type(message) == "table")then
-			if(storedCommands[tonumber(message[1][1])])then
-				if(slaveComputers[id]["function"])then
-					slaveComputers[id]["function"](message[1][2])
-					slaveComputers[id]["function"] = nil
-					commandsExecuted = commandsExecuted + 1
-				else asyncFeedback = asyncFeedback + 1 end
-				storedCommands[tonumber(message[1][1])] = nil
-				slaveComputers[id].state = "free"
-				slaveComputers[id]["timeout"] = 0
+			else
+				return commandSlaves[i]
 			end
 		end
-	else
-		print("Error: \""..tostring(event[2]).."\"")
 	end
 end
+-- Returns all Slave objects
+function getSlaveComputerData()
+	return commandSlaves
+end
 
-function chatchDoneCommandsLoop()
+
+-- Executing Command Computer Management
+function checkForNewSlaves()
 	while true do
-		chatchDoneCommands()
+		local event = {os.pullEvent("dcore_newCMDSlave")}
+		local tEvent = textutils.unserialize(event[2])
+		local idExisting = false
+		-- Check if it is already listed
+		for i=1,#commandSlaves do
+			if(commandSlaves[i].id == tEvent[4])then
+				idExisting = true
+			end
+		end
+		-- If not already listed, add to list
+		if(not idExisting)then 
+			commandSlaves[(#commandSlaves + 1)] = newSlaveComputer(tEvent[4])
+			-- Tell to get it going!
+			dcore.send(22,commandSlaves[(#commandSlaves)].id,"DoWork")
+		end
+	end
+end
+-- //// --
+
+
+
+-- Creates a command object [,func]
+function newCommandObject(command,requireResponse,id,func)
+	local commandObject = {}
+	commandObject.command = command
+	commandObject.isAsync = requireResponse
+	commandObject.id = id
+	if(func)then
+		commandObject.func = func
+	end
+	return commandObject
+end
+-- Adds a command to the list of waiting commands
+function addCommandOnList(commandObject)
+	table.insert(commandList,commandObject)
+end
+-- Returns one command object, or nil if it could not find one
+function getCommandFromList(requireResponse,timeout)
+	local pointer = 1
+	while pointer <= commandList and pointer < timeout do
+		if(commandList[pointer] == nil)then 
+			return
+		elseif(commandList[pointer].requireResponse == requireResponse)then
+			return commandList[pointer]
+		end
+		pointer = pointer + 1
+	end
+end
+-- Command Packet contains one or multiple commands
+
+-- ID is sent to slave
+function newCommandPacket()
+	local commandPacket = {}
+	commandPacket.content = {}
+	commandPacket.id = tostring({})
+	-- Adds a command to packet
+	commandPacket.add = function(self,commandObject)
+		table.insert(self.content,commandObject)
+		return self
+	end
+	return commandPacket
+end
+
+-- Collecting the signals of Slaves when they are done
+function recieveSlaveSignals()
+	while true do
+		local event = {os.pullEvent("dcore_cmd")}
+		local tEvent = textutils.unserialize(event[2])
+		if(tEvent)then
+			local slaveComputer = getSlaveComputerByID(tEvent[4])
+			local message = tEvent[5]
+			if(slaveComputer)then
+				-- Check if computer is still listed as working on that project, or if it has timed out
+				if(slaveComputer.workingOn.id == message[1][1])then
+					-- Check if event is Async
+					if(slaveComputer.workingOn.content[1].isAsync)then
+						-- For each command in the package do
+						for i=1,#slaveComputer.workingOn.content do
+							statistics.asyncCommandsSuccessfull = statistics.asyncCommandsSuccessfull + 1
+							-- Run functions or so that are requested to trigger
+							if(slaveComputer.workingOn.content[i].func)then
+								slaveComputer.workingOn.content[i].func()
+							end
+						end
+						-- Free the slave to work on other things
+						slaveComputer.workingOn = nil
+						slaveComputer.state = "ready"
+						slaveComputer.timer = 0
+					else
+						statistics.commandsSuccessfull = statistics.commandsSuccessfull + 1
+						-- Queue Event to return
+						os.queueEvent("cmd_eventDone_"..slaveComputer.workingOn.content[1].id,message[1][2])
+						--print("Queue: "..slaveComputer.workingOn.content[1].id)
+						-- Free the slave to work on other things
+						slaveComputer.workingOn = nil
+						slaveComputer.state = "ready"
+						slaveComputer.timer = 0
+					end
+				end
+			end
+		end
+	end
+end
+
+-- Send the current packet of a slave to that slave to have something to work on
+-- Returns if it was successful
+function sendPacketToSlave(slave)
+	-- 
+	if(slave["state"] == "waiting")then return false end
+	slave["state"] = "waiting"
+	slave["timer"] = 0
+	-- Sending the data to the slave
+	-- Found out if its async, then collect all the commands in a table
+	--print("Send Packet to slave #"..slave.id)
+	if(slave.workingOn.content[1].isAsync)then
+		local t = {}
+		for i=1,#slave.workingOn.content do
+			t[i] = slave.workingOn.content[i].command
+		end
+		dcore.send(22,slave.id,{t,slave.workingOn.id})
+	else
+		dcore.send(22,slave.id,{slave.workingOn.content[1].command,slave.workingOn.id})
+	end
+end
+
+-- Work Loop Making stuff
+function workLoop()
+	while true do
+		-- Increase Timer Tick
+		for i=1,#commandSlaves do
+			commandSlaves[i].timer = commandSlaves[i].timer + 1
+			if(commandSlaves[i].state == "waiting")then
+				-- Check if we have a timeout, slave is not responding
+				if(commandSlaves[i].timer >= config.CMD_MAXIMUM_TIMEOUT)then
+					commandSlaves[i].state = "ready"
+					commandSlaves[i].timer = 0
+					if(commandSlaves[i].workingOn.content[1].isAsync)then
+						-- Not sure what to do, doing nothing is okay i guess
+					else
+						os.queueEvent("cmd_eventDone_"..tostring(commandSlaves[i].workingOn.content[1].id))
+					end
+					commandSlaves[i].workingOn = nil
+					-- TODO: list how much we lost with this timeout
+					
+				end
+			end
+		end
+		statistics.commandsBeforeSharing = #commandList
+		-- As long as there are no working slave computers and he actually have something for them to work on
+		while (getFreeSlaveComputer() and #commandList > 0) do
+			local packet = newCommandPacket()
+			-- Put things to do into a packet
+			if(commandList[1].isAsync)then -- Async
+				local goal = math.floor(((#commandList + 5)/(#commandSlaves + 1) + 2))
+				local pointer = 1
+				while goal > 0 and pointer <= #commandList do
+					if(commandList[pointer].isAsync)then
+						goal = goal - 1						
+						-- Create new element so we do not create the object that the pointer points to next
+						packet:add(newCommandObject(commandList[pointer].command,commandList[pointer].isAsync,commandList[pointer].id))
+						table.remove(commandList,pointer)
+					end
+					pointer = pointer + 1
+				end
+			else -- NonAsync
+				-- Create new element so we do not create the object that the pointer points to next
+				packet:add(newCommandObject(commandList[1].command,commandList[1].isAsync,commandList[1].id))
+				table.remove(commandList,1)
+			end
+			-- Send the packet
+			local slave = getFreeSlaveComputer()
+			slave["workingOn"] = packet
+			sendPacketToSlave(slave)
+		end
+		statistics.commandsLeftAfterSharing = #commandList
+		sleep(config.CMD_MAIN_LOOP_WAITTIME)
 	end
 end
 
 
--- This API might get removed at some point, just wait for it...
 
-function getAllPlayerNames(customSearch)
-	local r,t = commands.xp(0,(customSearch or "@a"))
-	local players = {}
-	if(r)then
-		for i=1,#t do
-			players[#players+1] = string.match(t[i],"%a+$")
+-- Just runs a command
+-- Second argument can be a funcitn, that function will be run after the commands have been executed 
+function run(command,func)
+	--print("run:"..tostring(command))
+	statistics.AsyncCommandsRun = statistics.AsyncCommandsRun + 1
+	-- Find free slave with more than 5 idle
+	-- If not, put into list
+	local eventId = math.random(10000000)
+	table.insert(commandList,newCommandObject(command,true,eventId,func))
+end
+--
+
+-- Runs a command, returns value
+function get(command)
+	statistics.commandsRun = statistics.commandsRun + 1
+	--print("get:"..tostring(command))
+	-- Find free slave
+	local didFlush = false
+	-- Save Event ID for later event
+	local eventId = math.random(10000000)
+	if(config.CMD_ALLOW_COMMAND_QUICK_FLUSHING)then
+		local slave = getFreeSlaveComputer(5)
+		if(slave)then
+			slave["workingOn"] = newCommandPacket():add(newCommandObject(command,false,eventId))
+			sendPacketToSlave(slave)
+			didFlush = true
 		end
-		return players
-	else
-		print(t[1])
-		return nil
 	end
+	-- If not, put into list
+	if(not didFlush)then
+		table.insert(commandList,newCommandObject(command,false,eventId))
+	end
+	local _,t = os.pullEvent("cmd_eventDone_"..eventId)
+	return unpack(t)
 end

@@ -13,7 +13,17 @@ function draw()
 			term.setCursorPos(2,i+1)
 			term.write(tThreads[i].name..":")
 			term.setCursorPos(30,i+1)
+			if(not tThreads[i].restarted)then
+				term.setTextColor(colors.green)
+			else
+				if(tThreads[i].status == "dead")then
+					term.setTextColor(colors.red)
+				else
+					term.setTextColor(colors.orange)
+				end
+			end
 			term.write((tThreads[i].status))
+			term.setTextColor(colors.white)
 		end
 		
 		term.setCursorPos(1,ty)

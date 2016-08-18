@@ -322,7 +322,7 @@ addItemTier("chain_tier")
 addItemTier("gold_tier")
 addItemTier("diamond_tier")
 
-for k,v in pairs(getTiers())do print(k..":"..v.value) end
+--for k,v in pairs(getTiers())do print(k..":"..v.value) end
 
 -- // Equipment
 registerItemType("equipment",{"armor","weapon"})

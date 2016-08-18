@@ -30,7 +30,7 @@ update = function()
 				elseif(v == "true")then v = true 
 				elseif(v == "false")then v = false
 				end
-				print(k.." = "..tostring(v))
+				--print(k.." = "..tostring(v))
 				newData[k] = v
 				
 			end

@@ -1,0 +1,19 @@
+if(block.name == "minecraft:mossy_cobblestone")then
+	print("This is a DungeonArena Computer")
+	print("Identified as Dev Computer")
+	if(init)then
+		print("Updating")
+		sleep(1)
+		local update = shell.run("dungeon/computers/all/update","https://api.github.com/repos/wergat/DungeonMap/contents/")
+		if(not update)then printError("Update File not found!") end
+		sleep(1)
+		local open = fs.open(":startup","w")
+		open.write("shell.run(\"dungeon/computers/all/whoami\")")
+		open.close()
+		sleep(1)
+		os.reboot()
+	else
+		print("[] Running main function")
+		shell.run(":dungeon/mods/DungeonArena/main")
+	end
+end

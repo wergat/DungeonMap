@@ -1,0 +1,20 @@
+local duration = tonumber(({...})[1] or 3)
+
+print("Working")
+-- Start
+local internetStartTime = tonumber(http.get("http://currentmillis.com/time/seconds-since-unix-epoch.php").readAll())
+local startTime = os.clock()
+
+sleep(duration)
+
+-- Ending
+local internetEndTime = tonumber(http.get("http://currentmillis.com/time/seconds-since-unix-epoch.php").readAll())
+local endTime = os.clock()
+
+
+
+print("Time that happend here:")
+print(endTime - startTime)
+print("Time that happend in the internet:")
+print(internetEndTime - internetStartTime)
+

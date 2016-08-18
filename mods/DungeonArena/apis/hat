@@ -1,0 +1,46 @@
+function new()
+	local headObject = {}
+	headObject.isHeadObject = true
+	headObject.type = "" -- [UserName|Base64ID|Block]
+	headObject.data = ""
+	
+	-- USername of person whose head we want
+	headObject.setUserName = function(self,userName)
+		self.type = "UserName"
+		self.data = userName
+		return self	
+	end
+	-- Base64ID of the skin of the head
+	headObject.setBase64ID = function(self,playerID,textureID)
+		self.type = "Base64ID"
+		self.data = {playerID,textureID}
+		return self
+	end	
+	-- block data should be an array.
+	-- {id = ITEMID,damage = }
+	headObject.setBlock = function(self,blockData)
+		self.type = "Block"
+		self.data = blockData
+		return self
+	end
+	headObject.getDataTable = function(self)
+		local t = {}
+		if(self.type == "UserName")then
+			t.id = "minecraft:skull"
+			t.SkullOwner = self.data
+		elseif(self.type == "Base64ID")then
+			t.id  = "minecraft:skull"
+			t.tag = {["SkullOwner"] = {
+				["Id"] = self.data[1],
+				["Properties"] = {["textures"] = {
+						[1] = {["Value"] = self.data[2]}
+			}}}}
+		elseif(self.type == "Block")then
+			t = self.data
+		end
+		return t
+	end
+	return headObject
+end
+
+
