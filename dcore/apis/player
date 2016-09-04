@@ -17,7 +17,7 @@ function getPlayerByName(_playerName)
 		return self.name
 	end
 	playerObject.isOnline = function(self)
-		local r,_ = cmd.get(entity.newSel("a"):add("name",self.name):toString())
+		local r,_ = cmd.get("/testfor "..entity.newSel("a"):add("name",self.name):toString())
 		return r
 	end
 	-- Add XP to the player

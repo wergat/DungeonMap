@@ -211,6 +211,16 @@ function runFileInAllMods(_fileName)
 	end
 end
 
+
+-- // Modem Management
+local modem = peripheral.find("modem")
+if(not modem)then
+	print_log("dcore","No connected Modem found! Cannot run essential function without it!")
+	print_log("error","No connected Modem found! Cannot run essential function without it!")
+	printError("No connected Modem found! Cannot run essential function without it!")
+end
+local channels = {}
+-- Modem message handling
 function checkForNewMessage()
 	while true do
 		local eventData = {os.pullEvent("modem_message")}
@@ -221,25 +231,69 @@ function checkForNewMessage()
 		end
 	end
 end
-
+-- Open Channels on the modem
 function openChannel(channel)
-	for n,modemSide in ipairs(peripheral.getNames()) do
-		if(not peripheral.call(modemSide,"isOpen",channel))then
-			peripheral.call(modemSide,"open",channel)
-			print_log("dcore","Opened Channel "..channel.." for the modem on the "..modemSide)
-			print("Opened Channel "..channel.." for the modem on the "..modemSide)
-		end
+	if(type(channel) ~= "number")then return false end
+	if(not modem)then
+		print_log("error","No connected Modem found! Cannot run this function without it!")
+		printError("No connected Modem found! Cannot run this function without it!")	
+		return false
 	end
+	if(not modem.isOpen(channel))then
+		modem.open(channel)
+		channels[channel] = true
+		print_log("dcore","Opened Channel "..channel.." for the modem")
+		print("Opened Channel "..channel.." for the modem")
+		return true
+	end
+end
+function closeChannel(channel)
+	if(type(channel) ~= "number")then return false end
+	if(not modem)then
+		print_log("error","No connected Modem found! Cannot run this function without it!")
+		printError("No connected Modem found! Cannot run this function without it!")	
+		return false
+	end
+	if(modem.isOpen(channel))then
+		modem.open(channel)
+		channels[channel] = nil
+		print_log("dcore","Closed Channel "..channel.." for the modem")
+		print("Closed Channel "..channel.." for the modem")
+		return true
+	end	
 end
 function send(channel,replyChannel,message,target)
-	for n,modemSide in ipairs(peripheral.getNames()) do
+	if(modem)then
 		if(target)then
-			peripheral.call(modemSide,"transmit",channel,replyChannel,{message,target})
+			modem.transmit(channel,replyChannel,{message,target})
 		else
-			peripheral.call(modemSide,"transmit",channel,replyChannel,message)
+			modem.transmit(channel,replyChannel,message)
 		end
+		return true
+	else
+		print_log("error","No connected Modem found! Cannot run this function without it!")
+		printError("No connected Modem found! Cannot run this function without it!")	
+		return false
 	end
 end
+-- //
+
+-- Peripheral Management
+function checkForConnectedPeripherals()
+	while true do
+		local tEvent = {os.pullEvent("peripheral")}
+		print("A "..peripheral.getType(tEvent[2]).." has been attached on the "..tEvent[2])
+		print_log("dcore","A "..peripheral.getType(tEvent[2]).." has been attached on the "..tEvent[2])
+	end
+end
+function checkForDisconnectedPeripherals()
+	while true do
+		local tEvent = {os.pullEvent("peripheral_detach")}
+		print("A peripheral has been attached on the "..tEvent[2])
+		print_log("dcore","A peripheral has been attached on the "..tEvent[2])
+	end
+end
+-- //
 
 -- 1.20
 function getEngineVersion()

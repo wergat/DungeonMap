@@ -262,6 +262,8 @@ function loadConnections(block)
 	end
 end
 
+coroutine.yield()
+
 -- Chests
 function removeChests()
 	local chestPositions = config.get("CachedChestPositions")
@@ -531,6 +533,8 @@ function reset()
 	
 end
 
+coroutine.yield()
+
 -- Villagers
 function killVillagers()
 	-- Killing all the villagers
@@ -728,6 +732,7 @@ registerStage("init",function()
 	reset()
 	print("Stage: init -> start")
 	config.set("Stage","start")
+	config.save()
 end)
 registerStage("reset",function()
 	reset()
@@ -740,8 +745,10 @@ registerStage("reset",function()
 	summonGuardians()
 	setGateStatus(false,"Guardian")
 	config.set("Stage","start")
+	config.save()
 end)
 
+coroutine.yield()
 
 local threadsStatus = {}
 -- Threads
@@ -789,6 +796,10 @@ function blacklistThread()
 		sleep(10)
 	end
 end
+
+local luaTEnv = {["_echo"] = function(...) return ... end}
+setmetatable(luaTEnv,{__index = getfenv()})
+
 function rednetThread()
 	local funcs = {}
 	funcs["reset"] = function() config.set("Stage","reset") config.save() os.reboot() end
@@ -802,12 +813,53 @@ function rednetThread()
 	funcs["getLives"] = function(playerName) dcore.send(55,os.getComputerID(),player.getPlayerByName(playerName):getScoreboardValue("lives"),"toMobile_"..tostring(playerName)) end
 	-- Misc
 	funcs["ping"] = function() cmd.run("/say pong") end
-	funcs["lua"] = function(code) if(config.AllowLuaInjection)then
-		local newgt = {}
-		setmetatable(newgt,{__index = _G})
-		local func = loadstring(code)
-		setfenv(func,newgt)
-		dcore.send(55,os.getComputerID(),{pcall(func)})
+	funcs["lua"] = function(userName,code) if(config.AllowLuaInjection)then
+		print("Running: \""..code.."\" by "..userName)
+		
+		-- Taken from the lua programm to simulate proper handling
+		-- Loading the string into functions
+		local nForcePrint = 0
+		local func, e = loadstring(code,"lua")
+		local func2, e2 = loadstring("return _echo("..code..");","lua")
+		if not func then
+			if func2 then
+				func = func2
+				e = nil
+				nForcePrint = 1
+			end
+		else
+			if func2 then
+				func = func2
+			end
+		end
+		local returnValues = {}		
+		-- Checking if the functions were loaded successfully and then execute them
+		if func then
+			setfenv(func,luaTEnv)
+			local tResults = {pcall(func)}
+			if tResults[1] then
+				local n = 1
+				while (tResults[n + 1] ~= nil) or (n <= nForcePrint) do
+					local value = tResults[n+1]
+					if type(value) == "table" then
+						local ok, serialised = pcall(textutils.serialise,value)
+						if ok then
+							table.insert(returnValues,{true,serialised})
+						else
+							table.insert(returnValues,{true,tostring(value)})
+						end
+					else
+						table.insert(returnValues,{true,tostring(value)})
+					end
+					n = n + 1
+				end
+			else
+				table.insert(returnValues,{false,tResults[2]})
+			end
+		else
+			table.insert(returnValues,{false,e})
+		end
+		dcore.send(55,os.getComputerID(),returnValues)
 	end end
 	funcs["getLanguage"] = function() dcore.send(55,os.getComputerID(),language.get()) end
 	funcs["getWave"] = function() dcore.send(55,os.getComputerID(),getLevel()) end
@@ -950,6 +1002,7 @@ function mainLoop()
 	end
 end
 
+coroutine.yield()
 
 -- Starting Threads
 threadsStatus["lives"] = thread.add(livesThread,"Lives Management")
