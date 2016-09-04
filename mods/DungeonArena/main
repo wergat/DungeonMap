@@ -558,7 +558,7 @@ function summonVillagers()
 		{53,26,31},
 		{53,26,35},
 	}
-	if config.get("Spawn Villagers") then
+	if not config.get("Spawn Villagers") then
 		villager.new(args):setCustomType("closed"):setName(language.get("villager.drug")):summon(82, 26, 35)
 		villager.new(args):setCustomType("closed"):setName(language.get("villager.exchange")):summon(77, 26, 38)
 		villager.new(args):setCustomType("closed"):setName(language.get("villager.exchange")):summon(80, 26, 38)
