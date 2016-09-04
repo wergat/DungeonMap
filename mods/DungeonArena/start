@@ -494,21 +494,13 @@ function summonVillagers()
 	commands.execd('/tellraw @a "Summoning villagers"')
 	print("Summoning villagers")
 	local args = {noAI = true}
-	if get_v("Ultra-Hard Mode") then
-		villager.new(args):setCustomType("closed"):setName(get_text("villager.drug")):summon(82, 26, 35)
-		respawnHat()
-		villager.new(args):setCustomType("closed"):setName(get_text("villager.exchange")):summon(77, 26, 38)
-		villager.new(args):setCustomType("closed"):setName(get_text("villager.exchange")):summon(80, 26, 38)
-		villager.new(args):setCustomType("closed"):setName(get_text("villager.food")):summon(77, 26, 31)
-		villager.new(args):setCustomType("closed"):setName(get_text("villager.trash")):summon(67, 26, 28)
-	else
-		villager.new(args):setCustomType("drug", level):setName(get_text("villager.drug")):summon(82, 26, 35)
-		respawnHat()
-		villager.new(args):setCustomType("currency"):setName(get_text("villager.exchange")):summon(77, 26, 38)
-		villager.new(args):setCustomType("currency"):setName(get_text("villager.exchange")):summon(80, 26, 38)
-		villager.new(args):setCustomType("food"):setName(get_text("villager.food")):summon(77, 26, 31)
-		villager.new(args):setCustomType("trash"):setName(get_text("villager.trash")):summon(67, 26, 28)
-	end
+	villager.new(args):setCustomType("drug", level):setName(get_text("villager.drug")):summon(82, 26, 35)
+	respawnHat()
+	villager.new(args):setCustomType("currency"):setName(get_text("villager.exchange")):summon(77, 26, 38)
+	villager.new(args):setCustomType("currency"):setName(get_text("villager.exchange")):summon(80, 26, 38)
+	villager.new(args):setCustomType("food"):setName(get_text("villager.food")):summon(77, 26, 31)
+	villager.new(args):setCustomType("trash"):setName(get_text("villager.trash")):summon(67, 26, 28)
+
 	for i = 1, #villager_areas do
 		local obj = villager.new(args):setCustomType("equipment", level+5)
 		obj:setName(get_text("villager.normal"))
