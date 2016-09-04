@@ -101,6 +101,12 @@ local nextSong = true
 
 local currentObjective = "Not sure"
 
+
+function getCurrentObjective()
+	return currentObjective
+end
+
+
 local hatData = {}
 if(fs.exists("hatData"))then
 	local hatFile = fs.open("hatData","r")

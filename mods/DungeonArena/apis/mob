@@ -40,7 +40,7 @@ function summonBoss(x,y,z,mobType,difficulty)
 	boss:auto()
 	boss.name = boss_name(math.random(10)) .. ", " .. ranks[math.random(#ranks)] .. " of the Mobs"
 	boss.dropChances = {"1.0f","1.0f","1.0f","1.0f","1.0f"}
-	boss:setEquipment("helmet",{["id"] = 69,["Damage"] = 0,["Count"] = 1,["tag"] = {["display"] = {["Name"] = "Gate Key", ["Lore"] = {"Said to open Death's Shop.","Maybe there's a gate somewhere to use this on?", "You'd think placing it would be stupid of you."}}},})
+	boss:setEquipment("helmet",{["id"] = 131,["Damage"] = 0,["Count"] = 1,["tag"] = {["display"] = {["Name"] = "Gate Key", ["Lore"] = {"Said to open Death's Shop.","Maybe there's a gate somewhere to use this on?", "You'd think placing it would be stupid of you."}}},})
 	boss:summon(x,y,z)
 end
 
