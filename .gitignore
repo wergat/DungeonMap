@@ -44,3 +44,8 @@ Temporary Items
 
 # Log Files
 logs/
+
+# Eclipse
+.settings
+.buildpath
+.project
