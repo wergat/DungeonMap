@@ -128,7 +128,7 @@ end
 -- Rooms & Connections
 function loadConnections(block)
 	local block = "minecraft:stonebrick"
-	local startTime = os.time()
+	local startTime = os.clock()
 	--                          +-------+
 	-- X-Connection (X-1/Y) [--<| ROOM  |>--} X-Connection (X/Y)
 	--                          | (X/Y) |
@@ -270,7 +270,7 @@ function loadConnections(block)
 			end
 		end
 	end
-	cmd.get("/say Time for erasure:"..(startTime-os.time()))
+	cmd.get("/say Time for erasure:"..(startTime-os.clock()))
 end
 
 coroutine.yield()
