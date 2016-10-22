@@ -86,7 +86,7 @@ function requireAPI(...)
 					print_log("dcore","[API][MAIN] DID NOT LOAD "..config.DIR_APIS.."/"..tArgs[i].."; error occurred out of nowhere, might have been loaded already!")
 				end
 				apis_loaded[tArgs[i]] = true
-				loadedAPIsList[#loadedAPIsList+1] = tArgs[i]
+				loadedAPIsList[#loadedAPIsList+1] = config.DIR_APIS .. "/" .. tArgs[i]
 				--Load apis from mods-folders with same name
 				loadSimilarApis(tArgs[i])
 				config.save()
