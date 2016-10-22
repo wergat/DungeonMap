@@ -86,6 +86,7 @@ function requireAPI(...)
 					print_log("dcore","[API][MAIN] DID NOT LOAD "..config.DIR_APIS.."/"..tArgs[i].."; error occurred out of nowhere, might have been loaded already!")
 				end
 				apis_loaded[tArgs[i]] = true
+				loadedAPIsList[#loadedAPIsList+1] = tArgs[i]
 				--Load apis from mods-folders with same name
 				loadSimilarApis(tArgs[i])
 				config.save()
@@ -165,10 +166,6 @@ function loadSimilarApis(_forceName)
 				end
 				for k,v in pairs(tEnv) do
 					print_log("dcore","[API]["..l[i].."]["..file_name.."] Loading "..type(v).." "..k.." --> "..file_name.."."..k.."")
-					if not doneAPIs[file_name] then
-						loadedAPIsList[#loadedAPIsList+1] = file_name
-						doneAPIs[file_name] = true
-					end
 					_G[file_name][k] = v
 				end   
 			end
