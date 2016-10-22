@@ -1,30 +1,43 @@
 local formatting_colors = {
- {"§0","Black","black",colors.black},
- {"§1","Dark Blue","dark_blue",colors.blue},
- {"§2","Dark Green","dark_green",colors.green},
- {"§3","Dark Aqua","dark_aqua",colors.cyan},
- {"§4","Dark Red","dark_red",colors.red},
- {"§5","Dark Purple","dark_purple",colors.purple},
- {"§6","Gold","gold",colors.orange},
- {"§7","Gray","gray",colors.lightGray},
- {"§8","Dark Gray","dark_gray",colors.gray},
- {"§9","Blue","blue",colors.lightBlue},
- {"§a","Green","green",colors.lime},
- {"§b","Aqua","aqua",colors.cyan},
- {"§c","Red","red",colors.red},
- {"§d","Light Purple","light_purple",colors.magenta},
- {"§e","Yellow","yellow",colors.yellow},
- {"§f","White","white",colors.white}
+	{"§0","Black","black",colors.black},
+	{"§1","Dark Blue","dark_blue",colors.blue},
+	{"§2","Dark Green","dark_green",colors.green},
+	{"§3","Dark Aqua","dark_aqua",colors.cyan},
+	{"§4","Dark Red","dark_red",colors.red},
+	{"§5","Dark Purple","dark_purple",colors.purple},
+	{"§6","Gold","gold",colors.orange},
+	{"§7","Gray","gray",colors.lightGray},
+	{"§8","Dark Gray","dark_gray",colors.gray},
+	{"§9","Blue","blue",colors.lightBlue},
+	{"§a","Green","green",colors.lime},
+	{"§b","Aqua","aqua",colors.cyan},
+	{"§c","Red","red",colors.red},
+	{"§d","Light Purple","light_purple",colors.magenta},
+	{"§e","Yellow","yellow",colors.yellow},
+	{"§f","White","white",colors.white}
 }
 
+function getColorData(something)
+	for i=1,#formatting_colors do
+		for j=1,#formatting_colors[i] do
+			if(formatting_colors[i][j] == something)then
+				return formatting_colors[i]
+			end
+		end
+	end
+end
+
 local formatting_codes = {
- {"§k","Obfuscated"},
- {"§l","Bold"},
- {"§m","Strikethrough"},
- {"§n","Underline"},
- {"§o","Italic"},
- {"§r","Reset"}
+	{"§k","Obfuscated"},
+	{"§l","Bold"},
+	{"§m","Strikethrough"},
+	{"§n","Underline"},
+	{"§o","Italic"},
+	{"§r","Reset"}
 }
+
+
+
 
 local wool_colors = {
  {"0","White"},
@@ -44,6 +57,8 @@ local wool_colors = {
  {"14","Red"},
  {"15","Black"},
 }
+
+
 
 -- Input: official name of wanted color
 -- returns Code, e.g. §e
