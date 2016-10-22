@@ -132,6 +132,7 @@ function loadSimilarApis(_forceName)
 		if(isModEnabled(l[i]))then
 			-- l[i] = Modname
 			local pathToAPIFile = config.DIR_MODS.."/"..l[i].."/apis/"..file_name
+			loadedAPIsList[#loadedAPIsList+1] = config.DIR_MODS.."/"..l[i].."/apis/"..file_name
 			if(fs.exists(pathToAPIFile))then
 				print_log("dcore","[API]["..l[i].."] Loading mod-api "..pathToAPIFile.."")
 				-- Load functions of Mod API's files
