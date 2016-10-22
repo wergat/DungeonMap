@@ -175,14 +175,16 @@ function loadConnections(block)
 		for y=1,4 do
 			removeXConnection(x,y)
 			removeYConnection(x,y)
+			sleep(.05)
 		end
 	end
-		
+	
 	addRandomXConnection(3,3)
 	addRandomXConnection(2,3)
 	addRandomYConnection(3,3)
 	addRandomYConnection(3,2)
-
+	sleep(.05)
+	
 	local start = {1,1}
 	local lookingAt = start
 
@@ -693,12 +695,15 @@ registerStage("shop_start",function()
 	
 	-- Re-populating it
 	summonMobsInRooms()
+	sleep(0.05)
 	
 	-- Summon Boss and stuff
 	summonBoss()
+	sleep(0.05)
 	
 	-- Summon Guardians
 	summonGuardians()
+	sleep(0.05)
 	
 	print("Stage: shop_start -> shop")
 	config.set("Stage","shop")
