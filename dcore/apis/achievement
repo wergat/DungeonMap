@@ -76,9 +76,9 @@ function new(id)
 	achObj.notify = function(self,playerName)
 		if(not self or not playerName)then error("This function requires an Achievement Object!",2) end
 		if(not self.rarity)then error("Rarity is set to nil, cannot work with this!",2) end
-		local command = '/tellraw @a ["",{"text":"'..playerName..' has just earned the "},{"text":"'..advitem.getRarity(self.rarity)..'","color":'..advitem.getRarityColor(self.rarity)..'},'..
-		'{"text":" achievement "},{"text":"['..self.title..']","color":"'..advitem.getRarityColor(self.rarity)..'","hoverEvent":{"action":"show_text","value":{"text":"","extra":[{"text":"'..self.title..'\n","color":"'..advitem.getRarityColor(self.rarity)..'"},'..
-		'{"text":"'..(advitem.getRarity(self.rarity):gsub("^%l", string.upper))..' achievement\n","color":"'..advitem.getRarityColor(self.rarity)..'","italic":true},{"text":"'..tostring(self.text)..'"}]}}}]'
+		local command = '/tellraw @a ["",{"text":"'..playerName..' has just earned the "},{"text":"'..advitem.getRarity(self.rarity)..'","color":'..farben.getColorData(advitem.getRarityColor(self.rarity))[3]..'},'..
+		'{"text":" achievement "},{"text":"['..self.title..']","color":"'..farben.getColorData(advitem.getRarityColor(self.rarity))[3]..'","hoverEvent":{"action":"show_text","value":{"text":"","extra":[{"text":"'..self.title..'\n","color":"'..farben.getColorData(advitem.getRarityColor(self.rarity))[3]..'"},'..
+		'{"text":"'..(advitem.getRarity(self.rarity):gsub("^%l", string.upper))..' achievement\n","color":white,"italic":true},{"text":"'..tostring(self.text)..'"}]}}}]'
 		cmd.run(command)
 	end
 	
