@@ -1,6 +1,11 @@
+local tArgs = {...}
 if(not dcore)then os.loadAPI(":dungeon/dcore/apis/dcore") end
+
+local saveToFile = false
 local loaded = dcore.getLoadedAPIs()
 local existing = {}
+
+
 local function addToList(folder)
 	for k,v in pairs(fs.list(folder)) do
 		if(fs.isDir(folder.."/"..v))then
@@ -10,7 +15,19 @@ local function addToList(folder)
 		end
 	end
 end
-addToList(":dungeon")
+
+
+if(#tArgs == 0)then
+	addToList(":dungeon")
+elseif(#tArgs >= 1)then
+	for i=1,#tArgs do
+		if(tArgs[i] == "save")then
+			saveToFile = true
+		else
+			addToList(tArgs[i])
+		end
+	end
+end
 
 for i=1,#loaded do
 	local isLoaded = false
@@ -23,10 +40,20 @@ for i=1,#loaded do
 		end
 	end
 end
+
 local text = ""
 for i=1,#existing do
 	if(existing[i])then
-		text = text..((existing[i] or "")..",")
+		text = text..(tostring(existing[i] or "").."\n")
 	end
 end
 textutils.pagedPrint(text)
+if(saveToFile)then
+	local logfile = fs.open("unusedFiles","w")
+	if(logfile)then
+		logfile.writeLine(tostring(text))
+	end
+	if(logfile)then
+		logfile.close()
+	end
+end
