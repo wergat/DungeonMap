@@ -12,9 +12,9 @@ update = function()
 	print(config.DIR_MODS)
 	for i=1,#l do
 		local pathToAPIFile = config.DIR_MODS.."/"..l[i].."/languages/"..languageName
-		print(pathToAPIFile)
+		--print(pathToAPIFile)
 		if(fs.exists(pathToAPIFile))then
-			print("Found Translation File in " .. pathToAPIFile)
+			--print("Found Translation File in " .. pathToAPIFile)
 			--dcore.print_log("dcore","[TRANSLATE]["..languageName.."]["..l[i].."] Loading file "..pathToAPIFile.."")
 			local fileHandle = fs.open(pathToAPIFile,"r")
 			local fileContent = fileHandle.readAll()
