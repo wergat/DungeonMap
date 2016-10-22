@@ -142,7 +142,6 @@ function loadConnections(block)
 			for width=1,5 do
 				cmd.run("/setblock "..(14+x*20).." "..(18+height).." "..(-68+y*20+width).." "..block)
 			end
-			sleep(.05)
 		end
 	end
 	local function removeYConnection(x,y)
@@ -150,7 +149,6 @@ function loadConnections(block)
 			for width=1,5 do
 				cmd.run("/setblock "..(1+x*20+width).." "..(18+height).." "..(-55+y*20).." "..block)
 			end
-			sleep(.05)
 		end
 	end
 	local function addXConnection(x,y)
@@ -158,7 +156,6 @@ function loadConnections(block)
 			for width=1,5 do
 				cmd.run("/setblock "..(14+x*20).." "..(18+height).." "..(-68+y*20+width).." air")
 			end
-			sleep(.05)
 		end
 	end
 	local function addYConnection(x,y)
@@ -166,7 +163,7 @@ function loadConnections(block)
 			for width=1,5 do
 				cmd.run("/setblock "..(1+x*20+width).." "..(18+height).." "..(-55+y*20).." air")
 			end
-			sleep(.05)
+			
 		end
 	end
 	local function addRandomXConnection(x,y)
@@ -181,8 +178,9 @@ function loadConnections(block)
 			removeXConnection(x,y)
 			removeYConnection(x,y)
 		end
+		sleep(.05)
 	end
-	
+
 	addRandomXConnection(3,3)
 	addRandomXConnection(2,3)
 	addRandomYConnection(3,3)
