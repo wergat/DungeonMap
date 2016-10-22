@@ -69,7 +69,7 @@ end
 local loadedAPIsList = {}
 local doneAPIs = {}
 local function addToList(x)
-	if not doneAPIs[x] then
+	if not doneAPIs[x] and fs.exists(x) then
 		loadedAPIsList[#loadedAPIsList+1] = x
 		doneAPIs[x] = true
 	end
@@ -148,9 +148,7 @@ function loadSimilarApis(_forceName)
 		if(isModEnabled(l[i]))then
 			-- l[i] = Modname
 			local pathToAPIFile = config.DIR_MODS.."/"..l[i].."/apis/"..file_name
-			if fs.exists(pathToAPIFile) then
-				addToList(pathToAPIFile)
-			end
+			addToList(pathToAPIFile)
 			if(fs.exists(pathToAPIFile))then
 				print_log("dcore","[API]["..l[i].."] Loading mod-api "..pathToAPIFile.."")
 				-- Load functions of Mod API's files
