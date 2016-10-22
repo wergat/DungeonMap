@@ -66,6 +66,7 @@ function print_log(file,text)
 	end
 end
 
+local loadedAPIsList = {}
 function requireAPI(...)
 	local tArgs = { ... }
 	for i=1,#tArgs do
@@ -119,7 +120,6 @@ function Warning(text)
 	print_log("error","[WARNING] "..tostring(text))
 end
 
-DCORE__loadedAPIs = {}
 function loadSimilarApis(_forceName)
 	-- File name
 	local file_name = tostring(_forceName) or "--"
@@ -164,7 +164,7 @@ function loadSimilarApis(_forceName)
 				end
 				for k,v in pairs(tEnv) do
 					print_log("dcore","[API]["..l[i].."]["..file_name.."] Loading "..type(v).." "..k.." --> "..file_name.."."..k.."")
-					DCORE__loadedAPIs[#DCORE__loadedAPIs+1] = file_name .. "." .. k
+					loadedAPIsList[#loadedAPIsList+1] = file_name .. "." .. k
 					_G[file_name][k] = v
 				end   
 			end
@@ -172,6 +172,10 @@ function loadSimilarApis(_forceName)
 			print_log("dcore","[API]["..l[i].."] Is disabled by client, won't be loaded!")
 		end
 	end
+end
+
+function getLoadedAPIs()
+	return loadedAPIsList
 end
 
 function runFileInAllMods(_fileName)
