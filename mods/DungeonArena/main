@@ -270,7 +270,6 @@ function loadConnections(block)
 			end
 		end
 	end
-	cmd.get("/say Time for erasure:"..(startTime-os.clock()))
 end
 
 coroutine.yield()

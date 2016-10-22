@@ -1,0 +1,29 @@
+if(not dcore)then os.loadAPI(":dungeon/dcore/apis/dcore") end
+local loaded = dcore.getLoadedAPIs()
+local existing = {}
+function addToList(folder)
+	for k,v in pairs(fs.list(folder)) do
+		if(fs.isDir(folder.."/"..v))then
+			addToList(folder.."/"..v)
+		else
+			existing[(#existing + 1)] = folder.."/"..v
+		end
+	end
+end
+addToList(":dungeon")
+
+for i=1,#loaded do
+	local isLoaded = false
+	local j = 1
+	while j < #existing do
+		if(existing[j] == loaded[i])then
+			existing[j] = nil
+		else
+			j = j + 1
+		end
+	end
+end
+
+for i=1,#existing do
+	write(existing[i]..",")
+end
