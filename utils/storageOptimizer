@@ -25,6 +25,8 @@ for i=1,#loaded do
 end
 local text = ""
 for i=1,#existing do
-	text = text..((existing[i] or "")..",")
+	if(existing[i])then
+		text = text..((existing[i] or "")..",")
+	end
 end
 textutils.pagedPrint(text)
