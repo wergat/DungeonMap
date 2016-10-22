@@ -1,5 +1,6 @@
 if(not dcore)then os.loadAPI(":dungeon/dcore/apis/dcore") end
 
+--
 -- SCOREBOARD SET-UP:
 -- scoreboard id = ach_..achID
 -- Value of scoreboard:
