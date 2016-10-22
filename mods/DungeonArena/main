@@ -737,6 +737,11 @@ registerStage("shop",function()
 	-- Set up shop
 	summonVillagers()
 	print("Stage: shop -> start")
+	
+	-- Increase Wave Counter
+	config.set("Wave",(config.get("Wave") + 1))
+	
+	
 	config.set("Stage","start")
 	config.save()
 end)
