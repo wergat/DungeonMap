@@ -102,7 +102,10 @@ local oldLoadAPI = os.loadAPI
 os.loadAPI = function(...)
 	local tArgs = {...}
 	for i = 1, #tArgs do
-		loadedAPIsList[#loadedAPIsList+1] = tArgs[i]
+		if not doneAPIs[tArgs[i]] then
+			loadedAPIsList[#loadedAPIsList+1] = tArgs[i]
+			doneAPIs[tArgs[i]] = true
+		end
 	end
 	return oldLoadAPI(...)
 end
