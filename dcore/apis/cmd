@@ -152,30 +152,32 @@ function recieveSlaveSignals()
 			local message = tEvent[5]
 			if(slaveComputer)then
 				-- Check if computer is still listed as working on that project, or if it has timed out
-				if(slaveComputer.workingOn.id == message[1][1])then
-					-- Check if event is Async
-					if(slaveComputer.workingOn.content[1].isAsync)then
-						-- For each command in the package do
-						for i=1,#slaveComputer.workingOn.content do
-							statistics.asyncCommandsSuccessfull = statistics.asyncCommandsSuccessfull + 1
-							-- Run functions or so that are requested to trigger
-							if(slaveComputer.workingOn.content[i].func)then
-								slaveComputer.workingOn.content[i].func()
+				if(slaveComputer.workingOn)then
+					if(slaveComputer.workingOn.id == message[1][1])then
+						-- Check if event is Async
+						if(slaveComputer.workingOn.content[1].isAsync)then
+							-- For each command in the package do
+							for i=1,#slaveComputer.workingOn.content do
+								statistics.asyncCommandsSuccessfull = statistics.asyncCommandsSuccessfull + 1
+								-- Run functions or so that are requested to trigger
+								if(slaveComputer.workingOn.content[i].func)then
+									slaveComputer.workingOn.content[i].func()
+								end
 							end
+							-- Free the slave to work on other things
+							slaveComputer.workingOn = nil
+							slaveComputer.state = "ready"
+							slaveComputer.timer = 0
+						else
+							statistics.commandsSuccessfull = statistics.commandsSuccessfull + 1
+							-- Queue Event to return
+							os.queueEvent("cmd_eventDone_"..slaveComputer.workingOn.content[1].id,message[1][2])
+							--print("Queue: "..slaveComputer.workingOn.content[1].id)
+							-- Free the slave to work on other things
+							slaveComputer.workingOn = nil
+							slaveComputer.state = "ready"
+							slaveComputer.timer = 0
 						end
-						-- Free the slave to work on other things
-						slaveComputer.workingOn = nil
-						slaveComputer.state = "ready"
-						slaveComputer.timer = 0
-					else
-						statistics.commandsSuccessfull = statistics.commandsSuccessfull + 1
-						-- Queue Event to return
-						os.queueEvent("cmd_eventDone_"..slaveComputer.workingOn.content[1].id,message[1][2])
-						--print("Queue: "..slaveComputer.workingOn.content[1].id)
-						-- Free the slave to work on other things
-						slaveComputer.workingOn = nil
-						slaveComputer.state = "ready"
-						slaveComputer.timer = 0
 					end
 				end
 			end
