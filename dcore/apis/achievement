@@ -103,8 +103,6 @@ function new(id)
 				player.getPlayerByName(playerName):setScoreboardValue("ach_"..self.id,2)
 				-- Save it to the cache for quicker loading later on
 				cache(playerName,self.id,true)
-			else
-				cmd.run("/say Player \""..playerName.."\" has this achievement alreay!")
 			end
 		end
 	end
