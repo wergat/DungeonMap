@@ -76,20 +76,20 @@ function new(id)
 		if(not self or not playerName)then error("This function requires an Achievement Object!",2) end
 		if(not self.rarity)then error("Rarity is set to nil, cannot work with this!",2) end
 		local command = '/tellraw @a ["",{"text":"'..playerName..' has just earned the "},{"text":"'..advitem.getRarity(self.rarity)..'","color":'..advitem.getRarityColor(self.rarity)..'},'..
-		'{"text":" achievement "},{"text":"['..self.title..']","color":"green","hoverEvent":{"action":"show_text","value":{"text":"","extra":[{"text":"'..self.title..'\n","color":"green"},'..
-		'{"text":"'..type(advitem.getRarity(self.rarity):gsub("^%l", string.upper))..' achievement\n","color":"'..advitem.getRarityColor(self.rarity)..'","italic":true},{"text":"'..tostring(self.text)..'"}]}}}]'
+		'{"text":" achievement "},{"text":"['..self.title..']","color":"'..advitem.getRarityColor(self.rarity)..'","hoverEvent":{"action":"show_text","value":{"text":"","extra":[{"text":"'..self.title..'\n","color":"'..advitem.getRarityColor(self.rarity)..'"},'..
+		'{"text":"'..(advitem.getRarity(self.rarity):gsub("^%l", string.upper))..' achievement\n","color":"'..advitem.getRarityColor(self.rarity)..'","italic":true},{"text":"'..tostring(self.text)..'"}]}}}]'
 		cmd.run(command)
 	end
 	
 	achObj.isDone = function(self,playerName)
 		local cacheValue = getCache(playerName,self.id)
-		if(cacheValue == nil)then
+		if(not cacheValue)then
 			local value = tonumber(player.getPlayerByName(playerName):getScoreboardValue("ach_"..self.id) or 0)
 			-- Save it to the cache for quicker loading later on
-			cache(playerName,self.id,(value > 0))
+			cache(playerName,self.id,(value > 1))
 			return (value > 1)
 		else
-			return cacheValue
+			return true
 		end
 	end
 	
@@ -103,6 +103,8 @@ function new(id)
 				player.getPlayerByName(playerName):setScoreboardValue("ach_"..self.id,2)
 				-- Save it to the cache for quicker loading later on
 				cache(playerName,self.id,true)
+			else
+				cmd.run("/say Player \""..playerName.."\" has this achievement alreay!")
 			end
 		end
 	end
