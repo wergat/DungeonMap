@@ -9,7 +9,8 @@ print("Loading more APIs")
 os.loadAPI(":dungeon/dcore/apis/dcore")
 os.loadAPI(":dungeon/mods/DungeonArena/apis/room")
 os.loadAPI(":dungeon/mods/DungeonArena/apis/sha256")
-os.loadAPI(":dungeon/mods/DungeonArena/apis/hat")
+-- Not in use right now.
+-- os.loadAPI(":dungeon/mods/DungeonArena/apis/hat")
 
 
 dcore.requireAPI("chest")
