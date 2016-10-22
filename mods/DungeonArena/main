@@ -71,7 +71,7 @@ achievements["chicken"] = {"achievement.chicken.name","achievement.chicken.descr
 	achievement.getAchievementByID("chicken"):setDone(player.getPlayersBySelector("@a[score_ChickenKilled_min=1]"):getNames())
 end}
 achievements["heat"] = {"achievement.heat.name","achievement.heat.description",5,true,function()
-	local playersWithoutThisAchievment = (player.getPlayersBySelector("@a") - player.getPlayersBySelector("@a[score_ach_heat_min=1]"))
+	local playersWithoutThisAchievment = (player.getPlayersBySelector("@a") - player.getPlayersBySelector("@a[score_ach_heat_min=2]"))
 	if(#playersWithoutThisAchievment:getNames() > 0)then -- Optimising this, keep the commands that are run always low!
 		playersWithoutThisAchievment:execute("detect ~ ~0.7 ~ minecraft:lava -1 /scoreboard players set @p ach_heat 1")
 		achievement.getAchievementByID("heat"):setDone(player.getPlayersBySelector("@a[score_ach_heat_min=1,score_ach_heat=1]"):getNames())
