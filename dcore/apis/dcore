@@ -67,6 +67,7 @@ function print_log(file,text)
 end
 
 local loadedAPIsList = {}
+local doneAPIs = {}
 function requireAPI(...)
 	local tArgs = { ... }
 	for i=1,#tArgs do
@@ -164,7 +165,10 @@ function loadSimilarApis(_forceName)
 				end
 				for k,v in pairs(tEnv) do
 					print_log("dcore","[API]["..l[i].."]["..file_name.."] Loading "..type(v).." "..k.." --> "..file_name.."."..k.."")
-					loadedAPIsList[#loadedAPIsList+1] = file_name .. "." .. k
+					if not doneAPIs[file_name] then
+						loadedAPIsList[#loadedAPIsList+1] = file_name
+						doneAPIs[file_name] = true
+					end
 					_G[file_name][k] = v
 				end   
 			end
