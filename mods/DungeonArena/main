@@ -47,6 +47,12 @@ config.softInit("Enable Music",false)
 config.softInit("Stage","init")
 config.softInit("AchievementTickRate",0.1) -- In seconds, 1 is okay
 config.softInit("AllowLuaInjection",true) -- Allow user to send lua code to be executed here
+config.softInit("AllowLuaInjectionByAdmins",true) -- Allow Admins to send lua code to be executed here
+config.softInit("ConsoleAdmins",{}) -- List of admins
+
+-- 
+
+
 
 -- Saving if we just changed any settings
 config.save()
@@ -464,6 +470,13 @@ function setup()
 	cmd.run("/gamerule keepInventory true")
 	cmd.run("/gamerule mobGriefing false")
 end
+
+-- Resets the current wave and teleports all players back to the start
+-- Removes all the mobs and respawns them, too.
+function resetWave()
+
+end
+
 -- Reset
 function reset()
 	-- Remove Chests
@@ -820,69 +833,119 @@ setmetatable(luaTEnv,{__index = getfenv()})
 
 function rednetThread()
 	local funcs = {}
-	funcs["reset"] = function() config.set("Stage","reset") config.save() os.reboot() end
-	funcs["reboot"] = function() os.reboot() end
-	-- Music Controll
-	funcs["enableMusic"] = function() songRunning = true end
-	funcs["stopMusic"] = function() songRunning = false end
-	funcs["nextMusic"] = function() nextSong = true end
-	-- 
-	funcs["isOnline"] = function(playerName) dcore.send(55,os.getComputerID(),tostring(commands.exec("/testfor @a[name="..tostring(playerName).."]")),"toMobile_"..tostring(playerName)) end
-	funcs["getLives"] = function(playerName) dcore.send(55,os.getComputerID(),player.getPlayerByName(playerName):getScoreboardValue("lives"),"toMobile_"..tostring(playerName)) end
-	-- Misc
-	funcs["ping"] = function() cmd.run("/say pong") end
-	funcs["lua"] = function(userName,code) if(config.AllowLuaInjection)then
-		print("Running: \""..code.."\" by "..userName)
-		
-		-- Taken from the lua programm to simulate proper handling
-		-- Loading the string into functions
-		local nForcePrint = 0
-		local func, e = loadstring(code,"lua")
-		local func2, e2 = loadstring("return _echo("..code..");","lua")
-		if not func then
-			if func2 then
-				func = func2
-				e = nil
-				nForcePrint = 1
-			end
+	local users = {} -- ["userName"] = {returnNumber,authenticationID,isVertified},...
+	
+	--  Register Functions	
+	-- Login handeling. Sends number back to client
+	funcs["register"] = {}
+	funcs["register"]["registrationRequest"] = function(userName,randomReturnNumber)
+		-- Return random returnNumber, then save that.
+		-- From now on, data will be sent on that frequenzy
+	end
+	funcs["register"]["authenticationVertification"] = function(userName,code)
+		if(isValid(code))then
+			-- Tell tablet it is valid
+			-- Save that user is vertified.
 		else
-			if func2 then
-				func = func2
+			-- Tell tablet that it is invalid
+		end
+	end
+	funcs["register"]["authenticationRequest"] = function(userName)
+		-- Create Paper at client
+		-- Answer that server is waiting for answer
+	end
+	
+	--   Misc functions, don't harm anything, read only.
+	funcs["misc"] = {}
+	funcs["misc"]["ping"] = function() cmd.run("/say pong") end
+	funcs["misc"]["getLanguage"] = function() dcore.send(55,os.getComputerID(),language.get()) end
+	funcs["misc"]["getWave"] = function() dcore.send(55,os.getComputerID(),getLevel()) end
+	funcs["misc"]["getObjective"] = function() dcore.send(55,os.getComputerID(),currentObjective) end
+	
+	--   Executable functions, can create great harm.
+	funcs["exec"] = {}
+	-- Lua
+	local function isInjectionAllowed(userName)
+		if(config.AllowLuaInjection)then 
+			return true 
+		else
+			if(not config.AllowLuaInjectionByAdmins)then
+				return false
+			else
+				local t = config.ConsoleAdmins
+				for i=1,#t do
+					if(t[i] == userName)then
+						return true
+					end
+				end
 			end
 		end
-		local returnValues = {}		
-		-- Checking if the functions were loaded successfully and then execute them
-		if func then
-			setfenv(func,luaTEnv)
-			local tResults = {pcall(func)}
-			if tResults[1] then
-				local n = 1
-				while (tResults[n + 1] ~= nil) or (n <= nForcePrint) do
-					local value = tResults[n+1]
-					if type(value) == "table" then
-						local ok, serialised = pcall(textutils.serialise,value)
-						if ok then
-							table.insert(returnValues,{true,serialised})
+	end
+	funcs["exec"]["lua"] = function(userName,code)
+		if(isInjectionAllowed(userName))then
+			print("Running: \""..code.."\" by "..userName)
+			
+			
+			
+			-- Executing the code
+			-- Taken from the lua programm to simulate proper handling
+			-- Loading the string into functions
+			local nForcePrint = 0
+			local func, e = loadstring(code,"lua")
+			local func2, e2 = loadstring("return _echo("..code..");","lua")
+			if not func then
+				if func2 then
+					func = func2
+					e = nil
+					nForcePrint = 1
+				end
+			else
+				if func2 then
+					func = func2
+				end
+			end
+			local returnValues = {}		
+			-- Checking if the functions were loaded successfully and then execute them
+			if func then
+				setfenv(func,luaTEnv)
+				local tResults = {pcall(func)}
+				if tResults[1] then
+					local n = 1
+					while (tResults[n + 1] ~= nil) or (n <= nForcePrint) do
+						local value = tResults[n+1]
+						if type(value) == "table" then
+							local ok, serialised = pcall(textutils.serialise,value)
+							if ok then
+								table.insert(returnValues,{true,serialised})
+							else
+								table.insert(returnValues,{true,tostring(value)})
+							end
 						else
 							table.insert(returnValues,{true,tostring(value)})
 						end
-					else
-						table.insert(returnValues,{true,tostring(value)})
+						n = n + 1
 					end
-					n = n + 1
+				else
+					table.insert(returnValues,{false,tResults[2]})
 				end
 			else
-				table.insert(returnValues,{false,tResults[2]})
+				table.insert(returnValues,{false,e})
 			end
+			dcore.send(55,os.getComputerID(),returnValues)
 		else
-			table.insert(returnValues,{false,e})
+			dcore.send(55,os.getComputerID(),{false,"Access Denied"})
 		end
-		dcore.send(55,os.getComputerID(),returnValues)
-	end end
-	funcs["getLanguage"] = function() dcore.send(55,os.getComputerID(),language.get()) end
-	funcs["getWave"] = function() dcore.send(55,os.getComputerID(),getLevel()) end
-	funcs["getObjective"] = function() dcore.send(55,os.getComputerID(),currentObjective) end
-	funcs["getAchievements"] = function(playerName)
+	end
+	funcs["exec"]["reset"] = function() config.set("Stage","reset") config.save() os.reboot() end
+	funcs["exec"]["reboot"] = function() os.reboot() end
+	-- Music Controll
+	funcs["exec"]["enableMusic"] = function() songRunning = true end
+	funcs["exec"]["stopMusic"] = function() songRunning = false end
+	funcs["exec"]["nextMusic"] = function() nextSong = true end
+	
+	--   User Information
+	funcs["info"] = {}
+	funcs["info"]["getAchievements"] = function(playerName)
 		local data = {}
 		for k,v in pairs(achievements)do
 			local ach = achievement.getAchievementByID(k)
@@ -897,7 +960,9 @@ function rednetThread()
 		end
 		dcore.send(55,os.getComputerID(),data,"toMobile_"..tostring(playerName))
 	end
-	
+	funcs["info"]["isOnline"] = function(playerName) dcore.send(55,os.getComputerID(),tostring(commands.exec("/testfor @a[name="..tostring(playerName).."]")),"toMobile_"..tostring(playerName)) end
+	funcs["info"]["getLives"] = function(playerName) dcore.send(55,os.getComputerID(),player.getPlayerByName(playerName):getScoreboardValue("lives"),"toMobile_"..tostring(playerName)) end
+	-- Misc
 	
 	--modem.transmit(23,computersID,{{message[2],{commands.exec(message[1])}},"cmd"})
 	while true do
@@ -907,8 +972,10 @@ function rednetThread()
 		if(tEvent[5] and tEvent[5][1] and type(tEvent[5][1]) == "table")then
 			local f = tEvent[5][1][1]
 			table.remove(tEvent[5][1],1)
-			if funcs[f] then
-				funcs[f](unpack(tEvent[5][1]))
+			for k,_ in pairs(funcs)do
+				if funcs[k][f] then
+					funcs[k][f](unpack(tEvent[5][1]))
+				end
 			end
 		end
 	end

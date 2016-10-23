@@ -75,6 +75,24 @@ local function addToList(x)
 	end
 end
 
+local oldLoadAPI = os.loadAPI
+os.loadAPI = function(...)
+	local tArgs = {...}
+	for i = 1, #tArgs do
+		addToList(tArgs[i])
+	end
+	return oldLoadAPI(...)
+end
+
+local OldFsOpen = fs.open
+fs.open = function(...)
+	local tArgs = {...}
+	for i = 1, #tArgs do
+		addToList(tArgs[i])
+	end
+	return OldFsOpen(...)
+end
+
 function requireAPI(...)
 	local tArgs = { ... }
 	for i=1,#tArgs do
@@ -105,15 +123,7 @@ function requireAPI(...)
 	end
 end
 
-local doneAPIs = {}
-local oldLoadAPI = os.loadAPI
-os.loadAPI = function(...)
-	local tArgs = {...}
-	for i = 1, #tArgs do
-		addToList(tArgs[i])
-	end
-	return oldLoadAPI(...)
-end
+
 
 function isModEnabled(modName)
 	if(fs.exists(":dungeon/mods/"..modName))then
