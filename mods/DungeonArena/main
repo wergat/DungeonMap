@@ -80,7 +80,7 @@ achievements["herring"] = {"achievement.herring.name","achievement.herring.descr
 	local playersWithoutHerring = (player.getPlayersBySelector("@a") - player.getPlayersBySelector("@a[score_ach_herring_min=2]"))
 	if (#playersWithoutHerring:getNames() > 0) then
 		--playersWithoutHerring:execute("detect ~ ~0.7 ~ minecraft:lava -1 /scoreboard players set @p ach_heat 1")
-		local psuc, presult = cmd.get("/execute @a[name=" .. playersWithoutHerring:getNames() .."] ~ ~ ~ " .. command)
+		local psuc, presult = cmd.get("/execute @a[name=" .. playersWithoutHerring:getNames() .."] ~ ~ ~ /clear @a minecraft:carpet 4 0")
 		if psuc then
 			for i = 1, #presult do
 				if presult[i]:find("Cleared the inventory of") then
