@@ -21,6 +21,9 @@ dcore.requireAPI("cmd")
 dcore.requireAPI("player")
 dcore.requireAPI("mob")
 
+-- Just in fucking case you newer know if this fuckign API stuff might screw your stuff up WTF
+language.update()
+
 
 
 -- Setting default Config
