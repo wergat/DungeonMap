@@ -105,10 +105,10 @@ end}
 achievements["fifty"] = {"achievement.fifty.name","achievement.fifty.description",7,false}
 achievements["ninetyFour"] = {"achievement.nf.name","achievement.nf.description",8,true}
 achievements["konami"] = {"achievement.konami.name","achievement.konami.description",4,true,function()
-	--type in console: konamiDone = {"yourName"}
-	if type(konamiDone) == "table" then
-		achievement.getAchievementByID("konami"):setDone(konamiDone[1])
-		konamiDone = nil
+	--type in console: _G["konamiDone"] = {"yourName"}
+	if type(_G["konamiDone"]) == "table" then
+		achievement.getAchievementByID("konami"):setDone(_G["konamiDone"][1])
+		_G["konamiDone"] = nil
 	end
 end}
 
