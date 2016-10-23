@@ -123,7 +123,11 @@ local function downloadFromDir(url)
 			--for k,v in pairs(BLACKLIST) do if(v==path)then return end end
 			print(" > Downloading file: " .. path)
 			logfile.writeLine(" > Downloading file: " .. path)
-			local xt = github.get(f["download_url"]).readAll()
+			local handle = github.get(f["download_url"])
+			local xt = ""
+			if(handle)then
+				xt = handle.readAll()
+			end
 			local open = fs.open("dungeon/" .. path, "w")
 			open.write(xt)
 			open.close()
