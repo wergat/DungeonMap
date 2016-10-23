@@ -1,5 +1,10 @@
--- Loads a keylist form the internet
-local keylist = textutils.unserialize(http.get("http://pastebin.com/raw.php?i=JBAmmZ2x").readAll())
+-- Loads a keylist from the internet
+local keylist = http.get("http://pastebin.com/raw/v6PvjTAz").readAll()
+if keylist then
+	keylist = textutils.unserialize(keylist)
+else
+	error("No internet access, github API can not be used.")
+end
 -- JSON thing to parse data from github
 local JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
 
