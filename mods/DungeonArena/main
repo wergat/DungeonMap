@@ -49,6 +49,8 @@ config.softInit("AchievementTickRate",0.1) -- In seconds, 1 is okay
 config.softInit("AllowLuaInjection",true) -- Allow user to send lua code to be executed here
 config.softInit("AllowLuaInjectionByAdmins",true) -- Allow Admins to send lua code to be executed here
 config.softInit("ConsoleAdmins",{}) -- List of admins
+config.softInit("Respawn","PostWave") -- [PreWave,MidWave,PostWave]
+config.softInit("EnableGhosting",true) -- If players have to wait for thier respawn, are they being put into spectator mode?
 
 -- 
 
@@ -352,7 +354,8 @@ function summonChests()
 	config.set("CachedChestPositions", textutils.serialize(chosen))
 end
 function defuseChest(x,y,z)
-	cmd.run("/blockdata "..x.." "..y.." "..z.." {Items:[]}",function() cmd.run("/setblock "..x.." "..y.." "..z.." chest") end)
+	cmd.get("/blockdata "..x.." "..y.." "..z.." {Items:[]}")
+	cmd.run("/setblock "..x.." "..y.." "..z.." chest")
 end
 
 -- Torches
@@ -474,7 +477,7 @@ end
 -- Resets the current wave and teleports all players back to the start
 -- Removes all the mobs and respawns them, too.
 function resetWave()
-
+	
 end
 
 -- Reset
@@ -634,6 +637,22 @@ function loadEnchantmentTables(x,y,z)
 end
 
 
+local inSuspenstion = {}
+-- Releases players from suspension
+-- Value = pre-shop or post-shop
+function releasePlayerFromSuspension(spawnPostShop)
+	for k,v in pairs(inSuspenstion) do
+		if(v)then
+			if(spawnPostShop)then
+				cmd.get("/tp "..k.." 84 28 26")
+			else
+				cmd.get("/tp "..k.." 64 19 48")
+			end
+		end
+	end
+end
+
+
 local stages = {}
 function registerStage(stageName,func)
 	stages[stageName] = func
@@ -687,6 +706,7 @@ registerStage("waiting_key",function()
 end)
 registerStage("waiting_shop",function()
 	currentObjective = "Go upstairs"
+	releasePlayerFromSuspension(false)
 	cmd.run('/tellraw @a '..language.get("wave.waiting_shop"))
 	repeat
 		local _,playersOutsideArea = commands.exec("/xp 0 @a[72,26,40,rm=5]")
@@ -782,11 +802,18 @@ registerStage("reset",function()
 	config.save()
 end)
 
+
 coroutine.yield()
+
+
 
 local threadsStatus = {}
 -- Threads
 function livesThread()
+	-- Players currently in Spectator mode/holding cell
+	
+	--EnableGhosting
+	--config.softInit("Respawn","PostWave") -- [PreWave,MidWave,PostWave]
 	while true do
 		if config.get("Lives Amount") ~= "infinite" then
 			local success, _ = commands.exec("/scoreboard players add @a lives 1 {SelectedItem:{id:minecraft:red_mushroom}}")
@@ -796,19 +823,59 @@ function livesThread()
 		end
 		
 		cmd.get("/scoreboard players remove @a[-7,4,8,r=3] lives 1")
-		cmd.run('/tellraw @a[-7,4,8,r=3] some text stuff')
-		cmd.run("/tp @a[-7,4,8,r=3,score_lives=0] -6 26 -16")
-		cmd.run("/tp @a[-7,4,8,r=3,score_lives_min=0] "..getRandomSpawnPosition())
+		cmd.get('/tellraw @a[-7,4,8,r=3] some text stuff')
+		cmd.get("/tp @a[-7,4,8,r=3,score_lives=0] -6 26 -16")
+		
 		
 		local r,_ = commands.exec("/testfor @a[-6,26,-16,rm=4]")
 		if not r then
-			print("Game over!")
-			sleep(0.2)
-			commands.exec('/tellraw @a ["",{"text":"' .. language.get("life.zero") .. '","color":"gold","bold":true}]')
-			commands.exec('/tp @a -5 5 -15')
-			commands.exec('/execute @a ~ ~ ~ playsound mob.blaze.death @p[r=0]')
-			config.save()
-			sleep(0.1)
+			-- Check if all players are dead
+			local amountOfPlayersAlive = #player.getPlayersBySelector("@a[score_lives_min=1]"):getNames()
+			-- All players are dead
+			if(amountOfPlayersAlive == 0)then
+				commands.exec('/tellraw @a ["",{"text":"' .. language.get("life.zero") .. '","color":"gold","bold":true}]')
+				commands.exec('/tp @a -5 5 -15')
+				commands.exec('/execute @a ~ ~ ~ playsound mob.blaze.death @p[r=0]')
+				sleep(1)
+				reset()
+			else -- At least one player is still alive
+				-- Check if all players are in Suspension
+				local function isAtLeastOnePlayerInArena()
+					local playersLeft = player.getPlayersBySelector("@a[m=2]"):getNames()
+					for i=1,#playersLeft do
+						if(not inSuspenstion[playersLeft[i]])then
+							return true
+						end
+					end
+					return false
+				end
+				if(isAtLeastOnePlayerInArena())then
+					if(config.get("EnableGhosting"))then
+						-- Check if they can respawn instantly
+						if(config.get("Respawn") == "MidWave")then
+							-- Respawn player at random position
+							cmd.get("/tp @a[-7,4,8,r=3,score_lives_min=0] "..getRandomSpawnPosition())
+						else
+							local waiting = player.getPlayersBySelector("@a[-7,4,8,r=3,score_lives_min=0]"):getNames()
+							for i=1,#waiting do
+								inSuspenstion[waiting[i]] = true
+							end
+							-- Put player in Spectator mode to spectate the remaining players
+							cmd.get("/gamemode sp @a -5 5 -15")
+							-- Teleport to other player
+							cmd.get("/tp Wergat @r[m=2,c=1]")
+						end
+					else
+						-- Player is stuck here?
+						local waiting = player.getPlayersBySelector("@a[-7,4,8,r=3,score_lives_min=0]"):getNames()
+						for i=1,#waiting do
+							inSuspenstion[waiting[i]] = true
+						end
+					end
+				else
+					releasePlayerFromSuspension(true)
+				end
+			end
 		end
 		sleep(.2)
 	end
