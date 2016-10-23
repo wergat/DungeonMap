@@ -6,10 +6,10 @@ set = function(newLanguageName)
 	languageName = newLanguageName
 end
 update = function()
-	print("Updating the language")
+	--print("Updating the language")
 	local newData = {}
 	local l = fs.list(config.DIR_MODS)
-	print(config.DIR_MODS)
+	--print(config.DIR_MODS)
 	for i=1,#l do
 		local pathToAPIFile = config.DIR_MODS.."/"..l[i].."/languages/"..languageName
 		--print(pathToAPIFile)

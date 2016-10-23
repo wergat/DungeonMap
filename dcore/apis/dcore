@@ -26,8 +26,8 @@ if(not language)then
 	print("Setting up the language API!")
 	os.loadAPI(":dungeon/dcore/apis/language")
 	--language = setmetatable(language,{__index = function(t,key) return t.get(key) end}) -- Making it easier to access config data
-	language.update()
 end
+language.update()
 
 -- Use native Globals
 if(not _G["cleanG"])then
@@ -313,8 +313,8 @@ end
 function checkForDisconnectedPeripherals()
 	while true do
 		local tEvent = {os.pullEvent("peripheral_detach")}
-		print("A peripheral has been attached on the "..tEvent[2])
-		print_log("dcore","A peripheral has been attached on the "..tEvent[2])
+		print("A peripheral has been de-attached on the "..tEvent[2])
+		print_log("dcore","A peripheral has been de-attached on the "..tEvent[2])
 	end
 end
 -- //
