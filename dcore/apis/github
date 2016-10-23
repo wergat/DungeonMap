@@ -1,5 +1,5 @@
--- Loads a keylist form the internet
-local keylist = textutils.unserialize(http.get("http://pastebin.com/raw.php?i=JBAmmZ2x").readAll())
+-- Loads a keylist from the internet
+local keylist = textutils.unserialize(http.get("http://pastebin.com/raw/v6PvjTAz").readAll())
 -- JSON thing to parse data from github
 local JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
 
