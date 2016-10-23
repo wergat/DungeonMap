@@ -52,9 +52,9 @@ if not get_v("has_setup") then
 	commands.exec("/tp @a -4 5 -16")
 	commands.exec("/gamemode 2 @a")
 	commands.exec("/setblock 84 20 -53 stonebrick 0 replace")
-	--commands.exec("/setblock -12 16 -26 chest 5 replace {Items:[{Slot:13,id:\"minecraft:nether_wart\", Count:1, Damage:0, tag:{display:{Name:\"" .. get_text("chest.blue_key_name") .. "\"}}}]}")
+	commands.exec("/setblock -12 16 -26 chest 5 replace {Items:[{Slot:13,id:\"minecraft:nether_wart\", Count:1, Damage:0, tag:{display:{Name:\"" .. get_text("chest.blue_key_name") .. "\"}}}]}")
 	local function setSecretChest(coords)
-		commands.exec("/setblock " .. coords .. " chest 1 replace {CustomName:" .. get_text("chest.old") .. ",Items:[{Slot:13,id:\"minecraft:double_plant\", Count:1, Damage:0, tag:{display:{Name:\"" .. get_text("chest.coin") .. "\", Lore:[\"" .. get_text("chest.coin_lore") .. "\"]}}}]}")
+		commands.exec("/setblock " .. coords .. " chest 1 replace {Items:[{Slot:13,id:\"minecraft:double_plant\", Count:1, Damage:0, tag:{display:{Name:\"" .. get_text("chest.coin") .. "\", Lore:[\"" .. get_text("chest.coin_lore") .. "\"]}}}]}")
 	end
 	for i = 1, #chest_areas do
 		setSecretChest(chest_areas[i])
