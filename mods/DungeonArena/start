@@ -1,5 +1,6 @@
-os.loadAPI("script")
-get_text = script.get_text
+get_text = function()
+	return ""
+end
 function get_v(id, permanent)
 	local path; if permanent then path = ".permanent_config" else path = ".config" end
 	if not fs.exists(path) then
