@@ -43,6 +43,7 @@ update = function()
 	end
 end
 get = function(optionName)
+	if(not optionName)then return languageName end
 	if(data[optionName] ~= nil)then
 		return data[optionName]
 	else

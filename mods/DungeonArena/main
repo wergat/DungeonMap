@@ -779,12 +779,10 @@ function livesThread()
 			end
 		end
 		
-		cmd.run("/scoreboard players remove @a[-7,4,8,r=3] lives 1",function()
-			cmd.run('/tellraw @a[-7,4,8,r=3] some text stuff',function()
-				cmd.run("/tp @a[-7,4,8,r=3,score_lives=0] -6 26 -16")
-				cmd.run("/tp @a[-7,4,8,r=3,score_lives_min=0] "..getRandomSpawnPosition())
-			end)
-		end)
+		cmd.get("/scoreboard players remove @a[-7,4,8,r=3] lives 1")
+		cmd.run('/tellraw @a[-7,4,8,r=3] some text stuff')
+		cmd.run("/tp @a[-7,4,8,r=3,score_lives=0] -6 26 -16")
+		cmd.run("/tp @a[-7,4,8,r=3,score_lives_min=0] "..getRandomSpawnPosition())
 		
 		local r,_ = commands.exec("/testfor @a[-6,26,-16,rm=4]")
 		if not r then
@@ -795,7 +793,6 @@ function livesThread()
 			commands.exec('/execute @a ~ ~ ~ playsound mob.blaze.death @p[r=0]')
 			config.save()
 			sleep(0.1)
-			os.reboot()
 		end
 		sleep(.2)
 	end
