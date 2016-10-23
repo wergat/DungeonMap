@@ -76,7 +76,21 @@ achievements["pakka"] = {"achievement.pakka.name","achievement.pakka.description
 achievements["melt"] = {"achievement.melt.name","achievement.melt.description",6,false}
 achievements["meltClever"] = {"achievement.melt_clever.name","achievement.melt_clever.description",8,true}
 achievements["translate"] = {"achievement.translate.name","achievement.translate.description",8,false}
-achievements["herring"] = {"achievement.herring.name","achievement.herring.description",5,true}
+achievements["herring"] = {"achievement.herring.name","achievement.herring.description",5,true,function()
+	local playersWithoutHerring = (player.getPlayersBySelector("@a") - player.getPlayersBySelector("@a[score_ach_herring_min=2]"))
+	if (#playersWithoutHerring:getNames() > 0) then
+		--playersWithoutHerring:execute("detect ~ ~0.7 ~ minecraft:lava -1 /scoreboard players set @p ach_heat 1")
+		local psuc, presult = cmd.get("/execute @a[name=" .. playersWithoutHerring:getName() .."] ~ ~ ~ " .. command)
+		if psuc then
+			for i = 1, #presult do
+				if presult[i]:find("Cleared the inventory of") then
+					cmd.run("/scoreboard players set " .. presult[i]:gsub("Cleared the inventory of ", ""):gsub(", removing 1 items", "") .. " ach_herring 1")
+				end
+			end
+		end
+		achievement.getAchievementByID("herring"):setDone(player.getPlayersBySelector("@a[score_ach_herring_min=1,score_ach_herring=1]"):getNames())
+	end
+end}
 achievements["treasure"] = {"achievement.treasure.name","achievement.treasure.description",5,false}
 achievements["chicken"] = {"achievement.chicken.name","achievement.chicken.description",6,true,function()
 	achievement.getAchievementByID("chicken"):setDone(player.getPlayersBySelector("@a[score_ChickenKilled_min=1]"):getNames())
@@ -90,7 +104,13 @@ achievements["heat"] = {"achievement.heat.name","achievement.heat.description",5
 end}
 achievements["fifty"] = {"achievement.fifty.name","achievement.fifty.description",7,false}
 achievements["ninetyFour"] = {"achievement.nf.name","achievement.nf.description",8,true}
-achievements["konami"] = {"achievement.konami.name","achievement.konami.description",4,true}
+achievements["konami"] = {"achievement.konami.name","achievement.konami.description",4,true,function()
+	--type in console: konamiDone = {"yourName"}
+	if type(konamiDone) == "table" then
+		achievement.getAchievementByID("konami"):setDone(konamiDone[1])
+		konamiDone = nil
+	end
+end}
 
 -- Dungeon Arena Main Script
 
@@ -1178,4 +1198,3 @@ cmd.run("/scoreboard objectives add ChickenKilled stat.killEntity.Chicken")
 dcore.openChannel(54)
 
 print("Starting with Stage "..config.get("Stage"))
-
