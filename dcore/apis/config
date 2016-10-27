@@ -29,6 +29,15 @@ end
 function get(key)
 	return data[key]
 end
+--
+function getAll()
+	return data
+end
+--
+function getAllDeafault()
+	return default
+end
+
 
 -- sets a key in the config database
 function set(key,value)
