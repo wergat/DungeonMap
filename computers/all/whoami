@@ -1,4 +1,5 @@
-print("Running basic OS detection. Press and hold any key to cancle.")
+print("Running basic OS detection.")
+print("Press and hold any key to cancle.")
 local tArgs = {...}
 local init = false
 if(tArgs[1])then
@@ -12,13 +13,16 @@ end
 	
 -- BIOS informations
 -- Can be used in case of emergency
+sleep(.05)
 os.startTimer(.5)
 local tEvent = {os.pullEvent()}
 if(tEvent[1] == "key")then
 	printError("Booting process cancled")
 	sleep(.3)
-	printError(":")
-	sleep(.3)
+	for i=1,10 do
+		write(".")
+		sleep(.05)
+	end
 	error("Proceeding to fall back native OS.")
 end
 
