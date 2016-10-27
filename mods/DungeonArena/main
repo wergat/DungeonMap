@@ -417,13 +417,12 @@ function setGateStatus(isOpen,gate)
 		-- Add more gates
 		if(open)then
 			cmd.run("/fill 72 18 -6 72 21 -4 air")
+			cmd.run("/fill 72 17 -6 72 17 -4 minecraft:stone_brick_stairs")
+			cmd.run("/fill 73 18 -6 73 18 -4 minecraft:stone_brick_stairs")
+		else
 			cmd.run("/fill 72 20 -6 72 21 -4 minecraft:iron_bars")
 			cmd.run("/fill 72 17 -6 72 19 -4 minecraft:stonebrick")
 			cmd.run("/fill 73 18 -6 73 18 -4 minecraft:stonebrick")
-		else
-			cmd.run("/fill 72 18 -6 72 21 -4 air")
-			cmd.run("/fill 72 17 -6 72 17 -4 minecraft:stone_brick_stairs")
-			cmd.run("/fill 73 18 -6 73 18 -4 minecraft:stone_brick_stairs")
 		end
 	end
 	pos["leaveShop"] = function(open)
@@ -820,7 +819,7 @@ registerStage("reset",function()
 	summonMobsInRooms()
 	summonBoss()
 	summonGuardians()
-	setGateStatus(false,"Guardian")
+	setGateStatus(false,"guardian")
 	config.set("Stage","start")
 	config.save()
 end)
