@@ -38,6 +38,18 @@ else
 	_G["cleanG"] = clean
 end
 
+-- TEMP JSON DEBUG
+_G["debugJSON"] = function(str)
+	local counts = {["}"] = 0,["{"] = 0}
+	for k,_ in pairs(counts) do
+		for i in string.gfind(argv,k) do
+			counts[k] = counts[k] + 1
+		end
+		print("["..k.."]:"..counts[k])
+	end
+end
+
+
 local apis_loaded = {}
 
 local firstError = true
