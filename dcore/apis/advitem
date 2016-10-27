@@ -247,7 +247,7 @@ registerAttributeType("attributeModifier",{trigger = function(self)
 			local item = items.getItemWithStringID(self.itemID)
 			if(item.types["weapon"] and item.damage)then
 				if(config.ENABLE_ITEM_ROLL_INFORMATIONS)then
-					table.insert(self.tag.display.Lore,"\"gets +"..value.." from AttributeModifiers\"")#
+					table.insert(self.tag.display.Lore,"\"gets +"..value.." from AttributeModifiers\"")
 				end
 				value = value + item.damage
 			end
