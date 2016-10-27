@@ -1,5 +1,5 @@
 script.author = Atenefyr & Wergat
-script.version = v1.0
+script.version = v1.0a
 script.contact = @atenefyr & @wergat
 script.ign = {"Atenefyr", "Wergat"}
 achievement.cheat.name = Debugger
@@ -42,7 +42,7 @@ achievement.qualities = {"usual", "unusual", "rare", "extraordinary", "epic", "m
 chest.blue_key_name = Blue Key
 chest.unlocked = unlocked
 chest.key_name = Key
-chest.keys_lore_real = {"Why the boss carries this, "is beyond me."}
+chest.keys_lore_real = ["Why the boss carries this, "is beyond me."]
 chest.money = Money
 chest.keys = Fake Key
 chest.plural = s --placed after chest.keys

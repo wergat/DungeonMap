@@ -592,7 +592,7 @@ if(not dcore)then
 					text = text.."\""..(tostring(arg[#arg-1]) or "").."\""
 				end
 				commands.execAsync("/say An error happened! "..text.."")
-			
+				print_log("error","An error happened! \""..text.."\"")
 				_G["error"] = nativeError			
 				local nativeWrite = write
 			
