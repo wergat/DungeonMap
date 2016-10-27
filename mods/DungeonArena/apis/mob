@@ -41,12 +41,14 @@ local ranks = language.get("mob.ranks")
 --@mobType: Type of mob.
 --@difficulty: Mob level.
 function summonBoss(x,y,z,mobType,difficulty)
-	local boss = mob.newMob({difficulty = difficulty, type = mobType})
-	boss:auto()
+	local boss = mob.newMob({difficulty = difficulty, type = mobType}):auto()
 	boss.name = (boss_name(math.random(10)) or "Generation Error") .. ", " .. (ranks[math.random(#ranks)] or "Language Error") .. " " .. (language.get("mob.of") or "Language Error")
 	boss.dropChances = {"1.0f","1.0f","1.0f","1.0f","1.0f"}
-	boss:setEquipment("helmet",{["id"] = 131,["Damage"] = 0,["Count"] = 1,["tag"] = {["display"] = {["Name"] = language.get("chest.key_name"), ["Lore"] = language.get("chest.keys_lore_real")}},})
-	boss:summon(x,y,z)
+	boss:setEquipment("helmet",{["id"] = 131,["Damage"] = 0,["Count"] = 1,["tag"] = {["display"] = {["Name"] = language.get("chest.key_name"), ["Lore"] = language.get("chest.keys_lore_real")}}})
+	local success,errorMSG = boss:summon(x,y,z)
+	if(not success)then
+		error("Error while creating Boss, \""..errorMSG.."\"",2)
+	end
 end
 
 --Old function, for reference in case stuff needs to be modified

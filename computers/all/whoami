@@ -13,7 +13,7 @@ end
 	
 -- BIOS informations
 -- Can be used in case of emergency
-sleep(.05)
+sleep(.5)
 os.startTimer(.5)
 local tEvent = {os.pullEvent()}
 if(tEvent[1] == "key")then
