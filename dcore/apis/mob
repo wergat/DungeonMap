@@ -1,4 +1,5 @@
-dcore.requireAPI("advitem","potion")
+if(not advitem)then dcore.requireAPI("advitem") end
+if(not potion)then dcore.requireAPI("potion") end
 
 -- Some function that are used by the mob API functions
 local function count(input)

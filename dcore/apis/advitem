@@ -1,9 +1,9 @@
-dcore.requireAPI("items")
-dcore.requireAPI("farben")
-dcore.requireAPI("ench")
+if(not items)then dcore.requireAPI("items") end
+if(not farben)then dcore.requireAPI("farben") end
+if(not ench)then dcore.requireAPI("ench") end
 
-config.conditionalSet("DISABLE_DURABILITY_ON_ITEMS",false)
-config.conditionalSet("ENABLE_ITEM_ROLL_INFORMATIONS",false)
+config.softInit("DISABLE_DURABILITY_ON_ITEMS",false)
+config.softInit("ENABLE_ITEM_ROLL_INFORMATIONS",false)
 
 
 -- //////////////////
@@ -402,7 +402,9 @@ function newItem(args)
 					local seed = math.random(10000000)
 					math.randomseed(seed)
 					table.insert(self.attributes,self:getNewAttribute())
-					table.insert(self.tag.display.Lore,"\""..tostring(#self.attributes).." is a "..tostring(self.attributes[#self.attributes]["type"]).."\"")
+					if(config.ENABLE_ITEM_ROLL_INFORMATIONS)then
+						table.insert(self.tag.display.Lore,"\""..tostring(#self.attributes).." is a "..tostring(self.attributes[#self.attributes]["type"]).."\"")
+					end
 					self.tag.cc.rolls[#self.tag.cc.rolls+1] = {["seed"] = seed}
 				else c = c - 1 end
 			end

@@ -38,12 +38,13 @@ newMob = function(...)
 	return mob
 end
 
-local ranks = language.get("mob.ranks")
+
 --Summons a boss.
 --@x,@y,@z: X, Y, and Z coordinates.
 --@mobType: Type of mob.
 --@difficulty: Mob level.
 function summonBoss(x,y,z,mobType,difficulty)
+	local ranks = language.get("mob.ranks")
 	local boss = mob.newMob({difficulty = difficulty, type = mobType}):auto()
 	boss.name = (boss_name(math.random(10)) or "Generation Error") .. ", " .. (ranks[math.random(#ranks)] or "Language Error") .. " " .. (language.get("mob.of") or "Language Error")
 	boss.dropChances = {"1.0f","1.0f","1.0f","1.0f","1.0f"}
