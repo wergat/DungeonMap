@@ -20,7 +20,7 @@ local l = fs.list(config.DIR_MODS)
 print("Searching for valid startup file. Press any button NOW to cancle!")
 os.startTimer(.5)
 local tEvent = {os.pullEvent()}
-if(tEvent == "key")then return end
+if(tEvent == "key")then error("Booting process cancled.") end
 print("Continuing the booting process.")
 
 
