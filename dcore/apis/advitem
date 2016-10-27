@@ -197,7 +197,9 @@ registerAttributeType("enchantment",{trigger = function(self)
 	for k,v in pairs(self.attributes) do
 		if(v.type == "enchantment")then
 			allEnchData[v["ench"]] = math.min(((allEnchData[v["ench"]] or 0) + v["lv"]),ench.getMaxLvWithID(v["ench"]))
-			table.insert(self.tag.display.Lore,"\" Ench: "..ench.getEnchByID(v["ench"]).name.." lv "..v["lv"].."\"")
+			if(config.ENABLE_ITEM_ROLL_INFORMATIONS)then
+				table.insert(self.tag.display.Lore,"\" Ench: "..ench.getEnchByID(v["ench"]).name.." lv "..v["lv"].."\"")
+			end
 		end
 	end
 	local enchAmount = 1
@@ -244,7 +246,9 @@ registerAttributeType("attributeModifier",{trigger = function(self)
 		if(self.itemID and k == "generic.attackDamage")then
 			local item = items.getItemWithStringID(self.itemID)
 			if(item.types["weapon"] and item.damage)then
-				table.insert(self.tag.display.Lore,"\"gets +"..value.." from AttributeModifiers\"")
+				if(config.ENABLE_ITEM_ROLL_INFORMATIONS)then
+					table.insert(self.tag.display.Lore,"\"gets +"..value.." from AttributeModifiers\"")#
+				end
 				value = value + item.damage
 			end
 		end
