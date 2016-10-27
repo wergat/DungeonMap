@@ -1,11 +1,17 @@
+config.softInit("Language","English")
+
 local languageName = "English"
 -- This table includes all he text for the translations
 local data = {}
 
 set = function(newLanguageName)
 	languageName = newLanguageName
+	config.set("Language",newLanguageName)
 end
 update = function()
+	if(config.get("Language") ~= languageName)then
+		languageName = config.get("Language")
+	end
 	--print("Updating the language")
 	local newData = {}
 	local l = fs.list(config.DIR_MODS)

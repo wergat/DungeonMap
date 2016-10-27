@@ -1,4 +1,7 @@
-dcore.requireAPI("language")
+if(not language)then
+	dcore.requireAPI("language")
+	language.update()
+end
 if(not language)then
 	error("!!! Language API was not loaded successfilly, script cannot be run!",2)
 end
