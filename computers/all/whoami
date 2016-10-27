@@ -17,8 +17,9 @@ local l = fs.list(config.DIR_MODS)
 -- BIOS informations
 -- Can be used in case of emergency
 print("Searching for valid startup file. Press any button to cancle!")
-os.startTimer(.05)
-os.pullEvent()
+os.startTimer(.5)
+local tEvent = {os.pullEvent()}
+print(tEvent[1])
 print("Continuing the booting process.")
 
 
