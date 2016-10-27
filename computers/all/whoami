@@ -1,5 +1,4 @@
-print("Running basic OS detection. Press any key to cancle.")
-os.loadAPI(":dungeon/dcore/apis/dcore")
+print("Running basic OS detection. Press and hold any key to cancle.")
 local tArgs = {...}
 local init = false
 if(tArgs[1])then
@@ -9,22 +8,30 @@ if(tArgs[1])then
 	open.write("shell.run(\"dungeon/computers/all/whoami\")")
 	open.close()
 end
-local x,y,z = commands.getBlockPosition()
-local block = commands.getBlockInfo(x,y-1,z)
-print("No special block data found in mods, looking for native versions")
 
 	
-local l = fs.list(config.DIR_MODS)
 -- BIOS informations
 -- Can be used in case of emergency
-print("Searching for valid startup file. Press any button NOW to cancle!")
 os.startTimer(.5)
 local tEvent = {os.pullEvent()}
-if(tEvent == "key")then error("Booting process cancled.") end
-print("Continuing the booting process.")
+if(tEvent[1] == "key")then
+	printError("Booting process cancled")
+	sleep(.3)
+	printError(":")
+	sleep(.3)
+	error("Proceeding to fall back native OS.")
+end
 
+
+-- Getting launch block informations
+local x,y,z = commands.getBlockPosition()
+local block = commands.getBlockInfo(x,y-1,z)
+
+-- Loading DCORE
+os.loadAPI(":dungeon/dcore/apis/dcore")
 
 -- Starting Who-Am-I Events in mods and stuff
+local l = fs.list(config.DIR_MODS)
 for i=1,#l do
 	-- l[i] = Modname
 	local pathToAPIFile = config.DIR_MODS.."/"..l[i].."/event/whoami"
