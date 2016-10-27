@@ -4,11 +4,12 @@ if(not dcore)then os.loadAPI(":dungeon/dcore/apis/dcore") end
 local running = true
 local entryList = {}
 local scrolled = 0
+local selected
 
 if(#tArgs == 2)then
 	config.set(tArgs[1],tArgs[2])
 	running = false
-elseif(#tArgs == 1)
+elseif(#tArgs == 1)then
 	
 else
 	
@@ -16,37 +17,36 @@ end
 
 function run()
 	while running do
-		
+		local tEvent = {os.pullEvent}
+		draw()
 	end
 end
 
 function draw()
 	local tx,ty = term.getSize()
-	while running do
-		for y=1,ty do
-			if(entryList[(y+scolled)])then
-				term.setCursorPos(1,y)
-				if((y+scolled)%2 == 1)then term.setBackgroundColor(colors.black) else term.setBackgroundColor(colors.gray) end
-				write(string.sub(entryList[(y+scolled)].name..string.rep(" ",20),20)..":  ")
-				write(entryList[(y+scolled)].value)
-			end
+	for y=1,ty do
+		if(entryList[(y+scolled)])then
+			term.setCursorPos(1,y)
+			if((y+scolled)%2 == 1)then term.setBackgroundColor(colors.black) else term.setBackgroundColor(colors.gray) end
+			write(string.sub(entryList[(y+scolled)].name..string.rep(" ",20),20)..":  ")
+			write(entryList[(y+scolled)].value)
 		end
 	end
 end
 
 
 if(running)then
-	for k,v in pairs(getAll()) do
+	for k,v in pairs(config.getAll()) do
 		entryList[(#entryList + 1)] = {value = v,name = k}
 	end
-	for k,v in pairs(getAllDeafault()) do
+	for k,v in pairs(config.getAllDeafault()) do
 		for i=1,#entryList do
-			if(entryList[i].name = k)then
+			if(entryList[i].name == k)then
 				entryList[i].default = v
 			end
 		end
 	end
-	Parallel.waitForAny(run,draw)
+	parallel.waitForAny(run,draw)
 end
 
 
