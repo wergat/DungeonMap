@@ -497,7 +497,7 @@ end
 -- Resets the current wave and teleports all players back to the start
 -- Removes all the mobs and respawns them, too.
 function resetWave()
-	
+	cmd.run("/say wave reset should have happend")
 end
 
 -- Reset

@@ -1,4 +1,8 @@
 dcore.requireAPI("language")
+if(not language)then
+	error("!!! Language API was not loaded successfilly, script cannot be run!",2)
+end
+
 local function get_v(id)
 	if not fs.exists(".config") then
 		return nil
@@ -39,7 +43,7 @@ local ranks = language.get("mob.ranks")
 function summonBoss(x,y,z,mobType,difficulty)
 	local boss = mob.newMob({difficulty = difficulty, type = mobType})
 	boss:auto()
-	boss.name = boss_name(math.random(10)) .. ", " .. ranks[math.random(#ranks)] .. " " .. language.get("mob.of")
+	boss.name = (boss_name(math.random(10)) or "Generation Error") .. ", " .. (ranks[math.random(#ranks)] or "Language Error") .. " " .. (language.get("mob.of") or "Language Error")
 	boss.dropChances = {"1.0f","1.0f","1.0f","1.0f","1.0f"}
 	boss:setEquipment("helmet",{["id"] = 131,["Damage"] = 0,["Count"] = 1,["tag"] = {["display"] = {["Name"] = language.get("chest.key_name"), ["Lore"] = language.get("chest.keys_lore_real")}},})
 	boss:summon(x,y,z)

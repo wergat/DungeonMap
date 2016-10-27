@@ -1,4 +1,4 @@
-os.loadAPI(":dungeon/dcore/apis/dcore")
+if(not dcore)then os.loadAPI(":dungeon/dcore/apis/dcore") end
 dcore.requireAPI("entity")
 dcore.requireAPI("cmd")
 local playerArmorStandCache

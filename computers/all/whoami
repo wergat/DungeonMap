@@ -14,7 +14,15 @@ print("No special block data found in mods, looking for native versions")
 
 	
 local l = fs.list(config.DIR_MODS)
+-- BIOS informations
+-- Can be used in case of emergency
+print("Searching for valid startup file. Press any button to cancle!")
+os.startTimer(.05)
+os.pullEvent()
+print("Continuing the booting process.")
 
+
+-- Starting Who-Am-I Events in mods and stuff
 for i=1,#l do
 	-- l[i] = Modname
 	local pathToAPIFile = config.DIR_MODS.."/"..l[i].."/event/whoami"
