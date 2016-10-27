@@ -1,3 +1,4 @@
+print("Running basic OS detection. Press any key to cancle.")
 os.loadAPI(":dungeon/dcore/apis/dcore")
 local tArgs = {...}
 local init = false
@@ -16,10 +17,10 @@ print("No special block data found in mods, looking for native versions")
 local l = fs.list(config.DIR_MODS)
 -- BIOS informations
 -- Can be used in case of emergency
-print("Searching for valid startup file. Press any button to cancle!")
+print("Searching for valid startup file. Press any button NOW to cancle!")
 os.startTimer(.5)
 local tEvent = {os.pullEvent()}
-print(tEvent[1])
+if(tEvent == "key")then return end
 print("Continuing the booting process.")
 
 
