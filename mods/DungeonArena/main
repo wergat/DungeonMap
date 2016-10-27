@@ -208,13 +208,16 @@ function loadConnections(block)
 		for y=1,4 do
 			removeXConnection(x,y)
 			removeYConnection(x,y)
+			sleep(.05)
 		end
-		sleep(.05)
 	end
-
+	sleep(.05)
 	addRandomXConnection(3,3)
+	sleep(.05)
 	addRandomXConnection(2,3)
+	sleep(.05)
 	addRandomYConnection(3,3)
+	sleep(.05)
 	addRandomYConnection(3,2)
 	sleep(.05)
 	
