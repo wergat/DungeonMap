@@ -122,7 +122,7 @@ achievements["heat"] = {"achievement.heat.name","achievement.heat.description",5
 	end
 end}
 achievements["fifty"] = {"achievement.fifty.name","achievement.fifty.description",7,false,function()
-	local nof = (player.getPlayersBySelector("@a") - player.getPlayersBySelector("@a[score_ach_ninetyFour_min=2]"))
+	local nof = (player.getPlayersBySelector("@a") - player.getPlayersBySelector("@a[score_ach_fifty_min=2]"))
 	local activate2 = (config.get("Wave") == 50)
 	if _G["triggerFI"] then
 		activate2 = true
