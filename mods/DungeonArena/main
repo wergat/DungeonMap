@@ -70,7 +70,23 @@ local achievements = {}
 achievements["enterShop"] = {"achievement.shop.name","achievement.shop.description",1,false}
 achievements["noInternet"] = {"achievement.no_internet.name","achievement.no_internet.description",6,true}
 achievements["hated"] = {"achievement.hated.name","achievement.hated.description",4,true}
-achievements["rich"] = {"achievement.rich.name","achievement.rich.description",3,false}
+achievements["rich"] = {"achievement.rich.name","achievement.rich.description",3,false,function()
+	local pwr = (player.getPlayersBySelector("@a") - player.getPlayersBySelector("@a[score_ach_rich_min=2]"))
+	if (#pwr:getNames() > 0) then
+		local psuc, presult = cmd.get("/clear @a nether_star 0 0")
+		if psuc then
+			for i = 1, #presult do
+				if presult[i]:find("that match the criteria") then
+					local nplayer = presult[i]:gsub(" has 1 items that match the criteria", "")
+					if player.getPlayerByName(nplayer):getScoreboardValue("ach_rich") < 1 then
+						cmd.run("/scoreboard players set " .. nplayer .. " ach_rich 1")
+						achievement.getAchievementByID("rich"):setDone(nplayer)
+					end
+				end
+			end
+		end
+	end
+end}
 achievements["reader"] = {"achievement.reader.name","achievement.reader.description",2,true}
 achievements["pakka"] = {"achievement.pakka.name","achievement.pakka.description",5,true}
 achievements["melt"] = {"achievement.melt.name","achievement.melt.description",6,false}
@@ -79,18 +95,17 @@ achievements["translate"] = {"achievement.translate.name","achievement.translate
 achievements["herring"] = {"achievement.herring.name","achievement.herring.description",5,true,function()
 	local playersWithoutHerring = (player.getPlayersBySelector("@a") - player.getPlayersBySelector("@a[score_ach_herring_min=2]"))
 	if (#playersWithoutHerring:getNames() > 0) then
-		--playersWithoutHerring:execute("detect ~ ~0.7 ~ minecraft:lava -1 /scoreboard players set @p ach_heat 1")
 		local psuc, presult = cmd.get("/clear @a minecraft:carpet 4 1")
 		if psuc then
 			for i = 1, #presult do
 				if presult[i]:find(", removing 1 items") then
 					local nplayer = presult[i]:gsub("Cleared the inventory of ", ""):gsub(", removing 1 items", "")
 					cmd.run("/scoreboard players set " .. nplayer .. " ach_herring 1")
+					cmd.run("/tp " .. nplayer .. " ~ ~5 ~")
 					achievement.getAchievementByID("herring"):setDone(nplayer)
 				end
 			end
 		end
-		achievement.getAchievementByID("herring"):setDone(player.getPlayersBySelector("@a[score_ach_herring_min=1,score_ach_herring=1]"):getNames())
 	end
 end}
 achievements["treasure"] = {"achievement.treasure.name","achievement.treasure.description",5,false}
