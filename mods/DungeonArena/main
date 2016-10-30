@@ -129,7 +129,6 @@ achievements["treasure"] = {"achievement.treasure.name","achievement.treasure.de
 				if presult[i]:find(", removing 1 items") then
 					local oplayer = presult[i]:gsub("Cleared the inventory of ", ""):gsub(", removing 1 items", "")
 					local coinsgot = tonumber(player.getPlayerByName(oplayer):getScoreboardValue("CoinsCollected")) or 0
-					print(coinsgot.."!!!("..type(coinsgot)..")!")
 					cmd.run("/scoreboard players set " .. oplayer .. " coinsGot " .. coinsgot+1)
 					coinsgot = coinsgot+1
 					print(coinsgot.."!!!("..type(coinsgot)..")!")
@@ -137,6 +136,7 @@ achievements["treasure"] = {"achievement.treasure.name","achievement.treasure.de
 					if coinsgot == 5 then
 						cmd.run("/scoreboard players set " .. oplayer .. " ach_treasure 1")
 						achievement.getAchievementByID("treasure"):setDone(oplayer)
+						cmd.run("/scoreboard players set " .. oplayer .. " coinsGot 0")
 					end
 				end
 			end
