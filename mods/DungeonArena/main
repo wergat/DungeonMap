@@ -121,7 +121,19 @@ achievements["heat"] = {"achievement.heat.name","achievement.heat.description",5
 		achievement.getAchievementByID("heat"):setDone(player.getPlayersBySelector("@a[score_ach_heat_min=1,score_ach_heat=1]"):getNames())
 	end
 end}
-achievements["fifty"] = {"achievement.fifty.name","achievement.fifty.description",7,false}
+achievements["fifty"] = {"achievement.fifty.name","achievement.fifty.description",7,false,function()
+	local nof = (player.getPlayersBySelector("@a") - player.getPlayersBySelector("@a[score_ach_ninetyFour_min=2]"))
+	local activate = (config.get("Wave") == 50)
+	if _G["triggerFI"] then
+		activate = true
+		_G["triggerFI"] = false
+	end
+	
+	if activate and (#nof:getNames() > 0) then
+		cmd.run("/scoreboard players set @a ach_fifty 1")
+		achievement.getAchievementByID("fifty"):setDone(player.getPlayersBySelector("@a"):getNames())
+	end
+end}
 achievements["ninetyFour"] = {"achievement.nf.name","achievement.nf.description",8,true,function()
 	local nonf = (player.getPlayersBySelector("@a") - player.getPlayersBySelector("@a[score_ach_ninetyFour_min=2]"))
 	local activate = (config.get("Wave") == 94)
