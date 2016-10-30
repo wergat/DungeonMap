@@ -144,6 +144,7 @@ achievements["ninetyFour"] = {"achievement.nf.name","achievement.nf.description"
 	
 	if activate and (#nonf:getNames() > 0) then
 		cmd.run("/scoreboard players set @a ach_ninetyFour 1")
+		cmd.run("/say An error occured! window:94: Arguments must be the same length")
 		achievement.getAchievementByID("ninetyFour"):setDone(player.getPlayersBySelector("@a"):getNames())
 	end
 end}
@@ -391,8 +392,8 @@ function resetMiscChests()
 	cmd.run("/setblock 62 20 44 wall_sign 0 replace {Text1:\"" .. language.get("chest.keys") .. language.get("chest.plural") .. "\", Text2:\"I\", Text3:\"I\", Text4:\"V\"}")
 	cmd.run("/setblock 62 19 44 chest 1 replace {Items:[{Slot:0,id:\"minecraft:tripwire_hook\", Count:64, Damage:0, tag:{display:{Name:\"" .. language.get("chest.keys") .. "\", Lore:[\"" .. (language.get("chest.keys_lore_fake")[1] or "") .. "\", \"" .. (language.get("chest.keys_lore_fake")[2] or "") .. "\"]}}}]}")
 	-- Money chest (In the shop)
-	cmd.run("/setblock 74 27 36 wall_sign 1 replace {Text1:\"" .. language.get("chest.money") .. "\", Text2:\"I\", Text3:\"I\", Text4:\"V\"}")
-	cmd.run("/setblock 74 26 36 chest 1 replace {Items:[{Slot:0,id:\"minecraft:nether_star\", Count:64, tag:{display:{Name:\"Nether Star\", Lore:[\"This item is part of the currency\", \"It is worth exactly "..SS(2).."1'250'000"..SS("r")..SS("5")..SS("o").." quaz!\"]}}}, {Slot:1,id:\"minecraft:diamond_pickaxe\",Count:1,tag:{CanDestroy:[\"minecraft:sponge\", \"minecraft:prismarine\"],display:{Name:\"Easter Egg Pick\",Lore:[\"Breaks secret blocks\"]}}}]}")
+	--cmd.run("/setblock 74 27 36 wall_sign 1 replace {Text1:\"" .. language.get("chest.money") .. "\", Text2:\"I\", Text3:\"I\", Text4:\"V\"}")
+	--cmd.run("/setblock 74 26 36 chest 1 replace {Items:[{Slot:0,id:\"minecraft:nether_star\", Count:64, tag:{display:{Name:\"Nether Star\", Lore:[\"This item is part of the currency\", \"It is worth exactly "..SS(2).."1'250'000"..SS("r")..SS("5")..SS("o").." quaz!\"]}}}, {Slot:1,id:\"minecraft:diamond_pickaxe\",Count:1,tag:{CanDestroy:[\"minecraft:sponge\", \"minecraft:prismarine\"],display:{Name:\"Easter Egg Pick\",Lore:[\"Breaks secret blocks\"]}}}]}")
 end
 function summonChests()
 	local count = math.random(2,4)
