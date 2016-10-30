@@ -84,7 +84,9 @@ achievements["herring"] = {"achievement.herring.name","achievement.herring.descr
 		if psuc then
 			for i = 1, #presult do
 				if presult[i]:find(", removing 1 items") then
-					cmd.run("/scoreboard players set " .. presult[i]:gsub("Cleared the inventory of ", ""):gsub(", removing 1 items", "") .. " ach_herring 1")
+					local nplayer = presult[i]:gsub("Cleared the inventory of ", ""):gsub(", removing 1 items", "")
+					cmd.run("/scoreboard players set " .. nplayer .. " ach_herring 1")
+					achievement.getAchievementByID("herring"):setDone(nplayer)
 				end
 			end
 		end
