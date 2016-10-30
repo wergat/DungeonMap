@@ -78,7 +78,7 @@ achievements["rich"] = {"achievement.rich.name","achievement.rich.description",3
 			for i = 1, #presult do
 				if presult[i]:find("that match the criteria") then
 					local nplayer = presult[i]:gsub(" has 1 items that match the criteria", "")
-					if player.getPlayerByName(nplayer):getScoreboardValue("ach_rich") < 1 then
+					if player.getPlayerByName(nplayer):getScoreboardValue("ach_rich") then
 						cmd.run("/scoreboard players set " .. nplayer .. " ach_rich 1")
 						achievement.getAchievementByID("rich"):setDone(nplayer)
 					end
