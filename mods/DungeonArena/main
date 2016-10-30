@@ -124,7 +124,7 @@ achievements["treasure"] = {"achievement.treasure.name","achievement.treasure.de
 	end
 	local playersWithoutTreasure = (player.getPlayersBySelector("@a") - player.getPlayersBySelector("@a[score_ach_treasure_min=2]"))
 	if (#playersWithoutTreasure:getNames() > 0) then
-		local psuc, presult = cmd.get("/clear @a double_plant 0 1 {CustomName:\"" .. language.get("chest.coin") .. "\"}")
+		local psuc, presult = cmd.get("/clear @a double_plant 0 1 {display:{Name:\"" .. language.get("chest.coin") .. "\"}}")
 		if psuc then
 			for i = 1, #presult do
 				if presult[i]:find(", removing 1 items") then
