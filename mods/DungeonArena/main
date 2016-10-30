@@ -136,7 +136,7 @@ achievements["treasure"] = {"achievement.treasure.name","achievement.treasure.de
 					end
 					cmd.run("/scoreboard players add " .. oplayer .. " coinsGot 1")
 					coinsgot = coinsgot+1
-					cmd.run("/tellraw " .. oplayer .. "\"" .. language.get("achievement.treasure.discovered"):gsub("!!s", coinsgot) .. "\"")
+					cmd.run("/tellraw " .. oplayer .. " \"" .. language.get("achievement.treasure.discovered"):gsub("!!s", coinsgot) .. "\"")
 					if coinsgot == 5 then
 						cmd.run("/scoreboard players set " .. oplayer .. " ach_treasure 1")
 						achievement.getAchievementByID("treasure"):setDone(oplayer)
