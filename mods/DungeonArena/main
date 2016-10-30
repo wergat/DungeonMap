@@ -84,7 +84,7 @@ achievements["herring"] = {"achievement.herring.name","achievement.herring.descr
 		if psuc then
 			for i = 1, #presult do
 				if presult[i]:find("that match the criteria") then
-					cmd.run("/scoreboard players set " .. presult[i]:gsub(" has 1 items that match the criteria", "") .. " ach_herring 1")
+					cmd.run("/scoreboard players set " .. presult[i]:gsub("Cleared the inventory of ", ""):gsub(", removing 1 items") .. " ach_herring 1")
 				end
 			end
 		end
