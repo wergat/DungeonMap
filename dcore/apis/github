@@ -152,6 +152,63 @@ function isOnIgnoreList(file)
 end
 --
 
+function checkDownloadLimit()
+	local currentTime = getCurrentTimeAsUNIXTimespamp()
+	local githubRateTable = JSON:decode(github.get("https://api.github.com/rate_limit").readAll())
+	local githubRateLimit = githubRateTable["resources"]["core"]["reset"]
+	local waitTime = githubRateLimit - currentTime
+	local mins = math.floor(waitTime/60)
+	local secs = waitTime%60
+	printError(" > Oops! It looks like you've installed the DungeonMap files too much recently. Try again in about " .. mins .. "m:" .. secs .. "s!")
+	print("")
+	logfile.writeLine("Oops! It looks like you've installed the DungeonMap files too much recently. Try again in about " .. mins .. "m:" .. secs .. "s!")
+end
+
+
+-- Downlaoding from Repository
+function downloadFromDir(url)
+	local handle = github.get(url)
+	
+	-- Checking for the API limitations
+	if handle then
+		handle = handle.readAll()
+	else
+		
+		cancle = true
+		return
+	end
+	
+	local data = JSON:decode(handle)
+	logfile.writeLine("Found #"..tonumber(#data).." files inside "..url)
+	for i = 1, #data do
+		local f = data[i]
+		local path = f["path"]
+		if (f["sha"] == SHACodes[path] and f["type"] ~= "dir") then
+			files_not_updated = files_not_updated + 1
+			logfile.writeLine(" x Not updated: "..path)
+		elseif f["type"] == "dir" then
+			print("Scanning directory: " .. path)
+			logfile.writeLine("Downloading directory: " .. path)
+			SHACodes[path] = f["sha"]
+			downloadFromDir(f["url"])
+		else
+			--for k,v in pairs(BLACKLIST) do if(v==path)then return end end
+			print(" > Downloading file: " .. path)
+			logfile.writeLine(" > Downloading file: " .. path)
+			local handle = github.get(f["download_url"])
+			local xt = ""
+			if(handle)then
+				xt = handle.readAll()
+			end
+			local open = fs.open("dungeon/" .. path, "w")
+			open.write(xt)
+			open.close()
+			SHACodes[path] = f["sha"]
+			files_updated = files_updated + 1
+		end
+	end
+end
+
 
 
 
