@@ -78,7 +78,7 @@ achievements["rich"] = {"achievement.rich.name","achievement.rich.description",3
 			for i = 1, #presult do
 				if presult[i]:find("that match the criteria") then
 					local nplayer = presult[i]:gsub(" has 1 items that match the criteria", "")
-					if player.getPlayerByName(nplayer):getScoreboardValue("ach_rich") then
+					if not (player.getPlayerByName(nplayer):getScoreboardValue("ach_rich")) then
 						cmd.run("/scoreboard players set " .. nplayer .. " ach_rich 1")
 						achievement.getAchievementByID("rich"):setDone(nplayer)
 					end
@@ -100,9 +100,11 @@ achievements["herring"] = {"achievement.herring.name","achievement.herring.descr
 			for i = 1, #presult do
 				if presult[i]:find(", removing 1 items") then
 					local nplayer = presult[i]:gsub("Cleared the inventory of ", ""):gsub(", removing 1 items", "")
-					cmd.run("/scoreboard players set " .. nplayer .. " ach_herring 1")
-					cmd.run("/tp " .. nplayer .. " ~ ~5 ~")
-					achievement.getAchievementByID("herring"):setDone(nplayer)
+					if not (player.getPlayerByName(nplayer):getScoreboardValue("ach_herring")) then
+						cmd.run("/scoreboard players set " .. nplayer .. " ach_herring 1")
+						cmd.run("/tp " .. nplayer .. " ~ ~5 ~")
+						achievement.getAchievementByID("herring"):setDone(nplayer)
+					end
 				end
 			end
 		end
