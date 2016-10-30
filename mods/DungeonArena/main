@@ -132,7 +132,7 @@ achievements["ninetyFour"] = {"achievement.nf.name","achievement.nf.description"
 	
 	if activate and (#nonf:getNames() > 0) then
 		cmd.run("/scoreboard players set @a ach_ninetyFour 1")
-		achievement.getAchievementByID("ninetyFour"):setDone(player.getPlayersBySelector("@a"))
+		achievement.getAchievementByID("ninetyFour"):setDone(player.getPlayersBySelector("@a"):getNames())
 	end
 end}
 achievements["konami"] = {"achievement.konami.name","achievement.konami.description",4,true,function()
