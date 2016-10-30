@@ -116,7 +116,6 @@ achievements["treasure"] = {"achievement.treasure.name","achievement.treasure.de
 		cmd.run("/setblock " .. coords .. " chest 1 replace {CustomName:\"" .. language.get("chest.old") .. "\", Items:[{Slot:13,id:\"minecraft:double_plant\", Count:1, Damage:0, tag:{display:{Name:\"" .. language.get("chest.coin") .. "\", Lore:[\"" .. language.get("chest.coin_lore") .. "\"]}}}]}")
 	end
 	if not __hasPlacedChests then
-		cmd.run("/scoreboard players set @a coinsGot 0")
 		for i = 1, #chest_areas do
 			setSecretChest(chest_areas[i])
 		end
