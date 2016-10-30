@@ -7,7 +7,7 @@ dcore.openChannel(23)
 
 -- ticks after wich a slave computer gets set to ready
 config.conditionalSet("CMD_MAXIMUM_TIMEOUT",20)
--- Commands can be sent to slaves directlym without queueing if this is enabled
+-- Commands can be sent to slaves directly without queueing if this is enabled
 config.conditionalSet("CMD_ALLOW_COMMAND_QUICK_FLUSHING",true)
 
 -- Waiting time between processing rounds
@@ -93,6 +93,7 @@ function checkForNewSlaves()
 			commandSlaves[(#commandSlaves + 1)] = newSlaveComputer(tEvent[4])
 			-- Tell to get it going!
 			dcore.send(22,commandSlaves[(#commandSlaves)].id,"DoWork")
+			-- Add new slaves to list in config to save thier position! config.set("CommandComputerList") = commandSlaves
 		end
 	end
 end

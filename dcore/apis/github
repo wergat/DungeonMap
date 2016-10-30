@@ -1,21 +1,56 @@
--- Loads a keylist from the internet
-local keylist = http.get("http://pastebin.com/raw/v6PvjTAz").readAll()
-if keylist then
-	keylist = textutils.unserialize(keylist)
-else
-	error("No internet access, github API can not be used.")
+-- Initialization and stuff
+function init()
+	-- Makes sure dcore is loaded
+	if(not dcore)then os.loadAPI(":dungeon/dcore/apis/dcore") end
+	-- Config
+	softInit("githubDefaultRepositoryName","DungeonMap")
+	softInit("githubDefaultUserName","wergat")
+	
+	
+	-- Check for installed JSON API
+	JSON = nil
+	if(fs.exists(":dungeon/dcore/apis/JSON.lua"))then
+		JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
+		print("Native JSON-API found!")
+	else
+		printError("Could not find JSON parsing file; need to download a new one! Suspecting a fresh install or corrupted API directory!")
+	end
+
+	-- /// Engine Check
+	-- Check if HTTP API is enabled
+	if not http then
+		error("No HTTP! The updater requires connection to the internet to update the files! Please provide an internet connection or enable the HTTP API for ComputerCraft in the mod config!")
+	end
+	-- Check if there is an internet connection and if github is whitlisted
+	if not http.get("https://api.github.com/rate_limit") then
+		if not http.get("http://pastebin.com/") then
+			error("We need an internet connection to update our files!")
+		else
+			error("If you have internet, please check your Computercraft mod config and allow api.github.com to be used, so we are allowed to download files!")
+		end
+	end
+
+	if(not JSON)then
+		print("JSON Parser not found. Downloading a new one!")
+		local downloadedJSONFile = http.get("http://pastebin.com/raw/ALx63iW4").readAll()
+		if(not downloadedJSONFile)then error("could not download the new JSON Parser - it is required for the updater!") end
+		local newJSONFile = fs.open(":dungeon/dcore/apis/JSON.lua","w")
+		newJSONFile.writeLine(downloadedJSONFile)
+		newJSONFile.close()
+		JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
+		if(not JSON)then error("Could not write the new JSON Parser into a file - it is required for the updater!") end
+	end
 end
--- JSON thing to parse data from github
-local JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
+init()
 
+
+-- Key managment
 local defaultKey = nil
-
 -- Tests a key
 function testKey(key)
 	local x = http.get("https://api.github.com/rate_limit",{["Authorization"] = "token " .. key,}).readAll()
 	return JSON:decode(x)["resources"]["core"]["remaining"]
 end
-
 -- Tests a array of Lists
 -- Input: Key List
 -- Output: Input list with rate limits
@@ -26,7 +61,20 @@ function testkeylist(t)
 	end
 	return res
 end
+-- // Getting a list of keys.
+-- Loads a keylist from the internet
+local keylist = http.get("http://pastebin.com/raw/v6PvjTAz").readAll()
+if keylist then
+	keylist = textutils.unserialize(keylist)
+else
+	error("Could not establish connection to the pastebin servers. Internet connection might be troubled.")
+end
 
+
+
+
+
+-- Management of keys
 -- Picks a working key
 function pickWorkingKey(t)
 	local list = t
@@ -43,7 +91,6 @@ function pickWorkingKey(t)
 	end
 	-- At this point all keys are invalid
 end
-
 function setDefaultKey(key)
 	defaultKey = key
 end
@@ -59,19 +106,52 @@ function get(url,header,key)
 	header["Authorization"] = "token " .. key
 	return http.get(url, header)
 end
-
 -- Returns the requested URL as a parsed Table, instead of JSON
 function getRequestAsTable(url,header,key)
-	if get(url,header,key) then
-		return JSON:decode(x.readAll())
+	local data = get(url,header,key)
+	if data then
+		return JSON:decode(data.readAll())
 	else
 		return false, "GITHUB_NO_RESPONSE"
 	end
 	
 end
-
 -- Simple request for a simple URL request
 function request(url,header)
 	local header = header or {}
 	return getRequestAsTable(url,header,pickWorkingKey(keylist))
 end
+
+-- Ignore List stuff
+local ignoreList = nil
+function cacheIgnoreList(list)
+	ignoreList = list
+end
+function updateIgnoreList()
+	local url = "https://raw.githubusercontent.com/"..config.get("githubDefaultUserName").."/"..config.get("githubDefaultRepositoryName").."/master/.luaignore"
+	local list = textutils.unserialize(get(url))
+	cacheIgnoreList(list)
+	return list
+end
+function getIgnoreList()
+	if(not ignoreList)then
+		updateIgnoreList()
+		return ignoreList
+	else
+		return ignoreList
+	end
+end
+function isOnIgnoreList(file)
+	if(not ignoreList)then updateIgnoreList() end
+	for i=1,#ignoreList do
+		if(file == ignoreList[i])then
+			return true
+		end
+	end
+	return false
+end
+--
+
+
+
+

@@ -1,6 +1,5 @@
 print("Welcome to the Dungeon Map updater!")
-
-os.loadAPI(":dungeon/dcore/apis/dcore")
+if(not dcore)then os.loadAPI(":dungeon/dcore/apis/dcore") end
 JSON = nil
 if(fs.exists(":dungeon/dcore/apis/JSON.lua"))then
 	JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
