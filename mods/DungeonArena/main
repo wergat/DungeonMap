@@ -113,7 +113,7 @@ end}
 achievements["treasure"] = {"achievement.treasure.name","achievement.treasure.description",5,false,function()
 	local chest_areas = {"76 25 39", "90 29 -31", "37 9 -3", "18 19 21", "84 20 -54"}
 	local function setSecretChest(coords)
-		cmd.run("/setblock " .. coords .. " chest 1 replace {CustomName:" .. language.get("chest.old") .. ", Items:[{Slot:13,id:\"minecraft:double_plant\", Count:1, Damage:0, tag:{display:{Name:\"" .. language.get("chest.coin") .. "\", Lore:[\"" .. language.get("chest.coin_lore") .. "\"]}}}]}")
+		cmd.run("/setblock " .. coords .. " chest 1 replace {CustomName:\"" .. language.get("chest.old") .. "\", Items:[{Slot:13,id:\"minecraft:double_plant\", Count:1, Damage:0, tag:{display:{Name:\"" .. language.get("chest.coin") .. "\", Lore:[\"" .. language.get("chest.coin_lore") .. "\"]}}}]}")
 	end
 	if not __hasPlacedChests then
 		cmd.run("/scoreboard players set @a coinsGot 0")
@@ -124,7 +124,7 @@ achievements["treasure"] = {"achievement.treasure.name","achievement.treasure.de
 	end
 	local playersWithoutTreasure = (player.getPlayersBySelector("@a") - player.getPlayersBySelector("@a[score_ach_treasure_min=2]"))
 	if (#playersWithoutTreasure:getNames() > 0) then
-		local psuc, presult = cmd.get("/clear @a double_plant 0 1 {CustomName:" .. language.get("chest.coin") .. "}")
+		local psuc, presult = cmd.get("/clear @a double_plant 0 1 {CustomName:\"" .. language.get("chest.coin") .. "\"}")
 		if psuc then
 			for i = 1, #presult do
 				if presult[i]:find(", removing 1 items") then
