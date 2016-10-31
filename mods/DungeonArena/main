@@ -154,10 +154,10 @@ achievements["treasure"] = {"achievement.treasure.name","achievement.treasure.de
 		end
 	end
 end}
-achievements["treasureten"] = {"achievement.treasureten.name","achievement.treasureten.description",5,false)
-achievements["treasuretf"] = {"achievement.treasuretf.name","achievement.treasuretf.description",6,false)
-achievements["treasurefi"] = {"achievement.treasurefi.name","achievement.treasurefi.description",7,false)
-achievements["treasureoh"] = {"achievement.treasureoh.name","achievement.treasureoh.description",8,false)
+achievements["treasureten"] = {"achievement.treasureten.name","achievement.treasureten.description",5,false}
+achievements["treasuretf"] = {"achievement.treasuretf.name","achievement.treasuretf.description",6,false}
+achievements["treasurefi"] = {"achievement.treasurefi.name","achievement.treasurefi.description",7,false}
+achievements["treasureoh"] = {"achievement.treasureoh.name","achievement.treasureoh.description",8,false}
 achievements["chicken"] = {"achievement.chicken.name","achievement.chicken.description",6,true,function()
 	achievement.getAchievementByID("chicken"):setDone(player.getPlayersBySelector("@a[score_ChickenKilled_min=1]"):getNames())
 end}
