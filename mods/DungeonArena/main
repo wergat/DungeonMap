@@ -119,6 +119,7 @@ achievements["treasure"] = {"achievement.treasure.name","achievement.treasure.de
 		for i = 1, #chest_areas do
 			setSecretChest(chest_areas[i])
 		end
+		cmd.run("/setblock 84 20 -53 stonebrick")
 		__hasPlacedChests = true
 	end
 	local playersWithoutTreasure = (player.getPlayersBySelector("@a") - player.getPlayersBySelector("@a[score_ach_treasure_min=2]"))
