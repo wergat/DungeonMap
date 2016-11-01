@@ -111,7 +111,7 @@ achievements["herring"] = {"achievement.herring.name","achievement.herring.descr
 	end
 end}
 achievements["treasure"] = {"achievement.treasure.name","achievement.treasure.description",5,false,function()
-	local chest_areas = {"76 25 39", "90 29 -31", "37 9 -3", "18 19 21", "84 20 -54"}
+	local chest_areas = {"76 25 39", "90 29 -31", "37 9 -3", "18 19 21", "85 19 -52"}
 	function SetSecretChest(coords)
 		cmd.run("/setblock " .. coords .. " chest 1 replace {CustomName:\"" .. language.get("chest.old") .. "\", Items:[{Slot:13,id:\"minecraft:double_plant\", Count:1, Damage:0, tag:{display:{Name:\"" .. language.get("chest.coin") .. "\", Lore:[\"" .. language.get("chest.coin_lore") .. "\"]}}}]}")
 	end
