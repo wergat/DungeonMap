@@ -3,8 +3,8 @@ function init()
 	-- Makes sure dcore is loaded
 	if(not dcore)then os.loadAPI(":dungeon/dcore/apis/dcore") end
 	-- Config
-	softInit("githubDefaultRepositoryName","DungeonMap")
-	softInit("githubDefaultUserName","wergat")
+	config.softInit("githubDefaultRepositoryName","DungeonMap")
+	config.softInit("githubDefaultUserName","wergat")
 	
 	
 	-- Check for installed JSON API
