@@ -1,6 +1,15 @@
 dcore.requireAPI("language")
-local coin_data = {["display"] = {["Name"] = language.get("chest.coin")}}
-local coin_item =  {["id"] = 175, ["value"] = 10, ["max"] = 2, ["item"] = {["tag"] = coin_data, ["id"] = 175}}
+function doCoin()
+	local returnv = {}
+	returnv["powerCost"] = 10
+	returnv["setItemCount"] = 1
+	returnv["item"]["tag"] = {}
+	returnv["item"]["tag"]["display"] = {}
+	returnv["item"]["tag"]["display"]["Name"] = language.get("chest.coin")
+	returnv["item"]["tag"]["display"]["Lore"] = {language.get("chest.coin_lore")}
+	returnv["item"]["Damage"] = 0
+	return returnv
+end
 for i = 1, 4 do
-	chest.addNewItemToPool(i, coin_item)
+	chest.addNewItemToPool(i, doCoin)
 end
