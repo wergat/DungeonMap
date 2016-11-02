@@ -1,3 +1,4 @@
+dcore.requireAPI("language")
 local coin_data = {["display"] = {["Name"] = language.get("chest.coin")}}
 local coin_item =  {["id"] = 175, ["value"] = 10, ["max"] = 2, ["item"] = {["tag"] = coin_data, ["id"] = 175}}
 for i = 1, 4 do
