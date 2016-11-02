@@ -121,33 +121,30 @@ achievements["treasure"] = {"achievement.treasure.name","achievement.treasure.de
 		end
 		__hasPlacedChests = true
 	end
-	local playersWithoutTreasure = (player.getPlayersBySelector("@a") - player.getPlayersBySelector("@a[score_ach_treasureoh_min=2]"))
-	if (#playersWithoutTreasure:getNames() > 0) then
-		local psuc, presult = cmd.get("/clear @a double_plant 0 1 {display:{Name:\"" .. language.get("chest.coin") .. "\"}}")
-		if psuc then
-			for i = 1, #presult do
-				if presult[i]:find(", removing 1 items") then
-					local oplayer = presult[i]:gsub("Cleared the inventory of ", ""):gsub(", removing 1 items", "")
-					local coinsgot = tonumber(player.getPlayerByName(oplayer):getScoreboardValue("CoinsCollected")) or 0
-					cmd.run("/scoreboard players set " .. oplayer .. " coinsGot " .. coinsgot+1)
-					coinsgot = coinsgot+1
-					cmd.run("/tellraw " .. oplayer .. " {\"color\":\"gold\", \"text\":\"" .. language.get("achievement.treasure.discovered"):gsub("!!s", coinsgot) .. "\"}")
-					if coinsgot == 5 then
-						cmd.run("/scoreboard players set " .. oplayer .. " ach_treasure 1")
-						achievement.getAchievementByID("treasure"):setDone(oplayer)
-					elseif coinsgot == 10 then
-						cmd.run("/scoreboard players set " .. oplayer .. " ach_treasureten 1")
-						achievement.getAchievementByID("treasureten"):setDone(oplayer)
-					elseif coinsgot == 25 then
-						cmd.run("/scoreboard players set " .. oplayer .. " ach_treasuretf 1")
-						achievement.getAchievementByID("treasuretf"):setDone(oplayer)
-					elseif coinsgot == 50 then
-						cmd.run("/scoreboard players set " .. oplayer .. " ach_treasurefi 1")
-						achievement.getAchievementByID("treasurefi"):setDone(oplayer)
-					elseif coinsgot == 100 then
-						cmd.run("/scoreboard players set " .. oplayer .. " ach_treasureoh 1")
-						achievement.getAchievementByID("treasureoh"):setDone(oplayer)
-					end
+	local psuc, presult = cmd.get("/clear @a double_plant 0 1 {display:{Name:\"" .. language.get("chest.coin") .. "\"}}")
+	if psuc then
+		for i = 1, #presult do
+			if presult[i]:find(", removing 1 items") then
+				local oplayer = presult[i]:gsub("Cleared the inventory of ", ""):gsub(", removing 1 items", "")
+				local coinsgot = tonumber(player.getPlayerByName(oplayer):getScoreboardValue("CoinsCollected")) or 0
+				cmd.run("/scoreboard players set " .. oplayer .. " coinsGot " .. coinsgot+1)
+				coinsgot = coinsgot+1
+				cmd.run("/tellraw " .. oplayer .. " {\"color\":\"gold\", \"text\":\"" .. language.get("achievement.treasure.discovered"):gsub("!!s", coinsgot) .. "\"}")
+				if coinsgot == 5 then
+					cmd.run("/scoreboard players set " .. oplayer .. " ach_treasure 1")
+					achievement.getAchievementByID("treasure"):setDone(oplayer)
+				elseif coinsgot == 10 then
+					cmd.run("/scoreboard players set " .. oplayer .. " ach_treasureten 1")
+					achievement.getAchievementByID("treasureten"):setDone(oplayer)
+				elseif coinsgot == 25 then
+					cmd.run("/scoreboard players set " .. oplayer .. " ach_treasuretf 1")
+					achievement.getAchievementByID("treasuretf"):setDone(oplayer)
+				elseif coinsgot == 50 then
+					cmd.run("/scoreboard players set " .. oplayer .. " ach_treasurefi 1")
+					achievement.getAchievementByID("treasurefi"):setDone(oplayer)
+				elseif coinsgot == 100 then
+					cmd.run("/scoreboard players set " .. oplayer .. " ach_treasureoh 1")
+					achievement.getAchievementByID("treasureoh"):setDone(oplayer)
 				end
 			end
 		end
