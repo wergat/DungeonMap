@@ -3,6 +3,7 @@ function doCoin()
 	local returnv = {}
 	returnv["powerCost"] = 10
 	returnv["setItemCount"] = 1
+	returnv["item"] = {}
 	returnv["item"]["tag"] = {}
 	returnv["item"]["tag"]["display"] = {}
 	returnv["item"]["tag"]["display"]["Name"] = language.get("chest.coin")
