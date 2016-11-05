@@ -6,12 +6,14 @@ dcore.openChannel(23)
 -- dcore_newCMDSlave
 
 -- ticks after wich a slave computer gets set to ready
-config.conditionalSet("CMD_MAXIMUM_TIMEOUT",20)
+config.softInit("CMD_MAXIMUM_TIMEOUT",20)
 -- Commands can be sent to slaves directly without queueing if this is enabled
-config.conditionalSet("CMD_ALLOW_COMMAND_QUICK_FLUSHING",true)
-
+config.softInit("CMD_ALLOW_COMMAND_QUICK_FLUSHING",true)
 -- Waiting time between processing rounds
-config.conditionalSet("CMD_MAIN_LOOP_WAITTIME",.05)
+config.softInit("CMD_MAIN_LOOP_WAITTIME",.05)
+-- List of slaves to wake up
+config.softInit("CMD_SLAVE_POSITION_LIST",{})
+
 
 -- List of commands. Older commands first
 local commandList = {}
@@ -81,16 +83,30 @@ function checkForNewSlaves()
 	while true do
 		local event = {os.pullEvent("dcore_newCMDSlave")}
 		local tEvent = textutils.unserialize(event[2])
+		print(event[2])
 		local idExisting = false
 		-- Check if it is already listed
 		for i=1,#commandSlaves do
-			if(commandSlaves[i].id == tEvent[4])then
+			if(commandSlaves[i].id == tEvent[4][1])then
 				idExisting = true
 			end
 		end
 		-- If not already listed, add to list
-		if(not idExisting)then 
-			commandSlaves[(#commandSlaves + 1)] = newSlaveComputer(tEvent[4])
+		if(not idExisting)then
+			-- Save Positions of Command Computer Slaves
+			local list = config.get("CMD_SLAVE_POSITION_LIST")
+			local isInList = false
+			for i=1,#list do
+				if(list[i][1] == tEvent[4][2] and list[i][2] == tEvent[4][3] and list[i][3] == tEvent[4][4])then
+					isInList = true
+				end
+			end
+			if(not isInList)then
+				list[(#list + 1)] = {tEvent[4][2],tEvent[4][3],tEvent[4][4]}
+				print("Registered Computer at {"..tEvent[4][2]..","..tEvent[4][3]..","..tEvent[4][4].."}")
+			end
+			
+			commandSlaves[(#commandSlaves + 1)] = newSlaveComputer(tEvent[4][1])
 			-- Tell to get it going!
 			dcore.send(22,commandSlaves[(#commandSlaves)].id,"DoWork")
 			-- Add new slaves to list in config to save thier position! config.set("CommandComputerList") = commandSlaves

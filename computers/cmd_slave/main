@@ -1,6 +1,7 @@
 term.setTextColor(colors.orange)
 local tx,ty = term.getSize()
 local computersID = os.getComputerID()
+-- TODO: Check if this is a command block, if not warn User
 term.setCursorPos(15,1)
 term.clear()
 write("CmPU   -   GUI")
@@ -51,8 +52,9 @@ function run()
 end
 
 function show()
+	local x, y, z = commands.getBlockPosition()
 	while true do
-		modem.transmit(23,computersID,{"newSlave","newCMDSlave"})
+		modem.transmit(23,computersID,{"newSlave",{"newCMDSlave",x,y,z}})
 		sleep(5)
 	end
 end
