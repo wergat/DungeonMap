@@ -54,7 +54,7 @@ end
 function show()
 	local x, y, z = commands.getBlockPosition()
 	while true do
-		modem.transmit(23,computersID,{"newSlave",{"newCMDSlave",x,y,z}})
+		modem.transmit(23,computersID,{{"newSlave",x,y,z},"newCMDSlave"})
 		sleep(5)
 	end
 end
