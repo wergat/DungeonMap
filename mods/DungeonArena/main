@@ -1274,14 +1274,10 @@ function crushThread()
 		local t = {}
 		for k,v in pairs(obdata["Items"]) do print(k) t[(tonumber(k)+1)] = v end
 		obdata["Items"] = t
+		
+		local whitelist = {["minecraft:leather_helmet"] = true, ["minecraft:leather_chestplate"] = true, ["minecraft:leather_leggings"] = true, ["minecraft:leather_boots"] = true, ["minecraft:chainmail_helmet"] = true, ["minecraft:chainmail_chestplate"] = true, ["minecraft:chainmail_leggings"] = true, ["minecraft:chainmail_boots"] = true, ["minecraft:iron_helmet"] = true, ["minecraft:iron_chestplate"] = true, ["minecraft:iron_leggings"] = true, ["minecraft:iron_boots"] = true, ["minecraft:diamond_helmet"] = true, ["minecraft:diamond_chestplate"] = true, ["minecraft:diamond_leggings"] = true, ["minecraft:diamond_boots"] = true, ["minecraft:golden_helmet"] = true, ["minecraft:golden_chestplate"] = true, ["minecraft:golden_leggings"] = true, ["minecraft:golden_boots"] = true, ["minecraft:stone_axe"] = true, ["minecraft:diamond_sword"] = true, ["minecraft:diamond_axe"] = true, ["minecraft:golden_sword"] = true, ["minecraft:golden_axe"] = true, ["minecraft:iron_axe"] = true, ["minecraft:bow"] = true, ["minecraft:iron_sword"] = true, ["minecraft:wooden_sword"] = true, ["minecraft:wooden_axe"] = true, ["minecraft:stone_sword"] = true}
 		for i = 1, tablelength(obdata["Items"]) do
-			if not obdata["Items"][i]["tag"] then
-				obdata["Items"][i]["tag"] = {}
-			end
-			if not obdata["Items"][i]["tag"]["cc"] then
-				obdata["Items"][i]["tag"]["cc"] = {}
-			end
-			if obdata["Items"][i]["tag"]["cc"]["price"] then
+			if whitelist[obdata["Items"][i]["id"]] then
 				local citem = obdata["Items"][i]
 				local cslot = citem["Slot"]
 				if type(cslot) == "boolean" then
