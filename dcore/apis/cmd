@@ -86,7 +86,7 @@ function checkForNewSlaves()
 		local idExisting = false
 		-- Check if it is already listed
 		for i=1,#commandSlaves do
-			if(commandSlaves[i].id == tEvent[4][1])then
+			if(commandSlaves[i].id == tEvent[4])then
 				idExisting = true
 			end
 		end
@@ -105,7 +105,7 @@ function checkForNewSlaves()
 				print("Registered Computer at {"..tEvent[5][2]..","..tEvent[5][3]..","..tEvent[5][4].."}")
 			end
 			
-			commandSlaves[(#commandSlaves + 1)] = newSlaveComputer(tEvent[4][1])
+			commandSlaves[(#commandSlaves + 1)] = newSlaveComputer(tEvent[4])
 			-- Tell to get it going!
 			dcore.send(22,commandSlaves[(#commandSlaves)].id,"DoWork")
 			-- Add new slaves to list in config to save thier position! config.set("CommandComputerList") = commandSlaves
