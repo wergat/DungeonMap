@@ -1270,8 +1270,11 @@ function crushThread()
 		obdata = obdata[1]
 		obdata = obdata:gsub("The data tag did not change: ", "")
 		obdata = dcore.convertNBTtoTable(obdata)
+		local t = {}
+		for k,v in pairs(obdata) do	t[(tonumber(k)+1)] = v end
+		obdata = t
 		for i = 1, tablelength(obdata["Items"]) do
-			local citem = obdata["Items"][tostring(i-1)]
+			local citem = obdata["Items"][i]
 			local cslot = citem["Slot"]
 			if type(cslot) == "boolean" then
 				if cslot == false then
