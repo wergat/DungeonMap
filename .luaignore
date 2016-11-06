@@ -2,4 +2,5 @@
   ".gitattributes",
   ".gitignore",
   "README.md",
+  ".luaignore",
 }
