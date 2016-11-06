@@ -1260,12 +1260,17 @@ end
 
 function crushThread()
 	local obcoords = "68 27 38"
+	function tablelength(T)
+		local count = 0
+		for _ in pairs(T) do count = count + 1 end
+		return count
+	end
 	while true do
 		local _, obdata = cmd.get("/blockdata " .. obcoords .. " {}")
 		obdata = obdata[1]
 		obdata = obdata:gsub("The data tag did not change: ", "")
 		obdata = dcore.convertNBTtoTable(obdata)
-		for i = 1, #obdata["Items"] do
+		for i = 1, tablelength(obdata["Items"]) do
 			local citem = obdata["Items"][tostring(i-1)]
 			local cslot = citem["Slot"]
 			if type(cslot) == "boolean" then
