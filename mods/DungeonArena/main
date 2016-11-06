@@ -1259,6 +1259,7 @@ function achievementThread()
 end
 
 function crushThread()
+	--CC-Edition Obliterum Forge (Place gear in, replaces gear with 10% money worth)
 	local obcoords = "68 27 38"
 	function tablelength(T)
 		local count = 0
@@ -1271,22 +1272,24 @@ function crushThread()
 		obdata = obdata:gsub("The data tag did not change: ", "")
 		obdata = dcore.convertNBTtoTable(obdata)
 		local t = {}
-		for k,v in pairs(obdata["Items"]) do t[(tonumber(k)+1)] = v end
+		for k,v in pairs(obdata["Items"]) do print(k) t[(tonumber(k)+1)] = v end
 		obdata["Items"] = t
 		for i = 1, tablelength(obdata["Items"]) do
-			local citem = obdata["Items"][i]
-			local cslot = citem["Slot"]
-			if type(cslot) == "boolean" then
-				if cslot == false then
-					cslot = 0
-				elseif cslot == true then
-					cslot = 1
+			if obdata["Items"][i]["tag"]["cc"]["price"] then
+				local citem = obdata["Items"][i]
+				local cslot = citem["Slot"]
+				if type(cslot) == "boolean" then
+					if cslot == false then
+						cslot = 0
+					elseif cslot == true then
+						cslot = 1
+					end
 				end
+				local cquaz = tonumber(string.match(citem["tag"]["display"]["Lore"]["1"], "%d+"))
+				local cinfo = villager.getCurrencyTradeTablesByPrice(cquaz/10, 1)
+				cinfo[1]["Slot"] = tonumber(cslot)
+				obdata["Items"][i-1] = cinfo[1]
 			end
-			local cquaz = tonumber(string.match(citem["tag"]["display"]["Lore"]["1"], "%d+"))
-			local cinfo = villager.getCurrencyTradeTablesByPrice(cquaz/10, 1)
-			cinfo[1]["Slot"] = tonumber(cslot)
-			obdata["Items"][i-1] = cinfo[1]
 		end
 		if not d then
 			commands.exec("/say " .. textutils.serialize(obdata))
