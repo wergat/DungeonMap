@@ -316,4 +316,10 @@ function get(command)
 end
 
 
+-- Activate all the command blocks
+local list = config.get("CMD_SLAVE_POSITION_LIST")
+for i=1,#list do
+	command.execAsync("/blockdata "..list[i][1].." "..list[i][2].." "..list[i][3].." {on:1b}")
+end
+
 
