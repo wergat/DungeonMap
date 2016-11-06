@@ -1268,7 +1268,7 @@ function crushThread()
 			local citem = obdata["Items"][i]
 			local cslot = citem["Slot"]
 			local cquaz = string.match(citem["tag"]["display"]["Lore"][2], "%d+")
-			local cinfo = villager.getCurrencyTradeTablesByPrice(quaz, 1)
+			local cinfo = villager.getCurrencyTradeTablesByPrice(quaz/10, 1)
 			cinfo["Slot"] = tonumber(cslot)
 			obdata["Items"][i] = cinfo
 		end
