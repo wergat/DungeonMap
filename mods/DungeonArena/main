@@ -1257,6 +1257,26 @@ function achievementThread()
 		sleep(config.AchievementTickRate)
 	end
 end
+
+function crushThread()
+	local obcoords = "68 27 38"
+	while true do
+		local _, obdata = cmd.get("/blockdata " .. obcoords .. " {}")
+		obdata = obdata:gsub("The data tag did not change: ", "")
+		obdata = dcore.convertNBTtoTable(obdata)
+		for i = 1, #obdata["Items"] do
+			local citem = obdata["Items"][i]
+			local cslot = citem["Slot"]
+			local cquaz = string.match(citem["tag"]["display"]["Lore"][2], "%d+")
+			local cinfo = villager.getCurrencyTradeTablesByPrice(quaz, 1)
+			cinfo["Slot"] = tonumber(cslot)
+			obdata["Items"][i] = cinfo
+		end
+		cmd.run("/blockdata " .. obcoords .. " " .. dcore.getNBTStringFromTable(obdata))
+		sleep(0.5)
+	end
+end
+
 function mainLoop()
 	while true do
 		if(stages[config.get("Stage")])then
@@ -1274,6 +1294,7 @@ coroutine.yield()
 threadsStatus["lives"] = thread.add(livesThread,"Lives Management")
 threadsStatus["blacklist"] = thread.add(blacklistThread,"Blacklist Checker")
 threadsStatus["rednet"] = thread.add(rednetThread,"Rednet Communicator")
+threadsStatus["ccof"] = thread.add(crushThread, "CC Obliterum Forge")
 threadsStatus["music"] = thread.add(musicThread,"Music Player Manager")
 threadsStatus["status"] = thread.add(statusThread,"PC Status Manager")
 threadsStatus["misc"] = thread.add(statusThread,"Misc. Feature Loop")
