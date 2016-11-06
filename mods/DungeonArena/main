@@ -1266,12 +1266,12 @@ function crushThread()
 		obdata = obdata:gsub("The data tag did not change: ", "")
 		obdata = dcore.convertNBTtoTable(obdata)
 		for i = 1, #obdata["Items"] do
-			local citem = obdata["Items"][i]
+			local citem = obdata["Items"][i-1]
 			local cslot = citem["Slot"]
 			local cquaz = string.match(citem["tag"]["display"]["Lore"][2], "%d+")
 			local cinfo = villager.getCurrencyTradeTablesByPrice(quaz/10, 1)
 			cinfo[1]["Slot"] = tonumber(cslot)
-			obdata["Items"][i] = cinfo[1]
+			obdata["Items"][i-1] = cinfo[1]
 		end
 		cmd.run("/blockdata " .. obcoords .. " " .. dcore.getNBTStringFromTable(obdata))
 		sleep(0.5)
