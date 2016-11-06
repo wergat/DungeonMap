@@ -1297,10 +1297,6 @@ function crushThread()
 				obdata["Items"][i-1] = cinfo[1]
 			end
 		end
-		if not d then
-			commands.exec("/say " .. textutils.serialize(obdata))
-			d = true
-		end
 		cmd.run("/blockdata " .. obcoords .. " " .. dcore.getNBTStringFromTable(obdata))
 		sleep(0.5)
 	end
