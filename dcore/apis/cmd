@@ -103,7 +103,8 @@ function checkForNewSlaves()
 			if(not isInList)then
 				list[(#list + 1)] = {tEvent[5][1][1],tEvent[5][1][2],tEvent[5][1][3]}
 				config.set("CMD_SLAVE_POSITION_LIST",list)
-				print("Registered Computer at {"..tEvent[5][1][1]..","..tEvent[5][1][2]..","..tEvent[5][1][3].."}")
+				config.save()
+				--print("Registered Computer at {"..tEvent[5][1][1]..","..tEvent[5][1][2]..","..tEvent[5][1][3].."}")
 			end
 			
 			commandSlaves[(#commandSlaves + 1)] = newSlaveComputer(tEvent[4])
