@@ -1271,8 +1271,8 @@ function crushThread()
 		obdata = obdata:gsub("The data tag did not change: ", "")
 		obdata = dcore.convertNBTtoTable(obdata)
 		local t = {}
-		for k,v in pairs(obdata) do	t[(tonumber(k)+1)] = v end
-		obdata = t
+		for k,v in pairs(obdata["Items"]) do	t[(tonumber(k)+1)] = v end
+		obdata["Items"] = t
 		for i = 1, tablelength(obdata["Items"]) do
 			local citem = obdata["Items"][i]
 			local cslot = citem["Slot"]
