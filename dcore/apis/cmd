@@ -83,7 +83,6 @@ function checkForNewSlaves()
 	while true do
 		local event = {os.pullEvent("dcore_newCMDSlave")}
 		local tEvent = textutils.unserialize(event[2])
-		print(event[2])
 		local idExisting = false
 		-- Check if it is already listed
 		for i=1,#commandSlaves do
@@ -97,13 +96,13 @@ function checkForNewSlaves()
 			local list = config.get("CMD_SLAVE_POSITION_LIST")
 			local isInList = false
 			for i=1,#list do
-				if(list[i][1] == tEvent[4][2] and list[i][2] == tEvent[4][3] and list[i][3] == tEvent[4][4])then
+				if(list[i][1] == tEvent[5][2] and list[i][2] == tEvent[5][3] and list[i][3] == tEvent[5][4])then
 					isInList = true
 				end
 			end
 			if(not isInList)then
-				list[(#list + 1)] = {tEvent[4][2],tEvent[4][3],tEvent[4][4]}
-				print("Registered Computer at {"..tEvent[4][2]..","..tEvent[4][3]..","..tEvent[4][4].."}")
+				list[(#list + 1)] = {tEvent[5][2],tEvent[5][3],tEvent[5][4]}
+				print("Registered Computer at {"..tEvent[5][2]..","..tEvent[5][3]..","..tEvent[5][4].."}")
 			end
 			
 			commandSlaves[(#commandSlaves + 1)] = newSlaveComputer(tEvent[4][1])
