@@ -508,9 +508,7 @@ function convertNBTtoTable(startString)
 	end
 	return t
 end
-function convertNBTToTable(s)
-	return convertNBTtoTable(s)
-end
+
 
 -- /////////////
 -- Grabbing system function and changing them for our use
