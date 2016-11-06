@@ -141,10 +141,11 @@ function getIgnoreList()
 		return ignoreList
 	end
 end
+-- Wildcard: 
 function isOnIgnoreList(file)
 	if(not ignoreList)then updateIgnoreList() end
 	for i=1,#ignoreList do
-		if(file == ignoreList[i])then
+		if(string.find(file,"^("..ignoreList[i]..")$",1) and true or false)then
 			return true
 		end
 	end
@@ -166,47 +167,74 @@ end
 
 
 -- Downlaoding from Repository
-function downloadFromDir(url)
-	local handle = github.get(url)
-	
-	-- Checking for the API limitations
-	if handle then
-		handle = handle.readAll()
-	else
-		
-		cancle = true
-		return
+
+function newUpdater()
+	local updater = {}
+	updater.doPrint = false
+	updater.doLog = false
+	updater.SHACodes = {}
+	updater.setShaCodes = function(self,codes)
+		self.SHACodes = {}
+		if fs.exists(":dungeon/hashes") then
+			local file = fs.open(":dungeon/hashes", "r")
+			local data = open.readAll()
+			file.close()
+			self.SHACodes = textutils.unserialize(data)
+		end
+		return self
 	end
-	
-	local data = JSON:decode(handle)
-	logfile.writeLine("Found #"..tonumber(#data).." files inside "..url)
-	for i = 1, #data do
-		local f = data[i]
-		local path = f["path"]
-		if (f["sha"] == SHACodes[path] and f["type"] ~= "dir") then
-			files_not_updated = files_not_updated + 1
-			logfile.writeLine(" x Not updated: "..path)
-		elseif f["type"] == "dir" then
-			print("Scanning directory: " .. path)
-			logfile.writeLine("Downloading directory: " .. path)
-			SHACodes[path] = f["sha"]
-			downloadFromDir(f["url"])
-		else
-			--for k,v in pairs(BLACKLIST) do if(v==path)then return end end
-			print(" > Downloading file: " .. path)
-			logfile.writeLine(" > Downloading file: " .. path)
-			local handle = github.get(f["download_url"])
-			local xt = ""
-			if(handle)then
-				xt = handle.readAll()
-			end
-			local open = fs.open("dungeon/" .. path, "w")
-			open.write(xt)
-			open.close()
-			SHACodes[path] = f["sha"]
-			files_updated = files_updated + 1
+	updater.printOnScreen = function(self,text)
+		if(self.doPrint)then
+			print(text)
 		end
 	end
+	updater.writeToLog = function(self,text)
+		if(self.doLog)then
+			logfile.writeLine(text)
+		end
+	end
+	updater.downloadFromDir = function(self,url)
+		local handle = github.get(url)
+		-- Checking for the API limitations
+		if handle then handle = handle.readAll()
+		else return end
+		local data = JSON:decode(handle)
+		self:writeToLog("Found #"..tonumber(#data).." files inside "..url)
+		for i = 1, #data do
+			local entry = data[i]
+			local path = entry["path"]
+			if (entry["sha"] == SHACodes[path] and entry["type"] ~= "dir") then
+				self:writeToLog(" x Not updated: "..path)
+			elseif entry["type"] == "dir" then
+				self:printOnScreen("Scanning directory: " .. path)
+				self:writeToLog("Downloading directory: " .. path)
+				SHACodes[path] = entry["sha"]
+				self:downloadFromDir(entry["url"])
+			else
+				--for k,v in pairs(BLACKLIST) do if(v==path)then return end end
+				self:printOnScreen(" > Downloading file: " .. path)
+				self:writeToLog(" > Downloading file: " .. path)
+				local handle = github.get(entry["download_url"])
+				local xt = ""
+				if(handle)then
+					xt = handle.readAll()
+				end
+				local open = fs.open("dungeon/" .. path, "w")
+				open.write(xt)
+				open.close()
+				SHACodes[path] = entry["sha"]
+			end
+		end
+		return self
+	end
+	updater.updateHashes = function(self)
+		local handle = fs.open(":dungeon/hashes", "w")
+		handle.write(textutils.serialize(self.SHACodes))
+		handle.close()
+		return self
+	end
+	
+	return updater
 end
 
 
