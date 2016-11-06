@@ -1275,6 +1275,12 @@ function crushThread()
 		for k,v in pairs(obdata["Items"]) do print(k) t[(tonumber(k)+1)] = v end
 		obdata["Items"] = t
 		for i = 1, tablelength(obdata["Items"]) do
+			if not obdata["Items"][i]["tag"] then
+				obdata["Items"][i]["tag"] = {}
+			end
+			if not obdata["Items"][i]["tag"]["cc"] then
+				obdata["Items"][i]["tag"]["cc"] = {}
+			end
 			if obdata["Items"][i]["tag"]["cc"]["price"] then
 				local citem = obdata["Items"][i]
 				local cslot = citem["Slot"]
