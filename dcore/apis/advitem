@@ -421,6 +421,11 @@ function newItem(args)
 		if self.unbreakable then
 			self.tag["Unbreakable"] = true
 		end
+		-- Add tags
+		self.tag.cc.rarity = self.rarity
+		self.tag.cc.isLegendary = (self.rarity > 7)
+		self.tag.cc.price = self.price
+		self.tag.cc.value = self.value
 		return self
 	end
 	

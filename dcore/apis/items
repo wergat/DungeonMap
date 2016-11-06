@@ -116,7 +116,7 @@ function getItem(itemID)
 	if(type(itemID)=="number")then
 		return items[itemID]
 	else
-		dcore.Error("[items:114]: \""..tostring(itemID).." is NaN!\"",3)
+		dcore.Error("\""..tostring(itemID).." is NaN!\"",3)
 	end
 end
 
