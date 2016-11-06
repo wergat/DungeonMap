@@ -1270,8 +1270,8 @@ function crushThread()
 			local cslot = citem["Slot"]
 			local cquaz = string.match(citem["tag"]["display"]["Lore"][2], "%d+")
 			local cinfo = villager.getCurrencyTradeTablesByPrice(quaz/10, 1)
-			cinfo["Slot"] = tonumber(cslot)
-			obdata["Items"][i] = cinfo
+			cinfo[1]["Slot"] = tonumber(cslot)
+			obdata["Items"][i] = cinfo[1]
 		end
 		cmd.run("/blockdata " .. obcoords .. " " .. dcore.getNBTStringFromTable(obdata))
 		sleep(0.5)
