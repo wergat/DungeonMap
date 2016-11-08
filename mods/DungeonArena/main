@@ -1267,17 +1267,18 @@ function crushThread()
 		return count
 	end
 	while true do
-		local str,v = (({cmd.get("/blockdata "..obcoords.." {CustomName:\"Gear Crusher [Loading]\"}")})[2][1]):gsub("The data tag did not change: ", "")
-		if(v==1)then
+		local v = 1
+		local w = 1
+		local str = (({cmd.get("/blockdata "..obcoords.." {CustomName:\"Gear Crusher [Loading]\"}")})[2][1])
+		str,v = str:gsub("The data tag did not change: ", "")
+		sry,w = str:gsub("Block data updated to: ", "")
+		if(v==1 or w==1)then
 			local chestTable = dcore.convertNBTtoTable(str)
 			
 			-- Fixing conversion offset. NBT [0] => table["0"] -> table[1] => NBT [0]
 			local t = {}
 			for k,v in pairs(chestTable["Items"]) do t[(tonumber(k)+1)] = v end
 			chestTable["Items"] = t
-			
-			-- Whitelist TEMP 
-			--local whitelist = {["minecraft:leather_helmet"] = true, ["minecraft:leather_chestplate"] = true, ["minecraft:leather_leggings"] = true, ["minecraft:leather_boots"] = true, ["minecraft:chainmail_helmet"] = true, ["minecraft:chainmail_chestplate"] = true, ["minecraft:chainmail_leggings"] = true, ["minecraft:chainmail_boots"] = true, ["minecraft:iron_helmet"] = true, ["minecraft:iron_chestplate"] = true, ["minecraft:iron_leggings"] = true, ["minecraft:iron_boots"] = true, ["minecraft:diamond_helmet"] = true, ["minecraft:diamond_chestplate"] = true, ["minecraft:diamond_leggings"] = true, ["minecraft:diamond_boots"] = true, ["minecraft:golden_helmet"] = true, ["minecraft:golden_chestplate"] = true, ["minecraft:golden_leggings"] = true, ["minecraft:golden_boots"] = true, ["minecraft:stone_axe"] = true, ["minecraft:diamond_sword"] = true, ["minecraft:diamond_axe"] = true, ["minecraft:golden_sword"] = true, ["minecraft:golden_axe"] = true, ["minecraft:iron_axe"] = true, ["minecraft:bow"] = true, ["minecraft:iron_sword"] = true, ["minecraft:wooden_sword"] = true, ["minecraft:wooden_axe"] = true, ["minecraft:stone_sword"] = true}
 			
 			-- Going through all items in the chest
 			for i = 1, tablelength(chestTable["Items"]) do
