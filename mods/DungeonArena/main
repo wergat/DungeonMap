@@ -1271,7 +1271,7 @@ function crushThread()
 		local w = 1
 		local str = (({cmd.get("/blockdata "..obcoords.." {CustomName:\"Gear Crusher [Loading]\"}")})[2][1])
 		str,v = str:gsub("The data tag did not change: ", "")
-		sry,w = str:gsub("Block data updated to: ", "")
+		str,w = str:gsub("Block data updated to: ", "")
 		if(v==1 or w==1)then
 			local chestTable = dcore.convertNBTtoTable(str)
 			
