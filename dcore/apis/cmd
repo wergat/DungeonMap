@@ -327,9 +327,10 @@ end
 function debugBlock(x,y,z)
 	local str,v = (({cmd.get("/blockdata "..x.." "..y.." "..z.." {}")})[2][1]):gsub("The data tag did not change: ", "")
 	if(v==1)then
-		cmd.run("/say "..textutils.serialize(dcore.convertNBTtoTable(str)))
+		local tAsStr = dcore.convertNBTtoTable(str)
+		cmd.run("/say "..textutils.serialize(tAsStr))
 	else
-		cmd.run(str)
+		cmd.run("/say "..str)
 	end
 end
 

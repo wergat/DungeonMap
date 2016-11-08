@@ -1267,37 +1267,37 @@ function crushThread()
 		return count
 	end
 	while true do
-		local _, obdata = cmd.get("/blockdata " .. obcoords .. " {}")
-		obdata = obdata[1]
-		obdata = obdata:gsub("The data tag did not change: ", "")
-		obdata = dcore.convertNBTtoTable(obdata)
-		local t = {}
-		for k,v in pairs(obdata["Items"]) do print(k) t[(tonumber(k)+1)] = v end
-		obdata["Items"] = t
-		for i = 1, tablelength(obdata["Items"]) do
-			if not obdata["Items"][i]["tag"] then
-				obdata["Items"][i]["tag"] = {}
-			end
-			if not obdata["Items"][i]["tag"]["cc"] then
-				obdata["Items"][i]["tag"]["cc"] = {}
-			end
-			if obdata["Items"][i]["tag"]["cc"]["price"] then
-				local citem = obdata["Items"][i]
-				local cslot = citem["Slot"]
-				if type(cslot) == "boolean" then
-					if cslot == false then
-						cslot = 0
-					elseif cslot == true then
-						cslot = 1
+		local str,v = (({cmd.get("/blockdata "..obcoords.." {CustomName:\"Gear Crusher [Loading]\"}")})[2][1]):gsub("The data tag did not change: ", "")
+		if(v==1)then
+			local chestTable = dcore.convertNBTtoTable(str)
+			
+			-- Fixing conversion offset. NBT [0] => table["0"] -> table[1] => NBT [0]
+			local t = {}
+			for k,v in pairs(chestTable["Items"]) do t[(tonumber(k)+1)] = v end
+			chestTable["Items"] = t
+			
+			-- Going through all items in the chest
+			for i = 1, tablelength(chestTable["Items"]) do
+				if(chestTable["Items"][i]["tag"] and chestTable["Items"][i]["tag"]["cc"])then
+					if chestTable["Items"][i]["tag"]["cc"]["price"] then
+						local citem = chestTable["Items"][i]
+						-- Fixing problems with the converter, when it confuses numbers with booleans
+						local cslot = citem["Slot"]
+						if type(cslot) == "boolean" then cslot = (cslot == true) and 1 or 0 end
+						-- Replacing the item with currency worthy of the item						
+						local cquaz = tonumber(chestTable["Items"][i]["tag"]["cc"]["price"])
+						local cinfo = villager.getCurrencyTradeTablesByPrice(cquaz/10, 1)
+						cinfo[1]["Slot"] = tonumber(cslot)
+						chestTable["Items"][i-1] = cinfo[1]
 					end
 				end
-				local cquaz = tonumber(string.match(citem["tag"]["display"]["Lore"]["1"], "%d+"))
-				local cinfo = villager.getCurrencyTradeTablesByPrice(cquaz/10, 1)
-				cinfo[1]["Slot"] = tonumber(cslot)
-				obdata["Items"][i-1] = cinfo[1]
 			end
+			
+			
+			chestTable["CustomName"] = "Gear Crusher"
+			cmd.run("/blockdata " .. obcoords .. " " .. dcore.getNBTStringFromTable(chestTable))
 		end
-		cmd.run("/blockdata " .. obcoords .. " " .. dcore.getNBTStringFromTable(obdata))
+		
 		sleep(0.5)
 	end
 end
