@@ -179,7 +179,7 @@ function checkDownloadLimit()
 	local secs = waitTime%60
 	printError(" > Oops! It looks like you've installed the DungeonMap files too much recently. Try again in about " .. mins .. "m:" .. secs .. "s!")
 	print("")
-	logfile.writeLine("Oops! It looks like you've installed the DungeonMap files too much recently. Try again in about " .. mins .. "m:" .. secs .. "s!")
+	dcore.print_log("updater","Oops! It looks like you've installed the DungeonMap files too much recently. Try again in about " .. mins .. "m:" .. secs .. "s!")
 end
 
 
@@ -226,7 +226,7 @@ function newUpdater()
 	end
 	updater.writeToLog = function(self,text)
 		if(self.doLog)then
-			logfile.writeLine(text)
+			dcore.print_log("updater",text)
 		end
 	end
 	updater.downloadFromURL = function(self,url)
@@ -286,7 +286,3 @@ function newUpdater()
 	
 	return updater
 end
-
-
-
-
