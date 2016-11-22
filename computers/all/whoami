@@ -21,7 +21,7 @@ data.isCommand = ((commands) ~= nil)
 data.isTurtle = ((turtle) ~= nil)
 data.position = {["x"] = x,["y"] = y,["z"] = z}
 data.blockBelow = commands.getBlockInfo(x,y-1,z)
-data.
+-- Modem/Monitor/Peripheral Data
 function checkWhoAmI(object)
 	
 end
