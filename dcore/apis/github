@@ -140,7 +140,7 @@ end
 -- Updates the IgnoreList, be sure of that!
 function updateIgnoreList()
 	local url = getDownloadURL(config.get("githubDefaultUserName"),config.get("githubDefaultRepositoryName"),".luaignore")
-	local list = textutils.unserialize(get(url))
+	local list = textutils.unserialize(get(url).readAll())
 	cacheIgnoreList(list)
 	return list
 end
@@ -242,30 +242,32 @@ function newUpdater()
 			local entry = data[i]
 			local path = entry["path"]
 			-- Check if file is up-to-date with the SHA codes
-			if (entry["sha"] == SHACodes[path] and entry["type"] ~= "dir") then
+			if (entry["sha"] == SHACodes[path] and entry["type"] ~= "dir" and fs.exists(path)) then
 				self:writeToLog(" x Not updated: "..path)
 			elseif entry["type"] == "dir" then
 				self:printOnScreen("Scanning directory: " .. path)
-				self:writeToLog("Downloading directory: " .. path)
+				self:writeToLog("Scanning directory: " .. path)
 				SHACodes[path] = entry["sha"]
 				self,result = self:downloadFromURL(entry["url"])
 				if(not result)then
-					self:printOnScreen("Problem encountered downloading directory: " .. path)
-					self:writeToLog("Problem encountered downloading directory: " .. path)
+					self:printOnScreen("Problem encountered scanning directory: " .. path)
+					self:writeToLog("Problem encountered scanning directory: " .. path)
 				end
 			else
-				--for k,v in pairs(BLACKLIST) do if(v==path)then return end end
-				self:printOnScreen(" > Downloading file: " .. path)
-				self:writeToLog(" > Downloading file: " .. path)
-				local handle = github.get(entry["download_url"])
-				local xt = ""
-				if(handle)then
-					xt = handle.readAll()
+				-- Check if we can ignore the file
+				if(not isOnIgnoreList(path))then
+					self:printOnScreen(" > Downloading file: " .. path)
+					self:writeToLog(" > Downloading file: " .. path)
+					local handle = github.get(entry["download_url"])
+					local xt = ""
+					if(handle)then
+						xt = handle.readAll()
+					end
+					local open = fs.open("dungeon/" .. path, "w")
+					open.write(xt)
+					open.close()
+					SHACodes[path] = entry["sha"]
 				end
-				local open = fs.open("dungeon/" .. path, "w")
-				open.write(xt)
-				open.close()
-				SHACodes[path] = entry["sha"]
 			end
 		end
 		return self,true

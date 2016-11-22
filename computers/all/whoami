@@ -4,6 +4,12 @@ local tArgs = {...}
 local init = false
 if(tArgs[1])then
 	print("This is the first run, initializing!")
+	if(not (fs.exists(":dungeon/dcore/apis/dcore") and fs.exists(":dungeon/dcore/apis/github") and fs.exists(":dungeon/dcore/apis/config")))then
+		shell.run("update","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/apis/dcore","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/apis/github","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/apis/config")
+		print("Downloaded essential APIs, rebooting once more!")
+		sleep(5)
+		os.reboot()
+	end
 	init = true
 	local open = fs.open(":startup","w")
 	open.write("shell.run(\"dungeon/computers/all/whoami\")")
