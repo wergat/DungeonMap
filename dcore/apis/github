@@ -203,7 +203,7 @@ function newUpdater()
 		self.SHACodes = {}
 		if fs.exists(file) then
 			local file = fs.open(file, "r")
-			local data = open.readAll()
+			local data = file.readAll()
 			file.close()
 			self.SHACodes = textutils.unserialize(data)
 			return self,true
@@ -211,7 +211,7 @@ function newUpdater()
 			return self,false
 		end		
 	end
-	udpater.setGHUserName = function(self,newName)
+	updater.setGHUserName = function(self,newName)
 		self.GHUserName = newName
 		return self
 	end
