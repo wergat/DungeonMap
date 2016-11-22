@@ -1,14 +1,16 @@
 -- Initialization and stuff
-function init()
+local JSON = nil
+local function init()
 	-- Makes sure dcore is loaded
 	if(not dcore)then os.loadAPI(":dungeon/dcore/apis/dcore") end
 	-- Config
 	config.softInit("githubDefaultRepositoryName","DungeonMap")
 	config.softInit("githubDefaultUserName","wergat")
+	config.softInit("githubSHAHashStash",":dungeon/hashes")
 	
 	
 	-- Check for installed JSON API
-	JSON = nil
+	
 	if(fs.exists(":dungeon/dcore/apis/JSON.lua"))then
 		JSON = assert(loadfile ":dungeon/dcore/apis/JSON.lua")()
 		print("Native JSON-API found!")
@@ -42,7 +44,7 @@ function init()
 	end
 end
 init()
-
+--
 
 -- Key managment
 local defaultKey = nil
@@ -69,10 +71,6 @@ if keylist then
 else
 	error("Could not establish connection to the pastebin servers. Internet connection might be troubled.")
 end
-
-
-
-
 
 -- Management of keys
 -- Picks a working key
@@ -122,17 +120,31 @@ function request(url,header)
 	return getRequestAsTable(url,header,pickWorkingKey(keylist))
 end
 
--- Ignore List stuff
+function getAPIURL(username,repName,path)
+	return "https://api.github.com/repos/"..username.."/"..repName.."/contents/"..path
+end
+
+function getDownloadURL(username,repName,path)
+	return "https://raw.githubusercontent.com/"..username.."/"..repName.."/master/"..path
+end
+
+--
+-- /// Ignore List stuff
+--
+
 local ignoreList = nil
+-- Chaches the ignorelist for future uses
 function cacheIgnoreList(list)
 	ignoreList = list
 end
+-- Updates the IgnoreList, be sure of that!
 function updateIgnoreList()
-	local url = "https://raw.githubusercontent.com/"..config.get("githubDefaultUserName").."/"..config.get("githubDefaultRepositoryName").."/master/.luaignore"
+	local url = getDownloadURL(config.get("githubDefaultUserName"),config.get("githubDefaultRepositoryName"),".luaignore")
 	local list = textutils.unserialize(get(url))
 	cacheIgnoreList(list)
 	return list
 end
+-- Returns the IgnoreList, for sure
 function getIgnoreList()
 	if(not ignoreList)then
 		updateIgnoreList()
@@ -141,7 +153,7 @@ function getIgnoreList()
 		return ignoreList
 	end
 end
--- Wildcard: 
+-- Checks if file is on the ignoreList, including wildcards: 
 function isOnIgnoreList(file)
 	if(not ignoreList)then updateIgnoreList() end
 	for i=1,#ignoreList do
@@ -151,7 +163,12 @@ function isOnIgnoreList(file)
 	end
 	return false
 end
+
 --
+-- /// 
+--
+
+
 
 function checkDownloadLimit()
 	local currentTime = getCurrentTimeAsUNIXTimespamp()
@@ -169,18 +186,38 @@ end
 -- Downlaoding from Repository
 
 function newUpdater()
+	error("Not ready to use yet please talk to Wergat at once!",2)
 	local updater = {}
+	-- Makes the updater print status and such on the screen
 	updater.doPrint = false
+	-- Makes the updater to write status and such to the log file
 	updater.doLog = false
+	-- Table of SHA codes saved, if empty it will update all files.
 	updater.SHACodes = {}
-	updater.setShaCodes = function(self,codes)
+	-- Github username to use
+	updater.GHUserName = config.get("githubDefaultUserName")
+	-- Github repo name to use
+	updater.GHRepoName = config.get("githubDefaultRepositoryName")
+	-- Set the SHA codes
+	updater.setSHACodes = function(self,file)
+		file = file or config.get("githubSHAHashStash")
 		self.SHACodes = {}
-		if fs.exists(":dungeon/hashes") then
-			local file = fs.open(":dungeon/hashes", "r")
+		if fs.exists(file) then
+			local file = fs.open(file, "r")
 			local data = open.readAll()
 			file.close()
 			self.SHACodes = textutils.unserialize(data)
-		end
+			return self,true
+		else
+			return self,false
+		end		
+	end
+	udpater.setGHUserName = function(self,newName)
+		self.GHUserName = newName
+		return self
+	end
+	updater.setGHRepoName = function(self,newRepoName)
+		self.GHRepoName = newRepoName
 		return self
 	end
 	updater.printOnScreen = function(self,text)
@@ -193,23 +230,29 @@ function newUpdater()
 			logfile.writeLine(text)
 		end
 	end
-	updater.downloadFromDir = function(self,url)
+	updater.downloadFromURL = function(self,url)
 		local handle = github.get(url)
+		local result = true
 		-- Checking for the API limitations
 		if handle then handle = handle.readAll()
-		else return end
+		else return self,false end
 		local data = JSON:decode(handle)
 		self:writeToLog("Found #"..tonumber(#data).." files inside "..url)
 		for i = 1, #data do
 			local entry = data[i]
 			local path = entry["path"]
+			-- Check if file is up-to-date with the SHA codes
 			if (entry["sha"] == SHACodes[path] and entry["type"] ~= "dir") then
 				self:writeToLog(" x Not updated: "..path)
 			elseif entry["type"] == "dir" then
 				self:printOnScreen("Scanning directory: " .. path)
 				self:writeToLog("Downloading directory: " .. path)
 				SHACodes[path] = entry["sha"]
-				self:downloadFromDir(entry["url"])
+				self,result = self:downloadFromURL(entry["url"])
+				if(not result)then
+					self:printOnScreen("Problem encountered downloading directory: " .. path)
+					self:writeToLog("Problem encountered downloading directory: " .. path)
+				end
 			else
 				--for k,v in pairs(BLACKLIST) do if(v==path)then return end end
 				self:printOnScreen(" > Downloading file: " .. path)
@@ -225,10 +268,16 @@ function newUpdater()
 				SHACodes[path] = entry["sha"]
 			end
 		end
-		return self
+		return self,true
 	end
-	updater.updateHashes = function(self)
-		local handle = fs.open(":dungeon/hashes", "w")
+	-- Requires github-path, so no :dungeon or so. .luaignore is in the uppermost folder.
+	updater.downloadFromDir = function(self,path)
+		return self:downloadFromURL(getAPIURL(self.GHUserName,self.GHRepoName,path))
+	end
+	-- Saves hashes to a given file. "":dungeon/hashes""
+	updater.updateHashes = function(self,file)
+		file = file or config.get("githubSHAHashStash")
+		local handle = fs.open(file,"w")
 		handle.write(textutils.serialize(self.SHACodes))
 		handle.close()
 		return self

@@ -10,6 +10,22 @@ if(tArgs[1])then
 	open.close()
 end
 
+-- Checks if the object is supposed to run
+-- Object access some data like
+-- self.blockBelow
+local data = {}
+local x,y,z = commands.getBlockPosition()
+data.isColor = term.isColor()
+data.isMobile = ((pocket) ~= nil)
+data.isCommand = ((commands) ~= nil)
+data.isTurtle = ((turtle) ~= nil)
+data.position = {["x"] = x,["y"] = y,["z"] = z}
+data.blockBelow = commands.getBlockInfo(x,y-1,z)
+data.
+function checkWhoAmI(object)
+	
+end
+
 	
 -- BIOS informations
 -- Can be used in case of emergency
