@@ -1,10 +1,10 @@
-if(block.name == "minecraft:mossy_cobblestone")then
+if(self.computer.blockBelow.name == "minecraft:mossy_cobblestone")then
 	print("This is a DungeonArena Computer")
 	print("Identified as Dev Computer")
-	if(init)then
+	if(self.init)then
 		print("Updating")
 		sleep(1)
-		local update = shell.run("dungeon/computers/all/update","https://api.github.com/repos/wergat/DungeonMap/contents/")
+		self.updater:downloadFromDir("")
 		if(not update)then printError("Update File not found!") end
 		sleep(1)
 		local open = fs.open(":startup","w")

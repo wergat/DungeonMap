@@ -1,5 +1,22 @@
 print("Running basic OS detection.")
 print("Press and hold any key to cancle.")
+
+-- BIOS informations
+-- Can be used in case of emergency
+sleep(.5)
+os.startTimer(.5)
+local tEvent = {os.pullEvent()}
+if(tEvent[1] == "key")then
+	printError("Booting process cancled")
+	sleep(.3)
+	for i=1,10 do
+		write(".")
+		sleep(.05)
+	end
+	error("Proceeding to fall back native OS.")
+end
+-- ///
+
 local tArgs = {...}
 local init = false
 if(tArgs[1])then
@@ -23,95 +40,71 @@ if(tArgs[1])then
 	open.close()
 end
 
--- Checks if the object is supposed to run
--- Object access some data like
--- self.blockBelow
-local data = {}
-local x,y,z = commands.getBlockPosition()
-data.isColor = term.isColor()
-data.isMobile = ((pocket) ~= nil)
-data.isCommand = ((commands) ~= nil)
-data.isTurtle = ((turtle) ~= nil)
-data.position = {["x"] = x,["y"] = y,["z"] = z}
-data.blockBelow = commands.getBlockInfo(x,y-1,z)
--- Modem/Monitor/Peripheral Data
-function checkWhoAmI(object)
-	
-end
-
-	
--- BIOS informations
--- Can be used in case of emergency
-sleep(.5)
-os.startTimer(.5)
-local tEvent = {os.pullEvent()}
-if(tEvent[1] == "key")then
-	printError("Booting process cancled")
-	sleep(.3)
-	for i=1,10 do
-		write(".")
-		sleep(.05)
-	end
-	error("Proceeding to fall back native OS.")
-end
-
-
--- Getting launch block informations
-local x,y,z = commands.getBlockPosition()
-local block = commands.getBlockInfo(x,y-1,z)
 
 -- Loading DCORE
 os.loadAPI(":dungeon/dcore/apis/dcore")
+if(not github)then dcore.requireAPI("github") end
 
--- Starting Who-Am-I Events in mods and stuff
-local l = fs.list(config.DIR_MODS)
-for i=1,#l do
-	-- l[i] = Modname
-	local pathToAPIFile = config.DIR_MODS.."/"..l[i].."/event/whoami"
-	if(fs.exists(pathToAPIFile))then
-		dcore.print_log("dcore","[EVENT][whoami]["..l[i].."] Starting "..pathToAPIFile.."")
-		local tEnv = setmetatable({block = block,init = init}, { __index = _ENV } )
-		local fnAPI, err = loadfile(pathToAPIFile)
-		if fnAPI then
-			setfenv( fnAPI, tEnv )
-			local ok, err = pcall( fnAPI )
-			if not ok then
-				dcore.print_log("error","[EVENT][whoami]["..l[i].."] While loading "..pathToAPIFile.."; "..err)
-				if(firstError)then
-					if(term.isColor())then term.setTextColor(colors.red) end
-					print("error found while loading api files, check logs/error for more informations! "..err)
-					term.setTextColor(colors.white)
-					firstError = false
-				end
-			end
-		else
-			dcore.print_log("error","[EVENT][whoami]["..l[i].."] While loading "..pathToAPIFile.."; ")
-			if(firstError)then
-				if(term.isColor())then term.setTextColor(colors.red) end
-				print("error found while loading api files, check logs/error for more informations! "..err)
-				term.setTextColor(colors.white)
-				firstError = false
-			end
-		end
+-- Checks if the object is supposed to run
+-- Object access some data like
+-- self.blockBelow
+local self = {computer = {}}
+local x,y,z = commands.getBlockPosition()
+self.computer.isColor = term.isColor()
+self.computer.isMobile = ((pocket) ~= nil)
+self.computer.isCommand = ((commands) ~= nil)
+self.computer.isTurtle = ((turtle) ~= nil)
+self.computer.position = {["x"] = x,["y"] = y,["z"] = z}
+self.computer.blockBelow = commands.getBlockInfo(x,y-1,z)
+self.computer.id = os.getComputerID()
+self.computer.label = os.getComputerLabel()
+self.tArgs = tArgs
+self.init = init
+self.updater = github.newUpdater()
+
+local function displayError(p,e)
+	dcore.print_log("error","[EVENT][whoami]["..l[i].."] While loading "..p.."; "..e)
+	if(firstError)then
+		if(term.isColor())then term.setTextColor(colors.red) end
+		print("Error found while loading api files, check logs/error for more informations! "..e)
+		term.setTextColor(colors.white)
+		firstError = false
 	end
 end
 
-
--- Check for mobile computer
-if(pocket)then
+local tEnv = setmetatable({self = self},{__index = _ENV})
+function checkWhoAmI(object)
+	local files = {}
+	local mods = fs.list(config.DIR_MODS)
+	-- Find all whoami files and put them in a list
+	for modi=1,#mods do
+		if(fs.exists(config.DIR_MODS.."/"..mods[modi].."/event/whoami"))then
+			files[#files] = config.DIR_MODS.."/"..mods[modi].."/event/whoami"
+		end		
+	end
+	-- Go though the list with all the whoami files
+	for i=1,#files do
+		local fnAPI, err = loadfile(files[i])
+		if fnAPI then
+			setfenv(fnAPI,tEnv)
+			local ok, err = pcall(fnAPI)
+			if not ok then
+				displayError(files[i],err)
+			end
+		else
+			displayError(files[i],err)
+		end
+	end	
 end
 
 
-
-
 -- Main Computer
-if(block.name == "minecraft:quartz_block")then
+if(self.computer.blockBelow.name == "minecraft:quartz_block")then
 	print("Identified as Dev Computer")
 	if(init)then
 		print("Updating")
 		sleep(1)
-		local update = shell.run("dungeon/computers/all/update","https://api.github.com/repos/wergat/DungeonMap/contents/")
-		if(not update)then printError("Update File not found!") end
+		self.updater:downloadFromDir("")
 		sleep(1)
 		os.reboot()
 	else
@@ -122,15 +115,18 @@ end
 
 
 -- Settings monitor
-if(block.name == "minecraft:wool")then
-	shell.run("dungeon/computers/all/update","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/","https://api.github.com/repos/wergat/DungeonMap/contents/computers/option","https://api.github.com/repos/wergat/DungeonMap/contents/computers/all","https://api.github.com/repos/wergat/DungeonMap/contents/mods/")
-	if(init)then
+if(self.computer.blockBelow.name == "minecraft:wool")then
+	self.updater:downloadFromDir("/dcore")
+	self.updater:downloadFromDir("/computers/option")
+	self.updater:downloadFromDir("/computers/all")
+	self.updater:downloadFromDir("/mods")
+	if(self.init)then
 		sleep(1)
 		os.reboot()
 	end
 	local side = nil
 	for k,v in pairs(peripheral.getNames()) do
-		if(peripheral.getType(v))then
+		if(peripheral.getType(v) == "monitor")then
 			side = v
 		end
 	end
@@ -139,9 +135,11 @@ if(block.name == "minecraft:wool")then
 	end
 end
 
--- cmd_salve
-if(block.name == "minecraft:iron_block")then
-	local update = shell.run("dungeon/computers/all/update","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/apis/github","https://api.github.com/repos/wergat/DungeonMap/contents/computers/all","https://api.github.com/repos/wergat/DungeonMap/contents/computers/cmd_slave","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/apis/dcore")
-	if(not update)then print("Update File not found!") end
+-- cmd_slave
+if(self.computer.blockBelow.name == "minecraft:iron_block")then
+	self.updater:downloadFromDir("/dcore/apis/github")
+	self.updater:downloadFromDir("/computers/all")
+	self.updater:downloadFromDir("/computers/cmd_slave")
+	self.updater:downloadFromDir("/dcore/apis/dcore")
 	shell.run("dungeon/computers/cmd_slave/main")
 end

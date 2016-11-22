@@ -186,7 +186,6 @@ end
 -- Downlaoding from Repository
 
 function newUpdater()
-	error("Not ready to use yet please talk to Wergat at once!",2)
 	local updater = {}
 	-- Makes the updater print status and such on the screen
 	updater.doPrint = false
