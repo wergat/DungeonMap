@@ -44,7 +44,7 @@ if(not github)then dcore.requireAPI("github") end
 -- self.blockBelow
 local self = {computer = {}}
 if(commands)then
-	local x,y,z = commands.getBlockPosition()#
+	local x,y,z = commands.getBlockPosition()
 	self.computer.position = {["x"] = x,["y"] = y,["z"] = z}
 	self.computer.blockBelow = commands.getBlockInfo(x,y-1,z)
 end
