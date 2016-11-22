@@ -21,16 +21,10 @@ local tArgs = {...}
 local init = false
 if(tArgs[1])then
 	print("This is the first run, initializing!")
-	sleep(1)
-	print(fs.exists("dungeon/dcore/apis/dcore"))
-	print(fs.exists("dungeon/dcore/apis/github"))
-	print(fs.exists("dungeon/dcore/apis/config"))
-	sleep(10)
 	if(not (fs.exists("dungeon/dcore/apis/dcore") and fs.exists("dungeon/dcore/apis/github") and fs.exists("dungeon/dcore/apis/config")))then
 		shell.run("update","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/apis/dcore","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/apis/github","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/apis/config")
 		print("Important APIs not found, loading them now.")
 		print("Downloaded essential APIs, rebooting once more!")
-		sleep(5)
 		os.reboot()
 	end
 	print("Initialization complete.")
@@ -60,7 +54,7 @@ self.computer.id = os.getComputerID()
 self.computer.label = os.getComputerLabel()
 self.tArgs = tArgs
 self.init = init
-self.updater = github.newUpdater()
+self.updater = github.newUpdater():setSHACodes()
 
 local function displayError(p,e)
 	dcore.print_log("error","[EVENT][whoami]["..l[i].."] While loading "..p.."; "..e)
@@ -97,6 +91,7 @@ function checkWhoAmI(object)
 	end	
 end
 
+self.updater:setSHACodes()
 
 -- Main Computer
 if(self.computer.blockBelow.name == "minecraft:quartz_block")then

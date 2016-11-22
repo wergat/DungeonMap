@@ -241,12 +241,12 @@ function newUpdater()
 			local entry = data[i]
 			local path = entry["path"]
 			-- Check if file is up-to-date with the SHA codes
-			if (entry["sha"] == SHACodes[path] and entry["type"] ~= "dir" and fs.exists(path)) then
+			if (entry["sha"] == self.SHACodes[path] and entry["type"] ~= "dir" and fs.exists(path)) then
 				self:writeToLog(" x Not updated: "..path)
 			elseif entry["type"] == "dir" then
 				self:printOnScreen("Scanning directory: " .. path)
 				self:writeToLog("Scanning directory: " .. path)
-				SHACodes[path] = entry["sha"]
+				self.SHACodes[path] = entry["sha"]
 				self,result = self:downloadFromURL(entry["url"])
 				if(not result)then
 					self:printOnScreen("Problem encountered scanning directory: " .. path)
@@ -265,7 +265,7 @@ function newUpdater()
 					local open = fs.open("dungeon/" .. path, "w")
 					open.write(xt)
 					open.close()
-					SHACodes[path] = entry["sha"]
+					self.SHACodes[path] = entry["sha"]
 				end
 			end
 		end
