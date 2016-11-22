@@ -27,7 +27,9 @@ if(not language)then
 	os.loadAPI(":dungeon/dcore/apis/language")
 	--language = setmetatable(language,{__index = function(t,key) return t.get(key) end}) -- Making it easier to access config data
 end
-language.update()
+if(language)then
+	language.update()
+end
 
 -- Use native Globals
 if(not _G["cleanG"])then
@@ -546,7 +548,7 @@ if(not dcore)then
 	end
 
 	-- ASYNC Grabbing to prevent timeout's
-	local nativeExecAsync = commands.execAsync
+	local nativeExecAsync = (commands) and commands.execAsync
 	local nativeAsyncCommands = {}
 	local nativeSleep = sleep
 
@@ -589,7 +591,7 @@ if(not dcore)then
 				if(arg[#arg-1])then
 					text = text.."\""..(tostring(arg[#arg-1]) or "").."\""
 				end
-				commands.execAsync("/say An error happened! "..text.."")
+				if(commands)then commands.execAsync("/say An error happened! "..text.."") end
 				print_log("error","An error happened! \""..text.."\"")
 				_G["error"] = nativeError			
 				local nativeWrite = write
