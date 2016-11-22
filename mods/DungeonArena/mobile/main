@@ -1,0 +1,242 @@
+local modem = peripheral.wrap("back")
+modem.open(55)
+local username
+local isLogin = false
+local tx,ty = term.getSize()
+
+-- Login stuff
+function getPreviousLogins()
+	local fileHandle = fs.open("users","r")
+	if(fileHandle)then 
+		local users = textutils.unserialize(fileHandle.readAll() or "")
+		fileHandle.close()
+		return users
+	end
+end
+function checkUserName(userName)
+	while true do
+		local event = {os.pullEvent()}
+		if(event[1] == "modem_message" and event[5])then
+			if(event[5][2] == "toMobile_"..userName)then
+				if(event[5][1] == "true")then
+					return "playerFound"
+				else
+					return "playerNotFound"
+				end
+			end
+		elseif(event[1] == "timer")then
+			return "timeout"
+		end
+	end
+end
+function drawLogin()
+	term.setTextColor(colors.orange)
+	term.setCursorPos(math.floor((tx-5)/2),3)
+	term.write("Login")
+	term.setCursorPos(math.floor((tx-21)/2),5)
+	term.write("Please enter Username")
+	
+	local previousLogins = getPreviousLogins() or {}
+	-- Username input loop
+	repeat
+		term.setCursorPos(5,7)
+		term.clearLine()
+		if(username)then
+			term.setTextColor(colors.red)
+		else
+			term.setTextColor(colors.orange)
+		end
+		term.write("> ")
+		term.setTextColor(colors.white)
+		
+		username = read(nil,previousLogins)
+
+		term.setCursorPos(2,10)
+		term.clearLine()
+		term.setCursorPos(2,9)
+		term.clearLine()
+		term.setTextColor(colors.lime)
+		local timerID = os.startTimer(5) -- Timeout
+		term.write("Processing Username...")
+		sleep(.05)
+		term.setCursorPos(5,7)
+		term.setTextColor(colors.orange)
+		term.write(">")
+		modem.transmit(54,os.getComputerID(),{{"isOnline",username},"dungeonMobile"})
+		local status = checkUserName(username)
+		if(status == "playerFound")then
+			term.setCursorPos(5,7)
+			term.setTextColor(colors.lime)
+			term.write(">")
+			term.setCursorPos(2,10)
+			term.setTextColor(colors.green)
+			term.write("Success! Player found!")
+			isLogin = true
+		elseif(status == "playerNotFound")then
+			term.setCursorPos(2,10)
+			term.clearLine()
+			term.setTextColor(colors.red)
+			write("No player with that name was found")				
+		elseif(status == "timeout")then
+			term.setCursorPos(2,10)
+			term.clearLine()
+			term.setTextColor(colors.red)
+			write("Timeout, could not communicate with host")		
+		end
+		os.cancelTimer(timerID)
+		sleep(.05)
+	until (isLogin)
+	-- If username is valid
+	local handle = fs.open("users","w")
+	previousLogins[(#previousLogins + 1)] = username
+	handle.write(textutils.serialize(previousLogins))
+	handle.close()
+	-- Scroll-up Animation
+	
+	for i=1,6 do
+		term.scroll(1)
+		sleep(.05)
+	end
+	term.setCursorPos(5,1)
+	write(">")
+	local xPos = 7
+	local nameLength = string.len(username)
+	while (xPos + nameLength) <= tx do
+		term.scroll(1)
+		term.setCursorPos(xPos-2,1)
+		term.clearLine()
+		term.setTextColor(colors.green)
+		write("> ")
+		term.setTextColor(colors.white)
+		write(username)
+		xPos = xPos + 1
+		sleep(.05)
+	end
+	term.setCursorPos(xPos-3,1)
+	term.setTextColor(colors.green)
+	write("<")
+	term.setTextColor(colors.white)
+end
+-- Communication Function
+function getLives()
+	modem.transmit(54,os.getComputerID(),{{"getLives",username},"dungeonMobile"})
+	return tonumber(({os.pullEvent("modem_message")})[5][1])
+end
+function getWave()
+	modem.transmit(54,os.getComputerID(),{{"getWave"},"dungeonMobile"})
+	return tonumber(({os.pullEvent("modem_message")})[5])
+end
+-- Selection Menu
+
+
+-- Default UI drawing
+function drawTopUi()
+	term.clearLine()
+	local nameLength = string.len(username)
+	term.setCursorPos(math.max(tx-nameLength-2,7),1)
+	term.setTextColor(colors.green)
+	write("< ")
+	term.setTextColor(colors.white)
+	write(username)
+	term.setCursorPos(1,1)
+	term.setTextColor(colors.orange)
+	write("Lives: "..tostring(getLives()))
+	term.setTextColor(colors.white)
+end
+function drawBottomUi()
+	term.setCursorPos(1,(ty))
+	term.clearLine()
+	term.setTextColor(colors.orange)
+	write("Wave #"..getWave())
+	term.setTextColor(colors.white)
+end
+function drawDefaultUI()
+	drawTopUi()
+	drawBottomUi()
+end
+
+-- Functions
+function drawAchievements()
+	term.clear()
+	drawDefaultUI()
+	term.setCursorPos(1,2)
+	write("Your achievements")
+	while true do
+		-- Download the achievements
+		modem.transmit(54,os.getComputerID(),{{"getAchievements",username},"dungeonMobile"})
+		local achievments = ({os.pullEvent("modem_message")})[5][1]
+		-- Display then
+		term.setCursorPos(1,3)
+		for k,v in pairs(achievments) do
+			if(not v[4] or v[5])then
+				if(v[5])then
+					term.setTextColor(colors.white)
+				else
+					term.setTextColor(colors.gray)
+				end
+				print(v[1])
+			end
+		end
+		return
+	end
+end
+function drawLuaConsole()
+	term.clear()
+	drawDefaultUI()
+	term.setCursorPos(1,2)
+	term.setTextColor(colors.yellow)
+	write("Lua Console opened")
+	term.setCursorPos(1,3)
+	write("Press Enter twice to exit")
+	term.setCursorPos(1,4)
+	local history = {}
+	
+	
+	
+	while true do
+		term.clearLine()
+		term.setTextColor(colors.orange)
+		write("lua")
+		term.setTextColor(colors.white)
+		write("> ")
+		local luaCode = read(nil,history)
+		if(luaCode == "")then
+			return
+		else
+			-- Insert into history table if it is a non-dublicate
+			if(luaCode ~= history[#history])then
+				table.insert(history,luaCode)
+			end
+			modem.transmit(54,os.getComputerID(),{{"lua",username,luaCode},"dungeonMobile"})
+		end
+		local returnData = ({os.pullEvent("modem_message")})[5]
+		for i=1,#returnData do
+			if(returnData[i][2])then
+				if(not returnData[i][1])then
+					term.setTextColor(colors.red)
+				else
+					term.setTextColor(colors.white)
+				end
+				print(returnData[i][2])
+				term.setTextColor(colors.white)
+			end
+		end
+	end
+end
+
+
+
+function draw()
+	if(not isLogin)then
+		drawLogin()
+		draw()
+	else
+		drawAchievements()
+		drawLuaConsole()
+	end
+	term.setCursorPos(10,10)
+end
+
+
+draw()
+print()
