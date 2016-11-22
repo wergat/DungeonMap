@@ -43,13 +43,15 @@ if(not github)then dcore.requireAPI("github") end
 -- Object access some data like
 -- self.blockBelow
 local self = {computer = {}}
-local x,y,z = commands.getBlockPosition()
+if(commands)then
+	local x,y,z = commands.getBlockPosition()#
+	self.computer.position = {["x"] = x,["y"] = y,["z"] = z}
+	self.computer.blockBelow = commands.getBlockInfo(x,y-1,z)
+end
 self.computer.isColor = term.isColor()
 self.computer.isMobile = ((pocket) ~= nil)
 self.computer.isCommand = ((commands) ~= nil)
 self.computer.isTurtle = ((turtle) ~= nil)
-self.computer.position = {["x"] = x,["y"] = y,["z"] = z}
-self.computer.blockBelow = commands.getBlockInfo(x,y-1,z)
 self.computer.id = os.getComputerID()
 self.computer.label = os.getComputerLabel()
 self.tArgs = tArgs
