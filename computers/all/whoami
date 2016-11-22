@@ -96,47 +96,49 @@ end
 self.updater:setSHACodes()
 
 -- Main Computer
-if(self.computer.blockBelow.name == "minecraft:quartz_block")then
-	print("Identified as Dev Computer")
-	if(init)then
-		print("Updating")
-		sleep(1)
-		self.updater:downloadFromDir("")
-		sleep(1)
-		os.reboot()
-	else
-		print("Running main function")
-		shell.run("dungeon/computers/dev/main")
-	end
-end
-
-
--- Settings monitor
-if(self.computer.blockBelow.name == "minecraft:wool")then
-	self.updater:downloadFromDir("/dcore")
-	self.updater:downloadFromDir("/computers/option")
-	self.updater:downloadFromDir("/computers/all")
-	self.updater:downloadFromDir("/mods")
-	if(self.init)then
-		sleep(1)
-		os.reboot()
-	end
-	local side = nil
-	for k,v in pairs(peripheral.getNames()) do
-		if(peripheral.getType(v) == "monitor")then
-			side = v
+if(self.computer.blockBelow)then
+	if(self.computer.blockBelow.name == "minecraft:quartz_block")then
+		print("Identified as Dev Computer")
+		if(init)then
+			print("Updating")
+			sleep(1)
+			self.updater:downloadFromDir("")
+			sleep(1)
+			os.reboot()
+		else
+			print("Running main function")
+			shell.run("dungeon/computers/dev/main")
 		end
 	end
-	if(side)then
-		shell.run("monitor "..side.." dungeon/computers/option/main")
-	end
-end
 
--- cmd_slave
-if(self.computer.blockBelow.name == "minecraft:iron_block")then
-	self.updater:downloadFromDir("/dcore/apis/github")
-	self.updater:downloadFromDir("/computers/all")
-	self.updater:downloadFromDir("/computers/cmd_slave")
-	self.updater:downloadFromDir("/dcore/apis/dcore")
-	shell.run("dungeon/computers/cmd_slave/main")
+
+	-- Settings monitor
+	if(self.computer.blockBelow.name == "minecraft:wool")then
+		self.updater:downloadFromDir("/dcore")
+		self.updater:downloadFromDir("/computers/option")
+		self.updater:downloadFromDir("/computers/all")
+		self.updater:downloadFromDir("/mods")
+		if(self.init)then
+			sleep(1)
+			os.reboot()
+		end
+		local side = nil
+		for k,v in pairs(peripheral.getNames()) do
+			if(peripheral.getType(v) == "monitor")then
+				side = v
+			end
+		end
+		if(side)then
+			shell.run("monitor "..side.." dungeon/computers/option/main")
+		end
+	end
+
+	-- cmd_slave
+	if(self.computer.blockBelow.name == "minecraft:iron_block")then
+		self.updater:downloadFromDir("/dcore/apis/github")
+		self.updater:downloadFromDir("/computers/all")
+		self.updater:downloadFromDir("/computers/cmd_slave")
+		self.updater:downloadFromDir("/dcore/apis/dcore")
+		shell.run("dungeon/computers/cmd_slave/main")
+	end
 end
