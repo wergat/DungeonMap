@@ -20,6 +20,8 @@ config.softInit("ENABLED_LOGS",{["dcore"] = true,["command"] = true,["error"] = 
 config.save() -- Saving the config for later usage!
 
 _G["eventsFree"] = 0
+local O_PE = os.pullEvent
+local O_QE = os.queueEvent
 os.pullEvent = function(...)
 	eventsFree = eventsFree - 1
 	return O_PE(...)
