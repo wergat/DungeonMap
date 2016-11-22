@@ -78,7 +78,6 @@ end
 function getCurrentScanData()
 	return currentScanData
 end
-
 function scan()
 	local cmd = "/entitydata @e {}" --["..scanData.x..","..scanData.y..","..scanData.z..","..scanData.r.."]
 	local s,d = commands.exec(cmd)
@@ -149,9 +148,10 @@ end
 local selected_entity = nil
 while true do
 	repeat
-		local event, side, frequency, replyFrequency, message, distance = os.pullEvent("modem_message")
-		print(message)
-    until message == "scan_start"
+		local event = {os.pullEvent("dcore_NBTScanner")}
+		textutils.unserialize(event[2])
+		print(event[2])
+    until tEvent[5] == "scan_start"
 	scan()
 	modem.transmit(1,1,"scan_done")
 	-- Player position

@@ -35,7 +35,7 @@ function scan()
 	term.setCursorPos(1,1)
 	term.clearLine()
 	write("Scanning.")
-	modem.transmit(1,1,"scan_start")
+	modem.transmit(1,1,{"scan_start","NBTScanner"})
 	write(".")
 	repeat
 		local event, side, frequency, replyFrequency, message, distance = os.pullEvent("modem_message")
