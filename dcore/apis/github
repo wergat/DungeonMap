@@ -187,6 +187,8 @@ end
 
 function newUpdater()
 	local updater = {}
+	-- True if it encountered an error recently
+	updater.didError = false
 	-- Makes the updater print status and such on the screen
 	updater.doPrint = false
 	-- Makes the updater to write status and such to the log file
@@ -240,7 +242,7 @@ function newUpdater()
 			return self,false
 		end
 		local data = JSON:decode(handle)
-		self:writeToLog("Found #"..tonumber(#data).." files inside "..url)
+		self:writeToLog("Found ["..tonumber(#data).."] files inside "..url)
 		for i = 1, #data do
 			local entry = data[i]
 			local path = entry["path"]
@@ -254,8 +256,19 @@ function newUpdater()
 				self,result = self:downloadFromURL(entry["url"])
 				if(not result)then
 					self:printOnScreen("Problem encountered scanning directory: " .. path)
-					self:writeToLog("Problem encountered scanning directory: " .. path)
-				end
+					self:writeToLog(" x Problem encountered scanning directory: " .. path)
+					if(not self.didError)then
+						self:writeToLog(" + retrying scanning directory: " .. path)
+						self.didError = true
+						sleep(1)
+						self,result = self:downloadFromURL(entry["url"])
+						if(not result)then
+							self:writeToLog(" x Problem again encountered scanning directory: " .. path)
+						else
+							self.didError = false
+						end
+					end
+				elseif(not self.didError)then self.didError = false end
 			else
 				-- Check if we can ignore the file
 				if(not isOnIgnoreList(path))then
