@@ -234,7 +234,11 @@ function newUpdater()
 		local result = true
 		-- Checking for the API limitations
 		if handle then handle = handle.readAll()
-		else return self,false end
+		else 
+			self:printOnScreen("Could not fetch URL [http failure]: " .. url)
+			self:writeToLog("Could not fetch URL [http failure]: " .. url)		
+			return self,false
+		end
 		local data = JSON:decode(handle)
 		self:writeToLog("Found #"..tonumber(#data).." files inside "..url)
 		for i = 1, #data do

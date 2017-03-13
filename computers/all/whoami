@@ -101,7 +101,6 @@ if(self.computer.blockBelow)then
 		print("Identified as Dev Computer")
 		if(init)then
 			print("Updating")
-			sleep(1)
 			self.updater:downloadFromDir("")
 			sleep(1)
 			os.reboot()

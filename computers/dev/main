@@ -25,8 +25,16 @@ function getSizeOfFolder(_dirName,_countSubFolders)
 end
 
 print("Used Memory: "..(math.floor(getSizeOfFolder(".")/102.4)/10).."kb")
-local ThreadsMonitoringTab = multishell.launch({}, ":dungeon/utils/threads")
-local CommandsMonitoringTab = multishell.launch({}, ":dungeon/utils/commands")
+local ThreadsMonitoringTab
+local CommandsMonitoringTab
+local ThreadsRunningTab
+if(fs.exists(":dungeon/utils/"))then
+	ThreadsMonitoringTab = multishell.launch({}, ":dungeon/utils/threads")
+	CommandsMonitoringTab = multishell.launch({}, ":dungeon/utils/commands")
+else
+	printError("For some reason \":dungeon/utils/\" was not downloaded or deleted.")
+end
+
 local ThreadsRunningTab = multishell.launch({}, ":dungeon/computers/dev/threads")
 
 

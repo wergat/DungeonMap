@@ -44,6 +44,8 @@ function writeToLog(text)
 	logfile.writeLine(text)
 	logfile.flush()
 end
+writeToLog("~~ Using computers/all/update to download files ~~")
+
 if(dcore)then dcore.requireAPI("github") else printError("DCORE API WAS NOT FOUND!") end
 if(not github)then
 	printError("Github API is not installed, using http as alternative to install it.")

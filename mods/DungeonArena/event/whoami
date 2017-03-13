@@ -1,3 +1,4 @@
+print(self.computer.blockBelow.name)
 if(self.computer.blockBelow.name == "minecraft:mossy_cobblestone")then
 	print("This is a DungeonArena Computer")
 	print("Identified as Dev Computer")
