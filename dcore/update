@@ -60,6 +60,7 @@ print("[3] Update All Official Mods")
 print("[4] Force to update Everything")
 
 local logfile = fs.open(":dungeon/logs/updater","w")
+logfile.writeLine("~~ dcore/update ~~")
 logfile.writeLine("Log file for the updater!")
 local startRemaining = (JSON:decode(http.get("https://api.github.com/rate_limit").readAll())["resources"]["core"]["remaining"])
 logfile.writeLine("API Calls remaining: "..(startRemaining))

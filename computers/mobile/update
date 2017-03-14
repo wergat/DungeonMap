@@ -57,6 +57,7 @@ else
 end
 
 local logfile = fs.open(":dungeon/logs/updater","w")
+logfile.writeLine("~~ computers/mobile/update ~~")
 logfile.writeLine("Log file for the updater!")
 local startRemaining = (JSON:decode(http.get("https://api.github.com/rate_limit").readAll())["resources"]["core"]["remaining"])
 logfile.writeLine("API Calls remaining: "..(startRemaining))
