@@ -29,8 +29,9 @@ local ThreadsMonitoringTab
 local CommandsMonitoringTab
 local ThreadsRunningTab
 if(fs.exists(":dungeon/utils/"))then
-	ThreadsMonitoringTab = multishell.launch({}, ":dungeon/utils/threads")
-	CommandsMonitoringTab = multishell.launch({}, ":dungeon/utils/commands")
+	local env = {multishell = multishell}
+	ThreadsMonitoringTab = multishell.launch(env, ":dungeon/utils/threads")
+	CommandsMonitoringTab = multishell.launch(env, ":dungeon/utils/commands")
 else
 	printError("For some reason \":dungeon/utils/\" was not downloaded or deleted.")
 end
