@@ -78,7 +78,7 @@ function checkWhoAmI()
 	-- Find all whoami files and put them in a list
 	for modi=1,#mods do
 		if(fs.exists(config.DIR_MODS.."/"..mods[modi].."/event/whoami"))then
-			files[#files] = config.DIR_MODS.."/"..mods[modi].."/event/whoami"
+			files[(#files+1)] = config.DIR_MODS.."/"..mods[modi].."/event/whoami"
 		end		
 	end
 	-- Go though the list with all the whoami files
