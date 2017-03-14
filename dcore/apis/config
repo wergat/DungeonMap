@@ -13,6 +13,7 @@ function restoreDefault()
 	end
 end
 
+-- Sets the passed value as default, and if key is not set, sets it to value. Returns key.
 function softInit(key,value)
 	default[key] = value
 	return conditionalSet(key,value)

@@ -39,6 +39,8 @@ end
 os.loadAPI(":dungeon/dcore/apis/dcore")
 if(not dcore)then os.reboot() end
 if(not github)then dcore.requireAPI("github") end
+if(not config)then dcore.requireAPI("config") end
+
 
 -- Checks if the object is supposed to run
 -- Object access some data like
@@ -92,6 +94,10 @@ function checkWhoAmI()
 			displayError(files[i],err)
 		end
 	end	
+end
+
+if(config.enableCustomStartup)then
+	checkWhoAmI()
 end
 
 self.updater:setSHACodes()

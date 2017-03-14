@@ -17,6 +17,8 @@ config.softInit("DIR_APIS",":dungeon/dcore/apis")
 config.softInit("ENABLE_DEVELOPER_MODE",true)
 config.softInit("ENABLE_SHUTDOWN_TRIGGERS",true)
 config.softInit("ENABLED_LOGS",{["dcore"] = true,["command"] = true,["error"] = true,["updater"] = true})
+config.softInit("enableCustomStartup",true) -- Enables/Disable WhoAmI files of mods
+
 config.save() -- Saving the config for later usage!
 
 _G["eventsFree"] = 0

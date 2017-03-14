@@ -1,8 +1,8 @@
 local duration = tonumber(({...})[1] or 3)
 
 function parseInput(text)
-	local pre,sub,long = string.match(text,"(%d+).(%d+) (%d+)")
-	local mili = math.floor(tonumber(pre.."."..sub)*100)/100
+	local pre,post,long = string.match(text,"(%d+).(%d+) (%d+)")
+	local mili = math.floor(tonumber(pre.."."..post)*100)/100
 	return tonumber(long) + mili
 end
 
