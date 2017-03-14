@@ -20,7 +20,7 @@ function softInit(key,value)
 end
 
 function conditionalSet(key,value)
-	if(not data[key])then
+	if(data[key] == nil)then
 		data[key] = value
 	end
 	return data[key]
