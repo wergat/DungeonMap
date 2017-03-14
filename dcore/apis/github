@@ -169,7 +169,7 @@ end
 --
 
 
-
+-- Not used at all
 function checkDownloadLimit()
 	local currentTime = getCurrentTimeAsUNIXTimespamp()
 	local githubRateTable = JSON:decode(github.get("https://api.github.com/rate_limit").readAll())

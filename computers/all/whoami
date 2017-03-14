@@ -70,7 +70,7 @@ local function displayError(p,e)
 end
 
 local tEnv = setmetatable({self = self},{__index = _ENV})
-function checkWhoAmI(object)
+function checkWhoAmI()
 	local files = {}
 	local mods = fs.list(config.DIR_MODS)
 	-- Find all whoami files and put them in a list

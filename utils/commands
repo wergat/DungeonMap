@@ -12,21 +12,23 @@ local commandsBeforeSharing = 0
 
 function drawSlaves()
 	while true do
-		local slaveComputers = cmd.getSlaveComputerData()
-		for i=1,#slaveComputers do
-			local timer = slaveComputers[i].timer
-			term.setCursorPos(2,i+1)
-			if(timer > 99)then 
-				term.write(slaveComputers[i].id..": idle          ")
-			else
-				term.write(slaveComputers[i].id..": "..(slaveComputers[i].state).."   ")
-				term.setCursorPos(15,i+1)
-				term.write("("..timer..") ")
-			end
-			if(slaveComputers[i].state == "ready")then
-				idleCounter = idleCounter + 1
-			else
-				workingCounter = workingCounter + 1
+		if(multishell.getCurrent() == multishell.getFocus())then
+			local slaveComputers = cmd.getSlaveComputerData()
+			for i=1,#slaveComputers do
+				local timer = slaveComputers[i].timer
+				term.setCursorPos(2,i+1)
+				if(timer > 99)then 
+					term.write(slaveComputers[i].id..": idle          ")
+				else
+					term.write(slaveComputers[i].id..": "..(slaveComputers[i].state).."   ")
+					term.setCursorPos(15,i+1)
+					term.write("("..timer..") ")
+				end
+				if(slaveComputers[i].state == "ready")then
+					idleCounter = idleCounter + 1
+				else
+					workingCounter = workingCounter + 1
+				end
 			end
 		end
 		sleep(.05)
@@ -35,46 +37,47 @@ end
 
 function draw()
 	while true do
-		local data = cmd.getCommandStatistics()
-		term.clear()
-		term.setCursorPos(25,3)
-		local cmdLoss = string.sub((100-((data.commandsSuccessfull*100)/data.commandsRun)),1,5)
-		term.write(cmdLoss)
-		term.setCursorPos(32,3)
-		term.write("% Packet loss")
-		term.setCursorPos(25,4)
-		
-		local asyncLoss = string.sub((100-((data.asyncCommandsSuccessfull*100)/data.AsyncCommandsRun)),1,5)
-		term.write(asyncLoss)
-		term.setCursorPos(32,4)
-		term.write("% Async loss")
-				
-		term.setCursorPos(25,5)
-		term.write("Commands waiting : "..commandListLength)
-		commandListLength = 0
-		
-		term.setCursorPos(25,6)
-		term.write("Commands assigned: "..commandsBeforeSharing)
-		commandsBeforeSharing = 0
+		if(multishell.getCurrent() == multishell.getFocus())then
+			local data = cmd.getCommandStatistics()
+			term.clear()
+			term.setCursorPos(25,3)
+			local cmdLoss = string.sub((100-((data.commandsSuccessfull*100)/data.commandsRun)),1,5)
+			term.write(cmdLoss)
+			term.setCursorPos(32,3)
+			term.write("% Packet loss")
+			term.setCursorPos(25,4)
+			
+			local asyncLoss = string.sub((100-((data.asyncCommandsSuccessfull*100)/data.AsyncCommandsRun)),1,5)
+			term.write(asyncLoss)
+			term.setCursorPos(32,4)
+			term.write("% Async loss")
+					
+			term.setCursorPos(25,5)
+			term.write("Commands waiting : "..commandListLength)
+			commandListLength = 0
+			
+			term.setCursorPos(25,6)
+			term.write("Commands assigned: "..commandsBeforeSharing)
+			commandsBeforeSharing = 0
 
-		term.setCursorPos(25,7)
-		term.write("Commands in line : "..commandsLeftAfterSharing)
-		commandsLeftAfterSharing = 0
+			term.setCursorPos(25,7)
+			term.write("Commands in line : "..commandsLeftAfterSharing)
+			commandsLeftAfterSharing = 0
+			
+			term.setCursorPos(25,9)
+			term.write(string.sub(((workingCounter/(idleCounter+workingCounter))*100),1,5))
+			term.setCursorPos(30,9)
+			term.write("% Workload")
+			workingCounter = 0
+			idleCounter = 0
 		
-		term.setCursorPos(25,9)
-		term.write(string.sub(((workingCounter/(idleCounter+workingCounter))*100),1,5))
-		term.setCursorPos(30,9)
-		term.write("% Workload")
-		workingCounter = 0
-		idleCounter = 0
-	
-		
-		term.setCursorPos(1,ty)
-		write(string.rep("#",offCounter))
-		if(offCounter>1)then offCounter = offCounter - 1 end
-		if(offCounter>=tx)then return end
-		
-		sleep(1)
+			
+			term.setCursorPos(1,ty)
+			write(string.rep("#",offCounter))
+			if(offCounter>1)then offCounter = offCounter - 1 end
+			if(offCounter>=tx)then return end
+		end
+		sleep(.2)
 	end
 end
 
