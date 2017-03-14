@@ -21,11 +21,11 @@ local tArgs = {...}
 local init = false
 if(tArgs[1])then
 	print("This is the first run, initializing!")
-	if(not (fs.exists("dungeon/dcore/apis/dcore") and fs.exists("dungeon/dcore/apis/github") and fs.exists("dungeon/dcore/apis/config")))then
-		shell.run("update","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/apis/dcore","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/apis/github","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/apis/config")
-		print("Important APIs not found, loading them now.")
-		print("Downloaded essential APIs, rebooting once more!")
-		os.reboot()
+	local APIsNeeded = {"dcore","github","config"}
+	for i=1,#APIsNeeded do
+		if(not fs.exists("dungeon/"..APIsNeeded[i]))then
+			shell.run("update","https://api.github.com/repos/wergat/DungeonMap/contents/dcore/apis/"..APIsNeeded[i])
+		end
 	end
 	print("Initialization complete.")
 	init = true
@@ -37,6 +37,7 @@ end
 
 -- Loading DCORE
 os.loadAPI(":dungeon/dcore/apis/dcore")
+if(not dcore)then os.reboot() end
 if(not github)then dcore.requireAPI("github") end
 
 -- Checks if the object is supposed to run
@@ -99,14 +100,18 @@ self.updater:setSHACodes()
 if(self.computer.blockBelow)then
 	if(self.computer.blockBelow.name == "minecraft:quartz_block")then
 		print("Identified as Dev Computer")
-		if(init)then
+		if(self.init)then
 			print("Updating")
 			self.updater:downloadFromDir("")
 			sleep(1)
 			os.reboot()
 		else
 			print("Running main function")
-			shell.run("dungeon/computers/dev/main")
+			if(fs.exists(":dungeon/computers/dev/main"))then
+				shell.run(":dungeon/computers/dev/main")
+			else
+				printError(":dungeon/computers/dev/main does not exists, HOW?")
+			end
 		end
 	end
 

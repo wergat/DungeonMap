@@ -36,7 +36,11 @@ end
 -- Loading up the language API
 if(not language)then
 	print("Setting up the language API!")
-	os.loadAPI(":dungeon/dcore/apis/language")
+	if(fs.exists(":dungeon/dcore/apis/language"))then
+		os.loadAPI(":dungeon/dcore/apis/language")
+	else
+		printError("Language API not found!")
+	end
 	--language = setmetatable(language,{__index = function(t,key) return t.get(key) end}) -- Making it easier to access config data
 end
 if(language)then
