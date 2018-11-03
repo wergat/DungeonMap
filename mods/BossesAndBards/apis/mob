@@ -1,3 +1,22 @@
+if not script then
+	os.loadAPI("script")
+end
+get_text = script.get_text
+local function get_v(id)
+	if not fs.exists(".config") then
+		return nil
+	end
+	local open = fs.open(".config", "r")
+	local all = open.readAll()
+	open.close()
+	all = textutils.unserialize(all)
+	if all[id] then
+		return all[id]
+	else
+		return nil
+	end
+end
+
 local function overrideTable(_a,_b)
  local c = _a
  for k,v in pairs(_b) do
@@ -38,7 +57,9 @@ function summonBoss(x,y,z,mobType,difficulty)
 	local boss = mob.newMob({difficulty = difficulty, type = mobType})
 	boss:auto()
 	boss.name = boss_name(math.random(10)) .. ", " .. ranks[math.random(#ranks)] .. " of the Mobs"
-	boss.dropChances = {"1.0f","1.0f","1.0f","1.0f","1.0f"}
+    boss.PersistenceRequired = "1b"
+	boss:setEquipment("helmet",{["id"] = 131,["Damage"] = 0,["Count"] = 1,["tag"] = {["display"] = {["Name"] = SS("r") .. get_text("chest.key_name"), ["Lore"] = {get_text("chest.keys_lore_real")[1], get_text("chest.keys_lore_real")[2]}}}})
+	boss:setDropChances({"1.0f","1.0f","1.0f","1.0f","1.0f"})
 	boss:summon(x,y,z)
 end
 
